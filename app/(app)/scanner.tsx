@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  ActivityIndicator, ScrollView, StyleSheet, Text,
+  ActivityIndicator, Modal, ScrollView, StyleSheet, Text,
   TouchableOpacity, View, Image, Alert
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -79,7 +79,7 @@ async function saveScan(result: ScanResult, rating: PlateRating) {
 export default function ScannerScreen() {
   const router = useRouter()
   const [state, setState] = useState<'home' | 'loading' | 'result' | 'error'>('home')
-  const [showAIDisclosure, setShowAIDisclosure] = useState(true)
+  const [showAIDisclosure, setShowAIDisclosure] = useState(false)
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [result, setResult] = useState<ScanResult | null>(null)
   const [plate, setPlate] = useState<PlateRating | null>(null)
