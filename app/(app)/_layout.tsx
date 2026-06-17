@@ -10,6 +10,8 @@ export default function AppLayout() {
       <Stack.Screen name="scanner" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="tracker" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="progress" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="select-product" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+      <Stack.Screen name="product-detail" options={{ animation: 'slide_from_right' }} />
     </Stack>
   )
 }
