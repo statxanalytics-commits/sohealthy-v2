@@ -29,7 +29,8 @@ export default function DietScreen() {
         return
       }
 
-      // Get order_code from profile
+      // Get order_code from profile — passed to diet app via URL param
+      // The diet app reads ?code= and auto-skips the code entry screen
       const { data: profile } = await supabase
         .from('profiles')
         .select('order_code')
@@ -37,7 +38,6 @@ export default function DietScreen() {
         .single()
 
       if (profile?.order_code) {
-        // Pre-fill the code in the diet app URL
         setUrl(`${DIET_APP_URL}?code=${encodeURIComponent(profile.order_code)}`)
       } else {
         setUrl(DIET_APP_URL)
@@ -48,35 +48,6 @@ export default function DietScreen() {
       setLoading(false)
     }
   }
-
-  // Inject the code into the input field automatically
-  const injectedJS = url?.includes('?code=')
-    ? `
-      (function() {
-        var code = "${url.split('?code=')[1]}";
-        
-        function tryFillCode() {
-          var inputs = document.querySelectorAll('input[type="text"], input:not([type])');
-          for (var i = 0; i < inputs.length; i++) {
-            var inp = inputs[i];
-            if (inp.style && inp.style.textTransform === 'uppercase' || inp.style.letterSpacing) {
-              var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-              nativeInputValueSetter.call(inp, code);
-              inp.dispatchEvent(new Event('input', { bubbles: true }));
-              inp.dispatchEvent(new Event('change', { bubbles: true }));
-              break;
-            }
-          }
-        }
-
-        // Try immediately and after a short delay
-        tryFillCode();
-        setTimeout(tryFillCode, 800);
-        setTimeout(tryFillCode, 1500);
-      })();
-      true;
-    `
-    : undefined
 
   if (loading) {
     return (
@@ -111,7 +82,7 @@ export default function DietScreen() {
         )}
       </View>
 
-      {/* WebView */}
+      {/* WebView — diet app reads ?code= from URL and auto-validates */}
       <WebView
         ref={webviewRef}
         source={{ uri: url! }}
@@ -119,7 +90,6 @@ export default function DietScreen() {
         onLoadStart={() => setWebLoading(true)}
         onLoadEnd={() => setWebLoading(false)}
         onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
-        injectedJavaScript={injectedJS}
         javaScriptEnabled
         domStorageEnabled
         allowsInlineMediaPlayback
