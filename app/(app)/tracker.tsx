@@ -20,7 +20,7 @@ type WeightEntry = {
   weight: number
 }
 
-const GOAL_CALORIES = 1400 // Qëllim i paracaktuar — do të personalizohet nga plani i dietës
+const DEFAULT_GOAL = 1400
 
 export default function TrackerScreen() {
   const router = useRouter()
@@ -30,6 +30,7 @@ export default function TrackerScreen() {
   const [showWeightModal, setShowWeightModal] = useState(false)
   const [weightInput, setWeightInput] = useState('')
   const [savingWeight, setSavingWeight] = useState(false)
+  const [goalCalories, setGoalCalories] = useState(DEFAULT_GOAL)
 
   useFocusEffect(useCallback(() => {
     loadData()
@@ -40,6 +41,19 @@ export default function TrackerScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Load target calories from diet plan
+      const { data: dietPlan } = await supabase
+        .from('diet_plans')
+        .select('plan_content')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (dietPlan?.plan_content?.target_calories) {
+        setGoalCalories(dietPlan.plan_content.target_calories)
+      }
 
       // Load last 14 days of scans
       const { data: scanData } = await supabase
@@ -131,7 +145,7 @@ export default function TrackerScreen() {
 
   const todayScan = scans.find(s => s.date === new Date().toISOString().slice(0, 10))
   const todayCalories = todayScan?.calories || 0
-  const caloriePercent = Math.min(100, (todayCalories / GOAL_CALORIES) * 100)
+  const caloriePercent = Math.min(100, (todayCalories / goalCalories) * 100)
   const latestWeight = weights[0]
 
   function formatDate(dateStr: string) {
@@ -163,7 +177,7 @@ export default function TrackerScreen() {
             <View style={s.progressBg}>
               <View style={[s.progressFg, { width: `${caloriePercent}%` as any }]} />
             </View>
-            <Text style={s.progressText}>{todayCalories} / {GOAL_CALORIES} kcal — {Math.round(caloriePercent)}% e qëllimit</Text>
+            <Text style={s.progressText}>{todayCalories} / {goalCalories} kcal — {Math.round(caloriePercent)}% e qëllimit</Text>
             {todayScan && (
               <View style={s.macroRow}>
                 {[['P', todayScan.protein_g], ['K', todayScan.carbs_g], ['Y', todayScan.fat_g]].map(([l, v]) => (
@@ -227,7 +241,7 @@ export default function TrackerScreen() {
               </View>
             ) : (
               scans.slice(0, 10).map(day => {
-                const pct = Math.min(100, (day.calories / GOAL_CALORIES) * 100)
+                const pct = Math.min(100, (day.calories / goalCalories) * 100)
                 const isToday = day.date === new Date().toISOString().slice(0, 10)
                 return (
                   <View key={day.date} style={[s.dayRow, isToday && s.dayRowToday]}>
