@@ -1,7 +1,11 @@
+// app/(app)/(tabs)/index.tsx — Updated with premium check
+// Replace your current index.tsx with this
+
 import { useRouter } from 'expo-router'
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API, Colors, LOGO } from '../../../src/constants'
+import { usePremium } from '../../../src/hooks/usePremium'
 
 const FREE_TOOLS = [
   { id: 'challenge', icon: '📅', name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
@@ -10,43 +14,87 @@ const FREE_TOOLS = [
   { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makrot', url: API.bodyCalc },
 ]
 
+const PREMIUM_TOOLS = [
+  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal' },
+  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim' },
+  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd' },
+  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet' },
+]
+
 export default function HomeScreen() {
   const router = useRouter()
+  const { isPremium, loading } = usePremium()
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <View style={s.topRow}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Image source={{ uri: LOGO }} style={s.logoImg} />
-            <Text style={s.logoText}>SoHealthy</Text>
-          </View>
+      <ScrollView contentContainerStyle={s.scroll}>
+
+        {/* Header */}
+        <View style={s.header}>
+          <Image source={LOGO} style={s.logo} resizeMode="contain" />
+          <Text style={s.brand}>SoHealthy</Text>
         </View>
-        <View style={s.greetBox}>
-          <Text style={s.greetTitle}>Mirë se erdhe 👋</Text>
-          <Text style={s.greetSub}>Fillo udhëtimin tënd të shëndetit</Text>
-        </View>
-      </View>
-      <ScrollView style={s.body} showsVerticalScrollIndicator={false}>
-        <Text style={s.sectionLabel}>Mjetet falas</Text>
-        <View style={s.grid}>
-          {FREE_TOOLS.map(tool => (
-            <TouchableOpacity key={tool.id} style={s.freeTile} onPress={() => router.push({ pathname: '/webview', params: { url: tool.url, title: tool.name } } as any)}>
-              <Text style={s.tileIcon}>{tool.icon}</Text>
-              <Text style={s.tileName}>{tool.name}</Text>
-              <Text style={s.tileSub}>{tool.sub}</Text>
+
+        {/* FREE TOOLS — always visible */}
+        <Text style={s.sectionTitle}>🆓 Mjetet Falas</Text>
+        {FREE_TOOLS.map(tool => (
+          <TouchableOpacity
+            key={tool.id}
+            style={s.card}
+            onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
+          >
+            <Text style={s.cardIcon}>{tool.icon}</Text>
+            <View style={s.cardText}>
+              <Text style={s.cardName}>{tool.name}</Text>
+              <Text style={s.cardSub}>{tool.sub}</Text>
+            </View>
+            <Text style={s.cardArrow}>›</Text>
+          </TouchableOpacity>
+        ))}
+
+        {/* PREMIUM TOOLS */}
+        <Text style={s.sectionTitle}>
+          {isPremium ? '⭐ Premium' : '🔒 Premium — Aktivizo'}
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator color={Colors.pine} style={{ marginVertical: 20 }} />
+        ) : isPremium ? (
+          PREMIUM_TOOLS.map(tool => (
+            <TouchableOpacity
+              key={tool.id}
+              style={[s.card, s.premiumCard]}
+              onPress={() => {}}
+            >
+              <Text style={s.cardIcon}>{tool.icon}</Text>
+              <View style={s.cardText}>
+                <Text style={s.cardName}>{tool.name}</Text>
+                <Text style={s.cardSub}>{tool.sub}</Text>
+              </View>
+              <Text style={s.cardArrow}>›</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={s.sectionLabel}>Premium</Text>
-        <TouchableOpacity style={s.unlockBanner} onPress={() => router.push('/activate' as any)}>
-          <View style={s.unlockIcon}><Text style={{ fontSize: 20 }}>🔓</Text></View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.unlockTitle}>Zhblloko mjetet premium</Text>
-            <Text style={s.unlockSub}>Fut kodin e porosisë tënde</Text>
-          </View>
-          <Text style={{ color: Colors.aloe, fontSize: 20 }}>›</Text>
-        </TouchableOpacity>
-        <View style={{ height: 32 }} />
+          ))
+        ) : (
+          <>
+            {PREMIUM_TOOLS.map(tool => (
+              <View key={tool.id} style={[s.card, s.lockedCard]}>
+                <Text style={s.cardIcon}>{tool.icon}</Text>
+                <View style={s.cardText}>
+                  <Text style={[s.cardName, s.lockedText]}>{tool.name}</Text>
+                  <Text style={s.cardSub}>{tool.sub}</Text>
+                </View>
+                <Text style={s.lockIcon}>🔒</Text>
+              </View>
+            ))}
+            <TouchableOpacity
+              style={s.activateBtn}
+              onPress={() => router.push('/(app)/activate')}
+            >
+              <Text style={s.activateBtnText}>Aktivizo Llogarinë Premium →</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
       </ScrollView>
     </SafeAreaView>
   )
@@ -54,22 +102,28 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
-  header: { backgroundColor: Colors.pine, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  logoImg: { width: 28, height: 28, borderRadius: 8 },
-  logoText: { fontSize: 16, fontWeight: '700', color: Colors.white },
-  greetBox: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 12 },
-  greetTitle: { fontSize: 16, fontWeight: '600', color: Colors.white, marginBottom: 3 },
-  greetSub: { fontSize: 12, color: Colors.aloe },
-  body: { flex: 1, padding: 16 },
-  sectionLabel: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8, marginTop: 16 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  freeTile: { width: '48%', backgroundColor: Colors.white, borderRadius: 12, padding: 12 },
-  tileIcon: { fontSize: 22, marginBottom: 8 },
-  tileName: { fontSize: 12, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
-  tileSub: { fontSize: 11, color: Colors.muted },
-  unlockBanner: { backgroundColor: Colors.pine, borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  unlockIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(113,181,162,0.2)', alignItems: 'center', justifyContent: 'center' },
-  unlockTitle: { fontSize: 14, fontWeight: '600', color: Colors.white, marginBottom: 2 },
-  unlockSub: { fontSize: 12, color: Colors.aloe },
+  scroll: { padding: 20, paddingBottom: 40 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24 },
+  logo: { width: 36, height: 36 },
+  brand: { fontSize: 22, fontWeight: '700', color: Colors.pine },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.pine, letterSpacing: 0.5, marginBottom: 10, marginTop: 8, textTransform: 'uppercase' },
+  card: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    flexDirection: 'row', alignItems: 'center', marginBottom: 10,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+  },
+  premiumCard: { borderLeftWidth: 3, borderLeftColor: Colors.aloe },
+  lockedCard: { opacity: 0.5 },
+  lockedText: { color: '#999' },
+  cardIcon: { fontSize: 24, marginRight: 14 },
+  cardText: { flex: 1 },
+  cardName: { fontSize: 15, fontWeight: '600', color: Colors.pine },
+  cardSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  cardArrow: { fontSize: 20, color: Colors.aloe, fontWeight: '300' },
+  lockIcon: { fontSize: 16 },
+  activateBtn: {
+    backgroundColor: Colors.pine, borderRadius: 12,
+    padding: 16, alignItems: 'center', marginTop: 8,
+  },
+  activateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 15 },
 })
