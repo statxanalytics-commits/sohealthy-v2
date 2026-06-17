@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
@@ -13,9 +13,11 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [accepted, setAccepted] = useState(false)
 
   const handleSignup = async () => {
     if (!name || !username || !email || !password) { setError('Plotëso të gjitha fushat.'); return }
+    if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
     if (password.length < 6) { setError('Fjalëkalimi duhet të ketë 6+ karaktere.'); return }
     setLoading(true); setError('')
     const { data, error: err } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { name, username } } })
@@ -43,8 +45,25 @@ export default function SignupScreen() {
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
           <Text style={s.label}>FJALËKALIMI</Text>
           <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight} secureTextEntry />
+          {/* T&C Checkbox */}
+          <TouchableOpacity style={s.tcRow} onPress={() => setAccepted(!accepted)} activeOpacity={0.7}>
+            <View style={[s.checkbox, accepted && s.checkboxChecked]}>
+              {accepted && <Text style={s.checkboxTick}>✓</Text>}
+            </View>
+            <Text style={s.tcText}>
+              Pranoj{' '}
+              <Text style={s.tcLink} onPress={() => Linking.openURL('https://sohealthy.al/terms')}>
+                Kushtet e Shërbimit
+              </Text>
+              {' '}dhe{' '}
+              <Text style={s.tcLink} onPress={() => Linking.openURL('https://sohealthy.al/privacy')}>
+                Politikën e Privatësisë
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
           {error ? <Text style={s.error}>{error}</Text> : null}
-          <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleSignup} disabled={loading}>
+          <TouchableOpacity style={[s.btn, (loading || !accepted) && { opacity: 0.6 }]} onPress={handleSignup} disabled={loading || !accepted}>
             {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Krijo llogarinë →</Text>}
           </TouchableOpacity>
           <Text style={s.terms}>Duke u regjistruar pranon Kushtet e Përdorimit të SoHealthy</Text>
@@ -72,4 +91,14 @@ const s = StyleSheet.create({
   terms: { fontSize: 11, color: Colors.muted, textAlign: 'center', marginTop: 16, lineHeight: 16 },
   switchRow: { marginTop: 16, alignItems: 'center' },
   switchText: { fontSize: 13, color: Colors.muted },
+  tcRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, gap: 10 },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+    borderColor: Colors.pine, alignItems: 'center', justifyContent: 'center',
+    marginTop: 1, flexShrink: 0,
+  },
+  checkboxChecked: { backgroundColor: Colors.pine, borderColor: Colors.pine },
+  checkboxTick: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  tcText: { flex: 1, fontSize: 12, color: Colors.muted, lineHeight: 18 },
+  tcLink: { color: Colors.pine, fontWeight: '600', textDecorationLine: 'underline' },
 })
