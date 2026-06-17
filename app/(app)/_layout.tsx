@@ -8,6 +8,8 @@ export default function AppLayout() {
       <Stack.Screen name="webview" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="diet" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="scanner" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="tracker" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="progress" options={{ animation: 'slide_from_right' }} />
     </Stack>
   )
 }
