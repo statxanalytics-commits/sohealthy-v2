@@ -20,7 +20,7 @@ type WeightEntry = {
   weight: number
 }
 
-const GOAL_CALORIES = 1500
+const GOAL_CALORIES = 1400 // Qëllim i paracaktuar — do të personalizohet nga plani i dietës
 
 export default function TrackerScreen() {
   const router = useRouter()
@@ -163,7 +163,7 @@ export default function TrackerScreen() {
             <View style={s.progressBg}>
               <View style={[s.progressFg, { width: `${caloriePercent}%` as any }]} />
             </View>
-            <Text style={s.progressText}>{todayCalories} / {GOAL_CALORIES} kcal ({Math.round(caloriePercent)}%)</Text>
+            <Text style={s.progressText}>{todayCalories} / {GOAL_CALORIES} kcal — {Math.round(caloriePercent)}% e qëllimit</Text>
             {todayScan && (
               <View style={s.macroRow}>
                 {[['P', todayScan.protein_g], ['K', todayScan.carbs_g], ['Y', todayScan.fat_g]].map(([l, v]) => (
