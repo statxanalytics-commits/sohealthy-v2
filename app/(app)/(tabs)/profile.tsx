@@ -94,6 +94,12 @@ export default function ProfileScreen() {
         <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
           <Text style={s.logoutText}>Dil nga llogaria</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
+          <Text style={s.deleteText}>Fshi Llogarinë</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   )
