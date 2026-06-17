@@ -12,27 +12,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleForgotPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert('Email i nevojshëm', 'Shkruaj email-in tënd më sipër dhe kliko "Harrova fjalëkalimin".')
-      return
-    }
-    setLoading(true)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: 'sohealthy://reset-password',
-    })
-    setLoading(false)
-    if (err) {
-      Alert.alert('Gabim', err.message)
-    } else {
-      Alert.alert(
-        'Email u dërgua ✅',
-        'Kontrollo email-in tënd për linkun e rivendosjes së fjalëkalimit.',
-        [{ text: 'OK' }]
-      )
-    }
-  }
-
   const handleLogin = async () => {
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
     setLoading(true); setError('')
@@ -41,30 +20,71 @@ export default function LoginScreen() {
     setLoading(false)
   }
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Email i nevojshëm', 'Shkruaj email-in tënd në fushën e sipërme dhe provo përsëri.')
+      return
+    }
+    setLoading(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase())
+    setLoading(false)
+    if (err) {
+      Alert.alert('Gabim', err.message)
+    } else {
+      Alert.alert('Email u dërgua ✅', 'Kontrollo email-in tënd për linkun e rivendosjes së fjalëkalimit.')
+    }
+  }
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={s.back}>← Kthehu</Text>
+        </TouchableOpacity>
         <Text style={s.title}>Hyr në llogari</Text>
         <Text style={s.subtitle}>Mirë se u ktheve</Text>
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled">
           <Text style={s.label}>EMAIL</Text>
-          <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
+          <TextInput
+            style={s.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="adresa@email.com"
+            placeholderTextColor={Colors.mutedLight}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
           <Text style={s.label}>FJALËKALIMI</Text>
-          <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="••••••••" placeholderTextColor={Colors.mutedLight} secureTextEntry />
-          <TouchableOpacity
-            style={{ alignSelf: 'flex-end', marginBottom: 16, padding: 8 }}
-            onPress={handleForgotPassword}
-            hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
-          >
-            <Text style={{ color: Colors.aloe, fontSize: 13, fontWeight: '600' }}>Harrova fjalëkalimin?</Text>
-          </TouchableOpacity>
+          <TextInput
+            style={s.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor={Colors.mutedLight}
+            secureTextEntry
+          />
+
           {error ? <Text style={s.error}>{error}</Text> : null}
-          <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
+
+          <TouchableOpacity
+            style={[s.btn, loading && { opacity: 0.6 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
             {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Hyr →</Text>}
           </TouchableOpacity>
+
+          {/* Forgot password - below login button, easy to tap */}
+          <TouchableOpacity
+            style={s.forgotBtn}
+            onPress={handleForgotPassword}
+            activeOpacity={0.6}
+          >
+            <Text style={s.forgotText}>Harrova fjalëkalimin</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={s.switchRow} onPress={() => router.push('/(auth)/signup')}>
             <Text style={s.switchText}>Nuk ke llogari? <Text style={{ fontWeight: '700', color: Colors.pine }}>Regjistrohu falas</Text></Text>
           </TouchableOpacity>
@@ -84,8 +104,10 @@ const s = StyleSheet.create({
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
   input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
-  btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
+  btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 16 },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
-  switchRow: { marginTop: 20, alignItems: 'center' },
+  forgotBtn: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
+  forgotText: { color: Colors.aloe, fontSize: 14, fontWeight: '600' },
+  switchRow: { marginTop: 8, alignItems: 'center' },
   switchText: { fontSize: 13, color: Colors.muted },
 })
