@@ -31,7 +31,8 @@ const ALL_PRODUCTS = [
 
 type Package = {
   order_code: string
-  product_slug: string | null
+  product_slug: string | null  // primary product
+  product_slugs: string[]      // all products
   package_type: string | null
   activated_at: string
   is_active: boolean
@@ -45,7 +46,7 @@ export default function MyPackagesScreen() {
   const [loading, setLoading] = useState(true)
   const [showProductModal, setShowProductModal] = useState(false)
   const [selectedPackageCode, setSelectedPackageCode] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [showWeightModal, setShowWeightModal] = useState(false)
   const [weightInput, setWeightInput] = useState('')
@@ -95,15 +96,23 @@ export default function MyPackagesScreen() {
       // Build packages list — combine selections + history
       const codeMap: Record<string, Package> = {}
 
-      // Add from selections
+      // Group selections by order_code (multiple products per order)
+      const selByCode: Record<string, string[]> = {}
       for (const sel of selections || []) {
-        if (!codeMap[sel.order_code]) {
-          codeMap[sel.order_code] = {
-            order_code: sel.order_code,
-            product_slug: sel.product_slug,
+        if (!selByCode[sel.order_code]) selByCode[sel.order_code] = []
+        if (sel.product_slug) selByCode[sel.order_code].push(sel.product_slug)
+      }
+      // Add from selections
+      for (const [code, slugs] of Object.entries(selByCode)) {
+        if (!codeMap[code]) {
+          const firstSel = (selections || []).find(s => s.order_code === code)
+          codeMap[code] = {
+            order_code: code,
+            product_slug: slugs[0] || null,
+            product_slugs: slugs,
             package_type: null,
-            activated_at: sel.selected_at,
-            is_active: sel.order_code === activeCode,
+            activated_at: firstSel?.selected_at || new Date().toISOString(),
+            is_active: code === activeCode,
             start_weight: null,
             current_weight: null,
           }
@@ -116,6 +125,7 @@ export default function MyPackagesScreen() {
           codeMap[h.order_code] = {
             order_code: h.order_code,
             product_slug: null,
+            product_slugs: [],
             package_type: h.package_type,
             activated_at: h.activated_at,
             is_active: h.order_code === activeCode,
@@ -138,6 +148,7 @@ export default function MyPackagesScreen() {
         codeMap[activeCode] = {
           order_code: activeCode,
           product_slug: activeSel?.product_slug || null,
+          product_slugs: activeSel?.product_slug ? [activeSel.product_slug] : [],
           package_type: activeCode.startsWith('HY') ? 'ULTRA' : 'QUIK',
           activated_at: new Date().toISOString(),
           is_active: true,
@@ -169,22 +180,32 @@ export default function MyPackagesScreen() {
   }
 
   async function saveProductSelection() {
-    if (!selectedProduct) return
+    if (selectedProducts.length === 0) return
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      await supabase.from('product_selections').upsert({
+      const isActive = selectedPackageCode === activePackageCode
+
+      // Delete existing selections for this order_code first
+      await supabase.from('product_selections')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('order_code', selectedPackageCode)
+
+      // Insert all selected products
+      const rows = selectedProducts.map(slug => ({
         user_id: user.id,
         order_code: selectedPackageCode,
-        product_slug: selectedProduct,
-        is_active: selectedPackageCode === activePackageCode,
+        product_slug: slug,
+        is_active: isActive,
         selected_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,order_code' })
+      }))
+      await supabase.from('product_selections').insert(rows)
 
       setShowProductModal(false)
-      setSelectedProduct(null)
+      setSelectedProducts([])
       await loadPackages()
     } catch (e) {
       Alert.alert('Gabim', 'Nuk u ruajt produkti.')
@@ -430,13 +451,22 @@ export default function MyPackagesScreen() {
             <Text style={s.modalTitle}>Zgjidh Produktin</Text>
             <Text style={s.modalSub}>Cili produkt ishte në paketën tuaj?</Text>
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+              <Text style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+                Mund të zgjidhni më shumë se një produkt
+              </Text>
               {ALL_PRODUCTS.map(p => {
-                const isSelected = selectedProduct === p.slug
+                const isSelected = selectedProducts.includes(p.slug)
                 return (
                   <TouchableOpacity
                     key={p.slug}
                     style={[s.productRow, isSelected && s.productRowSelected]}
-                    onPress={() => setSelectedProduct(p.slug)}
+                    onPress={() => {
+                      setSelectedProducts(prev =>
+                        prev.includes(p.slug)
+                          ? prev.filter(x => x !== p.slug)
+                          : [...prev, p.slug]
+                      )
+                    }}
                   >
                     {PRODUCT_IMAGES[p.slug]
                       ? <Image source={{ uri: PRODUCT_IMAGES[p.slug] }} style={s.productRowImg} resizeMode="contain" />
@@ -457,7 +487,7 @@ export default function MyPackagesScreen() {
             >
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.modalBtnText}>Konfirmo</Text>}
             </TouchableOpacity>
-            <TouchableOpacity style={s.modalCancel} onPress={() => { setShowProductModal(false); setSelectedProduct(null) }}>
+            <TouchableOpacity style={s.modalCancel} onPress={() => { setShowProductModal(false); setSelectedProducts([]) }}>
               <Text style={s.modalCancelText}>Anulo</Text>
             </TouchableOpacity>
           </View>
