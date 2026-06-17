@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Colors, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -22,6 +22,32 @@ const PRODUCT_LIST = [
 export default function SelectProductScreen() {
   const router = useRouter()
   const [selected, setSelected] = useState<string | null>(null)
+  const [currentSelection, setCurrentSelection] = useState<string | null>(null)
+
+  useFocusEffect(useCallback(() => {
+    checkExistingSelection()
+  }, []))
+
+  async function checkExistingSelection() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase
+        .from('profiles').select('order_code').eq('id', user.id).single()
+      if (!profile?.order_code) return
+      const { data: sel } = await supabase
+        .from('product_selections')
+        .select('product_slug')
+        .eq('user_id', user.id)
+        .eq('order_code', profile.order_code)
+        .eq('is_active', true)
+        .single()
+      if (sel?.product_slug) {
+        setCurrentSelection(sel.product_slug)
+        setSelected(sel.product_slug) // pre-select current product
+      }
+    } catch (e) {}
+  }
   const [saving, setSaving] = useState(false)
 
   async function confirmSelection() {
@@ -80,8 +106,9 @@ export default function SelectProductScreen() {
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={s.intro}>
-          Kodi juaj u aktivizua me sukses! 🎉{'\n'}
-          Zgjidhni produktin që keni blerë për të parë udhëzimet e personalizuara.
+          {currentSelection
+            ? `Produkti aktual: ${PRODUCT_LIST.find(p => p.slug === currentSelection)?.name || currentSelection}\nZgjidhni produktin tuaj për të ndryshuar ose konfirmuar.`
+            : 'Zgjidhni produktin që keni blerë për të parë udhëzimet e personalizuara.'}
         </Text>
 
         <View style={s.grid}>
