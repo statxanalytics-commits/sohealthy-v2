@@ -1,6 +1,3 @@
-// app/(app)/(tabs)/index.tsx — Updated with premium check
-// Replace your current index.tsx with this
-
 import { useRouter } from 'expo-router'
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -15,10 +12,10 @@ const FREE_TOOLS = [
 ]
 
 const PREMIUM_TOOLS = [
-  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal' },
-  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim' },
-  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd' },
-  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet' },
+  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal', url: 'https://sohealthy.al' },
+  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim', url: 'https://sohealthy.al' },
+  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', url: 'https://sohealthy.al' },
+  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', url: 'https://sohealthy.al' },
 ]
 
 export default function HomeScreen() {
@@ -26,22 +23,20 @@ export default function HomeScreen() {
   const { isPremium, loading } = usePremium()
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
+    <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={s.scroll}>
 
-        {/* Header */}
         <View style={s.header}>
           <Image source={LOGO} style={s.logo} resizeMode="contain" />
           <Text style={s.brand}>SoHealthy</Text>
         </View>
 
-        {/* FREE TOOLS — always visible */}
         <Text style={s.sectionTitle}>🆓 Mjetet Falas</Text>
         {FREE_TOOLS.map(tool => (
           <TouchableOpacity
             key={tool.id}
             style={s.card}
-            onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
+            onPress={() => router.push({ pathname: "/(app)/webview", params: { url: tool.url, title: tool.name } })}
           >
             <Text style={s.cardIcon}>{tool.icon}</Text>
             <View style={s.cardText}>
@@ -52,9 +47,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
 
-        {/* PREMIUM TOOLS */}
         <Text style={s.sectionTitle}>
-          {isPremium ? '⭐ Premium' : '🔒 Premium — Aktivizo'}
+          {isPremium ? "⭐ Premium" : "🔒 Premium — Aktivizo"}
         </Text>
 
         {loading ? (
@@ -64,7 +58,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={tool.id}
               style={[s.card, s.premiumCard]}
-              onPress={() => {}}
+              onPress={() => router.push({ pathname: "/(app)/webview", params: { url: tool.url, title: tool.name } })}
             >
               <Text style={s.cardIcon}>{tool.icon}</Text>
               <View style={s.cardText}>
@@ -88,7 +82,7 @@ export default function HomeScreen() {
             ))}
             <TouchableOpacity
               style={s.activateBtn}
-              onPress={() => router.push('/(app)/activate')}
+              onPress={() => router.push("/(app)/activate")}
             >
               <Text style={s.activateBtnText}>Aktivizo Llogarinë Premium →</Text>
             </TouchableOpacity>
@@ -103,27 +97,27 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
   scroll: { padding: 20, paddingBottom: 40 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24 },
+  header: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
   logo: { width: 36, height: 36 },
-  brand: { fontSize: 22, fontWeight: '700', color: Colors.pine },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.pine, letterSpacing: 0.5, marginBottom: 10, marginTop: 8, textTransform: 'uppercase' },
+  brand: { fontSize: 22, fontWeight: "700", color: Colors.pine },
+  sectionTitle: { fontSize: 13, fontWeight: "700", color: Colors.pine, letterSpacing: 0.5, marginBottom: 10, marginTop: 8, textTransform: "uppercase" },
   card: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    flexDirection: 'row', alignItems: 'center', marginBottom: 10,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+    backgroundColor: "#fff", borderRadius: 12, padding: 16,
+    flexDirection: "row", alignItems: "center", marginBottom: 10,
+    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   premiumCard: { borderLeftWidth: 3, borderLeftColor: Colors.aloe },
   lockedCard: { opacity: 0.5 },
-  lockedText: { color: '#999' },
+  lockedText: { color: "#999" },
   cardIcon: { fontSize: 24, marginRight: 14 },
   cardText: { flex: 1 },
-  cardName: { fontSize: 15, fontWeight: '600', color: Colors.pine },
-  cardSub: { fontSize: 12, color: '#888', marginTop: 2 },
-  cardArrow: { fontSize: 20, color: Colors.aloe, fontWeight: '300' },
+  cardName: { fontSize: 15, fontWeight: "600", color: Colors.pine },
+  cardSub: { fontSize: 12, color: "#888", marginTop: 2 },
+  cardArrow: { fontSize: 20, color: Colors.aloe, fontWeight: "300" },
   lockIcon: { fontSize: 16 },
   activateBtn: {
     backgroundColor: Colors.pine, borderRadius: 12,
-    padding: 16, alignItems: 'center', marginTop: 8,
+    padding: 16, alignItems: "center", marginTop: 8,
   },
-  activateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 15 },
+  activateBtnText: { color: Colors.alabaster, fontWeight: "700", fontSize: 15 },
 })
