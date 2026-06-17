@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { Colors, PRODUCTS } from '../../src/constants'
+import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 const PRODUCT_LIST: Record<string, { name: string; emoji: string; desc: string }> = {
@@ -117,7 +117,9 @@ export default function ProductDetailScreen() {
 
         {/* Hero */}
         <View style={s.hero}>
-          <Text style={s.heroEmoji}>{product.emoji}</Text>
+          {PRODUCT_IMAGES[slug]
+          ? <Image source={{ uri: PRODUCT_IMAGES[slug] }} style={s.heroImg} resizeMode="contain" />
+          : <Text style={s.heroEmoji}>{product.emoji}</Text>}
           <Text style={s.heroName}>{product.name}</Text>
           <Text style={s.heroDesc}>{product.desc}</Text>
           {purchaseCount > 1 && (
@@ -203,6 +205,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 24, alignItems: 'center',
   },
   heroEmoji: { fontSize: 64, marginBottom: 12 },
+  heroImg: { width: 160, height: 160, marginBottom: 8 },
   heroName: { fontSize: 26, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
   heroDesc: { fontSize: 14, color: Colors.aloe, textAlign: 'center', lineHeight: 20 },
   loyaltyBadge: {
