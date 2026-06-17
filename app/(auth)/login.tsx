@@ -54,8 +54,12 @@ export default function LoginScreen() {
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
           <Text style={s.label}>FJALËKALIMI</Text>
           <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="••••••••" placeholderTextColor={Colors.mutedLight} secureTextEntry />
-          <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }} onPress={handleForgotPassword}>
-            <Text style={{ color: Colors.aloe, fontSize: 12, fontWeight: '500' }}>Harrova fjalëkalimin</Text>
+          <TouchableOpacity
+            style={{ alignSelf: 'flex-end', marginBottom: 16, padding: 8 }}
+            onPress={handleForgotPassword}
+            hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
+          >
+            <Text style={{ color: Colors.aloe, fontSize: 13, fontWeight: '600' }}>Harrova fjalëkalimin?</Text>
           </TouchableOpacity>
           {error ? <Text style={s.error}>{error}</Text> : null}
           <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
