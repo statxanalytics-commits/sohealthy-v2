@@ -33,8 +33,10 @@ export default function ActivateScreen() {
         .eq('id', user.id)
         .single();
 
-      if (profile?.is_premium) {
-        Alert.alert('Llogaria Aktive ✅', 'Llogaria juaj është tashmë premium!');
+      // Allow adding new code even if already premium (new package)
+      // But prevent reusing the same code
+      if (profile?.is_premium && profile?.order_code === trimmedCode) {
+        Alert.alert('Kod i Njëjtë', 'Ky kod është i njëjtë me atë aktual. Futni kodin e paketës suaj të re.');
         setLoading(false); return;
       }
 
