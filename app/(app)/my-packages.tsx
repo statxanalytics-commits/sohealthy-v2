@@ -317,7 +317,7 @@ export default function MyPackagesScreen() {
                     style={s.changeBtn}
                     onPress={() => {
                       setSelectedPackageCode(activePackage.order_code)
-                      setSelectedProduct(activePackage.product_slug)
+                      setSelectedProducts(activePackage.product_slug)
                       setShowProductModal(true)
                     }}
                   >
@@ -336,7 +336,7 @@ export default function MyPackagesScreen() {
                 style={s.selectBtn}
                 onPress={() => {
                   setSelectedPackageCode(activePackage.order_code)
-                  setSelectedProduct(null)
+                  setSelectedProducts([])
                   setShowProductModal(true)
                 }}
               >
@@ -417,7 +417,7 @@ export default function MyPackagesScreen() {
                     style={s.historySelectBtn}
                     onPress={() => {
                       setSelectedPackageCode(pkg.order_code)
-                      setSelectedProduct(null)
+                      setSelectedProducts([])
                       setShowProductModal(true)
                     }}
                   >
