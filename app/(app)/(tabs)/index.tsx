@@ -1,155 +1,221 @@
+import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { API, Colors, LOGO } from '../../../src/constants'
+import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
 import { usePremium } from '../../../src/hooks/usePremium'
+import { supabase } from '../../../src/lib/supabase'
+import { useFocusEffect } from 'expo-router'
 
 const FREE_TOOLS = [
   { id: 'challenge', icon: '📅', name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
-  { id: 'calculator', icon: '⚖️', name: 'Gjej Sa Kg Humb Me Paketat', sub: 'Llogarit humbjen e peshës', url: API.calculator },
-  { id: 'quiz', icon: '✨', name: 'Gjej Paketën Perfekte Për Ty', sub: 'Gjej produktin ideal', url: API.quiz },
-  { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makrot', url: API.bodyCalc },
+  { id: 'calculator', icon: '⚖️', name: 'Llogarit Humbjen', sub: 'Kalkulator peshe', url: API.calculator },
+  { id: 'quiz', icon: '✨', name: 'Gjej Paketën', sub: 'Quiz produktesh', url: API.quiz },
+  { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
 ]
 
 type PremiumTool = {
-  id: string
-  icon: string
-  name: string
-  sub: string
-  route: string
-  params?: Record<string, string>
+  id: string; icon: string; name: string; sub: string
+  route: string; params?: Record<string, string>
 }
 
 const PREMIUM_TOOLS: PremiumTool[] = [
-  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal', route: '/(app)/diet' },
-  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim', route: '/(app)/scanner' },
-  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', route: '/(app)/tracker' },
+  { id: 'scanner', icon: '📷', name: 'Skaner', sub: 'Skano ushqimet', route: '/(app)/scanner' },
+  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo kalorite', route: '/(app)/tracker' },
   { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
 ]
 
 export default function HomeScreen() {
   const router = useRouter()
   const { isPremium, loading } = usePremium()
+  const [userName, setUserName] = useState('')
+  const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
+
+  useFocusEffect(useCallback(() => {
+    loadUserData()
+  }, []))
+
+  async function loadUserData() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase
+        .from('profiles').select('name, order_code').eq('id', user.id).single()
+      if (profile?.name) setUserName(profile.name.split(' ')[0])
+      if (profile?.order_code) {
+        const { data: sel } = await supabase
+          .from('product_selections').select('product_slug')
+          .eq('user_id', user.id).eq('order_code', profile.order_code)
+          .eq('is_active', true).order('selected_at', { ascending: true }).limit(1).single()
+        if (sel?.product_slug) setActiveProduct({ slug: sel.product_slug, code: profile.order_code })
+      }
+    } catch {}
+  }
 
   function handlePremiumTool(tool: PremiumTool) {
-    if (tool.params) {
-      router.push({ pathname: tool.route as any, params: tool.params })
-    } else {
-      router.push(tool.route as any)
-    }
+    if (tool.params) router.push({ pathname: tool.route as any, params: tool.params })
+    else router.push(tool.route as any)
+  }
+
+  const greeting = () => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Miremengjes'
+    if (h < 18) return 'Miredita'
+    return 'Mirembrema'
   }
 
   return (
-    <SafeAreaView style={s.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={s.scroll}>
+    <SafeAreaView style={s.safe} edges={['top']}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
+        {/* Header */}
         <View style={s.header}>
-          <Image source={LOGO} style={s.logo} resizeMode="contain" />
-          <Text style={s.brand}>SoHealthy</Text>
+          <View>
+            <Text style={s.brandLabel}>SOHEALTHY</Text>
+            <Text style={s.greeting}>{greeting()}{userName ? `, ${userName}` : ''}</Text>
+          </View>
+          <View style={s.avatar}>
+            <Text style={s.avatarText}>{userName ? userName[0].toUpperCase() : 'S'}</Text>
+          </View>
         </View>
 
-        <Text style={s.sectionTitle}>🆓 Mjetet Falas</Text>
-        {FREE_TOOLS.map(tool => (
-          <TouchableOpacity
-            key={tool.id}
-            style={s.card}
-            onPress={() => router.push({ pathname: "/(app)/webview", params: { url: tool.url, title: tool.name } })}
-          >
-            <Text style={s.cardIcon}>{tool.icon}</Text>
-            <View style={s.cardText}>
-              <Text style={s.cardName}>{tool.name}</Text>
-              <Text style={s.cardSub}>{tool.sub}</Text>
+        {/* Active package banner */}
+        {isPremium && activeProduct && (
+          <TouchableOpacity style={s.packageBanner} onPress={() => router.push('/(app)/(tabs)/products' as any)}>
+            <View style={s.packageBannerLeft}>
+              <Text style={s.packageBannerLabel}>PAKETA AKTIVE</Text>
+              <Text style={s.packageBannerCode}>{activeProduct.code}</Text>
             </View>
-            <Text style={s.cardArrow}>›</Text>
+            {PRODUCT_IMAGES[activeProduct.slug]
+              ? <Image source={{ uri: PRODUCT_IMAGES[activeProduct.slug] }} style={s.packageBannerImg} resizeMode="contain" />
+              : <Text style={{ fontSize: 40 }}>📦</Text>
+            }
           </TouchableOpacity>
-        ))}
-
-        <Text style={s.sectionTitle}>
-          {isPremium ? "⭐ Premium" : "🔒 Premium — Aktivizo"}
-        </Text>
-
-        {loading ? (
-          <ActivityIndicator color={Colors.pine} style={{ marginVertical: 20 }} />
-        ) : isPremium ? (
-          <>
-            {/* My Packages card — always visible for premium users */}
-            <TouchableOpacity
-              style={[s.card, s.myProductCard]}
-              onPress={() => router.push('/(app)/my-packages')}
-            >
-              <Text style={s.cardIcon}>📦</Text>
-              <View style={s.cardText}>
-                <Text style={[s.cardName, { color: Colors.pine }]}>Paketat e Mia</Text>
-                <Text style={s.cardSub}>Historia e blerjeve & produkti aktiv</Text>
-              </View>
-              <Text style={s.cardArrow}>›</Text>
-            </TouchableOpacity>
-            {PREMIUM_TOOLS.map(tool => (
-              <TouchableOpacity
-                key={tool.id}
-                style={[s.card, s.premiumCard]}
-                onPress={() => handlePremiumTool(tool)}
-              >
-                <Text style={s.cardIcon}>{tool.icon}</Text>
-                <View style={s.cardText}>
-                  <Text style={s.cardName}>{tool.name}</Text>
-                  <Text style={s.cardSub}>{tool.sub}</Text>
-                </View>
-                <Text style={s.cardArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </>
-        ) : (
-          <>
-            {PREMIUM_TOOLS.map(tool => (
-              <View key={tool.id} style={[s.card, s.lockedCard]}>
-                <Text style={s.cardIcon}>{tool.icon}</Text>
-                <View style={s.cardText}>
-                  <Text style={[s.cardName, s.lockedText]}>{tool.name}</Text>
-                  <Text style={s.cardSub}>{tool.sub}</Text>
-                </View>
-                <Text style={s.lockIcon}>🔒</Text>
-              </View>
-            ))}
-            <TouchableOpacity
-              style={s.activateBtn}
-              onPress={() => router.push("/(app)/activate")}
-            >
-              <Text style={s.activateBtnText}>Aktivizo Llogarinë Premium →</Text>
-            </TouchableOpacity>
-          </>
         )}
 
+        {/* Diet Plan — featured */}
+        {isPremium && (
+          <TouchableOpacity style={s.dietCard} onPress={() => router.push('/(app)/diet')}>
+            <View>
+              <Text style={s.dietLabel}>PREMIUM</Text>
+              <Text style={s.dietTitle}>Plani i Dietes</Text>
+              <Text style={s.dietSub}>Plan 14-ditor personal</Text>
+            </View>
+            <View style={s.dietArrow}>
+              <Text style={s.dietArrowText}>Hap →</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Free tools */}
+        <Text style={s.sectionLabel}>MJETET FALAS</Text>
+        <View style={s.freeGrid}>
+          {FREE_TOOLS.map(tool => (
+            <TouchableOpacity
+              key={tool.id}
+              style={s.freeCard}
+              onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
+            >
+              <Text style={s.freeIcon}>{tool.icon}</Text>
+              <Text style={s.freeName}>{tool.name}</Text>
+              <Text style={s.freeSub}>{tool.sub}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Premium tools */}
+        {isPremium ? (
+          <>
+            <Text style={s.sectionLabel}>PREMIUM</Text>
+            <View style={s.premiumRow}>
+              {PREMIUM_TOOLS.map(tool => (
+                <TouchableOpacity
+                  key={tool.id}
+                  style={s.premiumSmall}
+                  onPress={() => handlePremiumTool(tool)}
+                >
+                  <Text style={s.premiumSmallIcon}>{tool.icon}</Text>
+                  <Text style={s.premiumSmallName}>{tool.name}</Text>
+                  <Text style={s.premiumSmallSub}>{tool.sub}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        ) : !loading ? (
+          <>
+            <Text style={s.sectionLabel}>PREMIUM</Text>
+            <TouchableOpacity style={s.activateCard} onPress={() => router.push('/(app)/activate')}>
+              <Text style={s.activateTitle}>Aktivizo Paketën →</Text>
+              <Text style={s.activateSub}>Fut kodin e porosisë për akses premium</Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
+
+        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.alabaster },
-  scroll: { padding: 20, paddingBottom: 40 },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
-  logo: { width: 36, height: 36 },
-  brand: { fontSize: 22, fontWeight: "700", color: Colors.pine },
-  sectionTitle: { fontSize: 13, fontWeight: "700", color: Colors.pine, letterSpacing: 0.5, marginBottom: 10, marginTop: 8, textTransform: "uppercase" },
-  card: {
-    backgroundColor: "#fff", borderRadius: 12, padding: 16,
-    flexDirection: "row", alignItems: "center", marginBottom: 10,
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+  safe: { flex: 1, backgroundColor: '#ECEFE8' },
+  scroll: { paddingBottom: 20 },
+  header: {
+    backgroundColor: Colors.pine, paddingHorizontal: 20,
+    paddingTop: 12, paddingBottom: 20,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  premiumCard: { borderLeftWidth: 3, borderLeftColor: Colors.aloe },
-  myProductCard: { borderLeftWidth: 3, borderLeftColor: Colors.pine, backgroundColor: Colors.pine + '08' },
-  lockedCard: { opacity: 0.5 },
-  lockedText: { color: "#999" },
-  cardIcon: { fontSize: 24, marginRight: 14 },
-  cardText: { flex: 1 },
-  cardName: { fontSize: 15, fontWeight: "600", color: Colors.pine },
-  cardSub: { fontSize: 12, color: "#888", marginTop: 2 },
-  cardArrow: { fontSize: 20, color: Colors.aloe, fontWeight: "300" },
-  lockIcon: { fontSize: 16 },
-  activateBtn: {
-    backgroundColor: Colors.pine, borderRadius: 12,
-    padding: 16, alignItems: "center", marginTop: 8,
+  brandLabel: { fontSize: 11, letterSpacing: 2.5, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
+  greeting: { fontSize: 20, fontWeight: '600', color: Colors.alabaster },
+  avatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.aloe,
+    alignItems: 'center', justifyContent: 'center',
   },
-  activateBtnText: { color: Colors.alabaster, fontWeight: "700", fontSize: 15 },
+  avatarText: { fontSize: 16, fontWeight: '600', color: Colors.pine },
+  packageBanner: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 12,
+    borderRadius: 16, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  packageBannerLeft: {},
+  packageBannerLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
+  packageBannerCode: { fontSize: 17, color: Colors.alabaster, fontWeight: '600', letterSpacing: 0.5 },
+  packageBannerImg: { width: 56, height: 56 },
+  dietCard: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10,
+    borderRadius: 16, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  dietLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
+  dietTitle: { fontSize: 17, color: Colors.alabaster, fontWeight: '600' },
+  dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
+  dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
+  sectionLabel: {
+    fontSize: 10, letterSpacing: 2, color: '#6B7F72', fontWeight: '600',
+    marginHorizontal: 16, marginTop: 20, marginBottom: 10,
+  },
+  freeGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 8 },
+  freeCard: {
+    width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 14,
+    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+  },
+  freeIcon: { fontSize: 22, marginBottom: 8 },
+  freeName: { fontSize: 13, fontWeight: '600', color: Colors.pine, lineHeight: 17, marginBottom: 2 },
+  freeSub: { fontSize: 11, color: '#6B7F72' },
+  premiumRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8 },
+  premiumSmall: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+  },
+  premiumSmallIcon: { fontSize: 20, marginBottom: 6 },
+  premiumSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine },
+  premiumSmallSub: { fontSize: 10, color: '#6B7F72', marginTop: 2, textAlign: 'center' },
+  activateCard: {
+    backgroundColor: Colors.pine, marginHorizontal: 16,
+    borderRadius: 14, padding: 16,
+  },
+  activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
+  activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
 })
