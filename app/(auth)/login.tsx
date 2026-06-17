@@ -15,24 +15,39 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
     setLoading(true); setError('')
-    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(), password
+    })
     if (err) setError(err.message)
     setLoading(false)
   }
 
-  const handleForgotPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert('Email i nevojshëm', 'Shkruaj email-in tënd në fushën e sipërme dhe provo përsëri.')
-      return
-    }
-    setLoading(true)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase())
-    setLoading(false)
-    if (err) {
-      Alert.alert('Gabim', err.message)
-    } else {
-      Alert.alert('Email u dërgua ✅', 'Kontrollo email-in tënd për linkun e rivendosjes së fjalëkalimit.')
-    }
+  const handleForgotPassword = () => {
+    // Use Alert.prompt — works perfectly on iOS, no tap issues
+    Alert.prompt(
+      'Rivendos Fjalëkalimin',
+      'Shkruaj email-in tënd dhe do të dërgojmë udhëzimet:',
+      async (inputEmail) => {
+        if (!inputEmail?.trim()) return
+        setLoading(true)
+        const { error: err } = await supabase.auth.resetPasswordForEmail(
+          inputEmail.trim().toLowerCase()
+        )
+        setLoading(false)
+        if (err) {
+          Alert.alert('Gabim', err.message)
+        } else {
+          Alert.alert(
+            'Email u dërgua ✅',
+            'Kontrollo email-in tënd për linkun e rivendosjes së fjalëkalimit.',
+            [{ text: 'OK' }]
+          )
+        }
+      },
+      'plain-text',
+      email, // pre-fill with whatever they typed
+      'email-address'
+    )
   }
 
   return (
@@ -65,28 +80,25 @@ export default function LoginScreen() {
             placeholderTextColor={Colors.mutedLight}
             secureTextEntry
           />
-
           {error ? <Text style={s.error}>{error}</Text> : null}
-
           <TouchableOpacity
             style={[s.btn, loading && { opacity: 0.6 }]}
             onPress={handleLogin}
             disabled={loading}
           >
-            {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Hyr →</Text>}
+            {loading
+              ? <ActivityIndicator color={Colors.white} />
+              : <Text style={s.btnText}>Hyr →</Text>
+            }
           </TouchableOpacity>
-
-          {/* Forgot password - below login button, easy to tap */}
-          <TouchableOpacity
-            style={s.forgotBtn}
-            onPress={handleForgotPassword}
-            activeOpacity={0.6}
-          >
-            <Text style={s.forgotText}>Harrova fjalëkalimin</Text>
+          <TouchableOpacity style={s.forgotBtn} onPress={handleForgotPassword}>
+            <Text style={s.forgotText}>Harrova fjalëkalimin?</Text>
           </TouchableOpacity>
-
           <TouchableOpacity style={s.switchRow} onPress={() => router.push('/(auth)/signup')}>
-            <Text style={s.switchText}>Nuk ke llogari? <Text style={{ fontWeight: '700', color: Colors.pine }}>Regjistrohu falas</Text></Text>
+            <Text style={s.switchText}>
+              Nuk ke llogari?{' '}
+              <Text style={{ fontWeight: '700', color: Colors.pine }}>Regjistrohu falas</Text>
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -100,14 +112,26 @@ const s = StyleSheet.create({
   back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
   title: { fontSize: 26, fontWeight: '700', color: Colors.white, marginBottom: 4 },
   subtitle: { fontSize: 13, color: Colors.aloe },
-  form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
+  form: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, flexGrow: 1,
+  },
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
-  input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
+  input: {
+    backgroundColor: Colors.white, borderWidth: 1.5,
+    borderColor: Colors.border, borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 13,
+    fontSize: 15, color: Colors.pine, marginBottom: 16,
+  },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
-  btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 16 },
+  btn: {
+    backgroundColor: Colors.pine, borderRadius: 12,
+    paddingVertical: 15, alignItems: 'center', marginBottom: 4,
+  },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
-  forgotBtn: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
+  forgotBtn: { alignItems: 'center', paddingVertical: 14 },
   forgotText: { color: Colors.aloe, fontSize: 14, fontWeight: '600' },
-  switchRow: { marginTop: 8, alignItems: 'center' },
+  switchRow: { marginTop: 4, alignItems: 'center', paddingVertical: 8 },
   switchText: { fontSize: 13, color: Colors.muted },
 })
