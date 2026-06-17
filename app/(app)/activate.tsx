@@ -76,6 +76,20 @@ export default function ActivateScreen() {
           plan_start: new Date().toISOString(),
         });
 
+      // New code = new package: deactivate old diet plan and product selections
+      // so user can generate fresh diet and select new products
+      await supabase
+        .from('diet_plans')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      await supabase
+        .from('product_selections')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
       // Save to purchase_history for loyalty/discount tracking
       const { data: orderData } = await supabase
         .from('orders')
