@@ -105,6 +105,14 @@ export default function ProductDetailScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
+      {/* Header with back button */}
+      <View style={s.header}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+          <Text style={s.backText}>‹ Kthehu</Text>
+        </TouchableOpacity>
+        <Text style={s.headerTitle}>Produkti Im</Text>
+      </View>
+
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Hero */}
@@ -182,6 +190,14 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   errorText: { fontSize: 16, color: '#888', marginBottom: 16 },
   scroll: { paddingBottom: 40 },
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: Colors.pine, gap: 12,
+  },
+  backBtn: { padding: 4 },
+  backText: { color: Colors.alabaster, fontSize: 17, fontWeight: '600' },
+  headerTitle: { color: Colors.alabaster, fontSize: 18, fontWeight: '700', flex: 1 },
   hero: {
     backgroundColor: Colors.pine, paddingTop: 24, paddingBottom: 32,
     paddingHorizontal: 24, alignItems: 'center',
