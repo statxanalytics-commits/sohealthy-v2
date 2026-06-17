@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Colors, PRODUCTS } from '../../src/constants'
+import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 // All selectable products with display info
@@ -122,7 +122,9 @@ export default function SelectProductScreen() {
                 activeOpacity={0.7}
               >
                 {isSelected && <View style={s.checkBadge}><Text style={s.checkText}>✓</Text></View>}
-                <Text style={s.productEmoji}>{p.emoji}</Text>
+                {PRODUCT_IMAGES[p.slug]
+                  ? <Image source={{ uri: PRODUCT_IMAGES[p.slug] }} style={s.productImg} resizeMode="contain" />
+                  : <Text style={s.productEmoji}>{p.emoji}</Text>}
                 <Text style={[s.productName, isSelected && s.productNameSelected]}>{p.name}</Text>
                 <Text style={s.productDesc}>{p.desc}</Text>
               </TouchableOpacity>
@@ -185,6 +187,7 @@ const s = StyleSheet.create({
   },
   checkText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   productEmoji: { fontSize: 32, marginBottom: 10 },
+  productImg: { width: 80, height: 80, marginBottom: 8 },
   productName: { fontSize: 13, fontWeight: '700', color: Colors.pine, textAlign: 'center', marginBottom: 4 },
   productNameSelected: { color: Colors.pine },
   productDesc: { fontSize: 11, color: '#888', textAlign: 'center', lineHeight: 16 },
