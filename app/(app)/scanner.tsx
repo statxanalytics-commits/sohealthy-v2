@@ -247,12 +247,7 @@ export default function ScannerScreen() {
           <View style={s.disclosureCard}>
             <Text style={s.disclosureTitle}>🤖 Analiza me AI</Text>
             <Text style={s.disclosureText}>
-              Fotografitë e ushqimeve dërgohen te shërbimi{' '}
-              <Text style={{ fontWeight: '700' }}>Anthropic Claude AI</Text>{' '}
-              për analizë. Imazhet nuk ruhen nga Anthropic.{'
-
-'}
-              Të dhënat tuaja trajtohen sipas Politikës tonë të Privatësisë.
+              {'Fotografite e ushqimeve dergohen te sherbimiAnthropic Claude AI per analize. Imazhet nuk ruhen.\n\nTe dhenat tuaja trajtohen sipas Politikes tone te Privatesise.'}
             </Text>
             <TouchableOpacity
               style={s.disclosureBtn}
