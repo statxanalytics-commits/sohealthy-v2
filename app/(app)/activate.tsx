@@ -107,9 +107,9 @@ export default function ActivateScreen() {
           text: 'Vazhdo',
           onPress: () => {
             if (existingSelection?.product_slug) {
-              router.replace({ pathname: '/(app)/product-detail', params: { slug: existingSelection.product_slug } });
+              router.replace('/(app)/my-packages');
             } else {
-              router.replace('/(app)/select-product');
+              router.replace('/(app)/my-packages');
             }
           }
         }]
