@@ -126,6 +126,11 @@ export default function ProductsScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
+        <View style={s.headerTop}>
+          <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+            <Text style={s.backText}>‹ Kthehu</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={s.headerSub}>SOHEALTHY</Text>
         <Text style={s.headerTitle}>Paketat e Mia</Text>
       </View>
@@ -324,6 +329,9 @@ const s = StyleSheet.create({
     backgroundColor: Colors.pine, paddingHorizontal: 20,
     paddingTop: 8, paddingBottom: 20,
   },
+  headerTop: { flexDirection: 'row', marginBottom: 8 },
+  backBtn: { padding: 4 },
+  backText: { color: Colors.aloe, fontSize: 16, fontWeight: '600' },
   headerSub: { color: Colors.aloe, fontSize: 11, letterSpacing: 3, fontWeight: '700', marginBottom: 4 },
   headerTitle: { color: Colors.alabaster, fontSize: 24, fontWeight: '700' },
   scroll: { padding: 16 },
