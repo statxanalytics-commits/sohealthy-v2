@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Alert, useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../../src/constants'
@@ -16,6 +16,35 @@ export default function ProfileScreen() {
     if (!user) return
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     setProfile(data)
+  }
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Fshi Llogarinë',
+      'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
+      [
+        { text: 'Anulo', style: 'cancel' },
+        {
+          text: 'Fshi Llogarinë',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser()
+              if (!user) return
+              await supabase.from('scan_history').delete().eq('user_id', user.id)
+              await supabase.from('tracker_entries').delete().eq('user_id', user.id)
+              await supabase.from('product_selections').delete().eq('user_id', user.id)
+              await supabase.from('diet_plans').delete().eq('user_id', user.id)
+              await supabase.from('purchase_history').delete().eq('user_id', user.id)
+              await supabase.from('profiles').delete().eq('id', user.id)
+              await supabase.auth.signOut()
+            } catch (e) {
+              Alert.alert('Gabim', 'Nuk u fshi llogaria. Kontaktoni info@sohealthy.al')
+            }
+          }
+        }
+      ]
+    )
   }
 
   const handleLogout = async () => {
@@ -88,4 +117,6 @@ const s = StyleSheet.create({
   infoValue: { fontSize: 13, fontWeight: '500', color: Colors.pine },
   logoutBtn: { backgroundColor: Colors.goji, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
+  deleteBtn: { marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: '#cc000040' },
+  deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
 })
