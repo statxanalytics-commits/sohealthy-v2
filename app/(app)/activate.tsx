@@ -74,10 +74,43 @@ export default function ActivateScreen() {
           plan_start: new Date().toISOString(),
         });
 
+      // Save to purchase_history for loyalty/discount tracking
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('sheet_source')
+        .eq('order_code', trimmedCode)
+        .single();
+
+      await supabase.from('purchase_history').upsert({
+        user_id: user.id,
+        order_code: trimmedCode,
+        package_type: orderData?.sheet_source || 'unknown',
+        activated_at: new Date().toISOString(),
+        source: orderData?.sheet_source || 'unknown',
+      }, { onConflict: 'order_code' });
+
+      // Check if already selected a product for this code
+      const { data: existingSelection } = await supabase
+        .from('product_selections')
+        .select('product_slug')
+        .eq('user_id', user.id)
+        .eq('order_code', trimmedCode)
+        .eq('is_active', true)
+        .single();
+
       Alert.alert(
         'Urime! 🎉',
         'Llogaria juaj premium u aktivizua me sukses!',
-        [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/(tabs)') }]
+        [{
+          text: 'Vazhdo',
+          onPress: () => {
+            if (existingSelection?.product_slug) {
+              router.replace({ pathname: '/(app)/product-detail', params: { slug: existingSelection.product_slug } });
+            } else {
+              router.replace('/(app)/select-product');
+            }
+          }
+        }]
       );
 
     } catch (err) {
