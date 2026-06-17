@@ -71,20 +71,34 @@ export default function HomeScreen() {
         {loading ? (
           <ActivityIndicator color={Colors.pine} style={{ marginVertical: 20 }} />
         ) : isPremium ? (
-          PREMIUM_TOOLS.map(tool => (
+          <>
+            {/* My Product card — always visible for premium users */}
             <TouchableOpacity
-              key={tool.id}
-              style={[s.card, s.premiumCard]}
-              onPress={() => handlePremiumTool(tool)}
+              style={[s.card, s.myProductCard]}
+              onPress={() => router.push('/(app)/select-product')}
             >
-              <Text style={s.cardIcon}>{tool.icon}</Text>
+              <Text style={s.cardIcon}>📦</Text>
               <View style={s.cardText}>
-                <Text style={s.cardName}>{tool.name}</Text>
-                <Text style={s.cardSub}>{tool.sub}</Text>
+                <Text style={[s.cardName, { color: Colors.pine }]}>Produkti Im</Text>
+                <Text style={s.cardSub}>Shiko udhëzimet e produktit tënd</Text>
               </View>
               <Text style={s.cardArrow}>›</Text>
             </TouchableOpacity>
-          ))
+            {PREMIUM_TOOLS.map(tool => (
+              <TouchableOpacity
+                key={tool.id}
+                style={[s.card, s.premiumCard]}
+                onPress={() => handlePremiumTool(tool)}
+              >
+                <Text style={s.cardIcon}>{tool.icon}</Text>
+                <View style={s.cardText}>
+                  <Text style={s.cardName}>{tool.name}</Text>
+                  <Text style={s.cardSub}>{tool.sub}</Text>
+                </View>
+                <Text style={s.cardArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </>
         ) : (
           <>
             {PREMIUM_TOOLS.map(tool => (
@@ -124,6 +138,7 @@ const s = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   premiumCard: { borderLeftWidth: 3, borderLeftColor: Colors.aloe },
+  myProductCard: { borderLeftWidth: 3, borderLeftColor: Colors.pine, backgroundColor: Colors.pine + '08' },
   lockedCard: { opacity: 0.5 },
   lockedText: { color: "#999" },
   cardIcon: { fontSize: 24, marginRight: 14 },
