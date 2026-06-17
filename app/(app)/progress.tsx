@@ -131,11 +131,11 @@ export default function ProgressScreen() {
               <Text style={s.statNum}>{avgCalories || '—'}</Text>
               <Text style={s.statLabel}>Kcal mesatare/ditë</Text>
             </View>
-            <View style={[s.statCard, { borderColor: weightChange !== null && weightChange < 0 ? Colors.aloe : Colors.goji }]}>
+            <View style={[s.statCard, { borderColor: weightChange !== null ? (weightChange < 0 ? Colors.aloe : Colors.goji) : '#f0f0f0' }]}>
               <Text style={[s.statNum, { color: weightChange !== null && weightChange < 0 ? Colors.aloe : weightChange !== null && weightChange > 0 ? Colors.goji : Colors.pine }]}>
                 {weightChange !== null ? `${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)}kg` : '—'}
               </Text>
-              <Text style={s.statLabel}>Ndryshim pesë</Text>
+              <Text style={s.statLabel}>Ndryshimi i Peshës</Text>
             </View>
           </View>
 
