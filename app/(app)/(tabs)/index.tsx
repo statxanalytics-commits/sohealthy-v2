@@ -23,8 +23,8 @@ type PremiumTool = {
 const PREMIUM_TOOLS: PremiumTool[] = [
   { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal', route: '/(app)/diet' },
   { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim', route: '/(app)/scanner' },
-  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', route: '/(app)/webview', params: { url: 'https://sohealthy.al', title: 'Tracker' } },
-  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/webview', params: { url: 'https://sohealthy.al', title: 'Progresi' } },
+  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', route: '/(app)/tracker' },
+  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
 ]
 
 export default function HomeScreen() {
