@@ -159,11 +159,7 @@ export default function ProductsScreen() {
                   <Text style={s.codeBadgeLabel}>KOD AKTIV</Text>
                   <Text style={s.codeBadgeVal}>{activePackage.order_code}</Text>
                 </View>
-                {activePackage.package_type && (
-                  <View style={s.typeBadge}>
-                    <Text style={s.typeBadgeText}>{activePackage.package_type}</Text>
-                  </View>
-                )}
+                
                 {purchaseCount > 1 && (
                   <View style={s.loyaltyBadge}>
                     <Text style={s.loyaltyText}>⭐ {purchaseCount} paketa</Text>
