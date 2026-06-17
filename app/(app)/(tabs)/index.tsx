@@ -11,16 +11,33 @@ const FREE_TOOLS = [
   { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makrot', url: API.bodyCalc },
 ]
 
-const PREMIUM_TOOLS = [
-  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal', url: 'https://sohealthy.al' },
-  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim', url: 'https://sohealthy.al' },
-  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', url: 'https://sohealthy.al' },
-  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', url: 'https://sohealthy.al' },
+type PremiumTool = {
+  id: string
+  icon: string
+  name: string
+  sub: string
+  route: string
+  params?: Record<string, string>
+}
+
+const PREMIUM_TOOLS: PremiumTool[] = [
+  { id: 'diet', icon: '🥗', name: 'Plani i Dietës', sub: 'Plani juaj personal', route: '/(app)/diet' },
+  { id: 'scanner', icon: '📷', name: 'Skaner Ushqimor', sub: 'Skano çdo ushqim', route: '/(app)/webview', params: { url: 'https://sohealthy.al', title: 'Skaner Ushqimor' } },
+  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo progresin tënd', route: '/(app)/webview', params: { url: 'https://sohealthy.al', title: 'Tracker' } },
+  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/webview', params: { url: 'https://sohealthy.al', title: 'Progresi' } },
 ]
 
 export default function HomeScreen() {
   const router = useRouter()
   const { isPremium, loading } = usePremium()
+
+  function handlePremiumTool(tool: PremiumTool) {
+    if (tool.params) {
+      router.push({ pathname: tool.route as any, params: tool.params })
+    } else {
+      router.push(tool.route as any)
+    }
+  }
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -58,7 +75,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={tool.id}
               style={[s.card, s.premiumCard]}
-              onPress={() => router.push({ pathname: "/(app)/webview", params: { url: tool.url, title: tool.name } })}
+              onPress={() => handlePremiumTool(tool)}
             >
               <Text style={s.cardIcon}>{tool.icon}</Text>
               <View style={s.cardText}>
