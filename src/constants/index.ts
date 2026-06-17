@@ -20,7 +20,7 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   'aloe-shot':      'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-4.png',
   'metabolic-shot': 'https://sohealthy.al/wp-content/uploads/2024/08/upscalemedia-transformed-4.png',
   'g1':             'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-2.png',
-  'nf01':           'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
+  'nf01':           'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-2.webp',
   'fiber-plus':     'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
   'green-organics': 'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
 }
