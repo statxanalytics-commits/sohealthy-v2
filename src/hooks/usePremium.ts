@@ -6,7 +6,6 @@ export function usePremium() {
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Runs every time the screen comes into focus — catches post-activation
   useFocusEffect(
     useCallback(() => {
       checkPremium()
@@ -18,15 +17,14 @@ export function usePremium() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setIsPremium(false); setLoading(false); return }
 
+      // Check profiles.is_premium — the source of truth
       const { data } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('activated_by', user.id)
-        .eq('used', true)
-        .limit(1)
+        .from('profiles')
+        .select('is_premium')
+        .eq('id', user.id)
         .single()
 
-      setIsPremium(!!data)
+      setIsPremium(data?.is_premium === true)
     } catch {
       setIsPremium(false)
     } finally {
