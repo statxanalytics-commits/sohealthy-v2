@@ -12,6 +12,19 @@ export const Colors = {
 
 export const LOGO = 'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg'
 
+export const PRODUCT_IMAGES: Record<string, string> = {
+  'detox-shot':     'https://sohealthy.al/wp-content/uploads/2024/08/upscalemedia-transformed.png',
+  'detox-2':        'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-5.png',
+  'green-shot':     'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-3.png',
+  'berry-bliss':    'https://sohealthy.al/wp-content/uploads/2022/04/upscalemedia-transformed-2.png',
+  'aloe-shot':      'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-4.png',
+  'metabolic-shot': 'https://sohealthy.al/wp-content/uploads/2024/08/upscalemedia-transformed-4.png',
+  'g1':             'https://sohealthy.al/wp-content/uploads/2026/05/upscalemedia-transformed-2.png',
+  'nf01':           'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
+  'fiber-plus':     'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
+  'green-organics': 'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
+}
+
 export const API = {
   scanner: 'https://project-iaeqw.vercel.app/api/analyze',
   diet: 'https://sohealthy-diet.vercel.app/api/generate-diet',
