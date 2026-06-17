@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../../src/constants'
+import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
 const PRODUCT_NAMES: Record<string, string> = {
@@ -22,7 +22,8 @@ const PRODUCT_EMOJIS: Record<string, string> = {
 
 type ActivePackage = {
   order_code: string
-  product_slug: string | null
+  product_slugs: string[]
+  product_slug: string | null  // primary product (first one)
   package_type: string | null
   start_weight: number | null
   current_weight: number | null
@@ -54,14 +55,16 @@ export default function ProductsScreen() {
       setIsPremium(profile?.is_premium || false)
 
       if (profile?.order_code) {
-        // Get active product selection
-        const { data: sel } = await supabase
+        // Get ALL active product selections for this order
+        const { data: selData } = await supabase
           .from('product_selections')
           .select('product_slug')
           .eq('user_id', user.id)
           .eq('order_code', profile.order_code)
           .eq('is_active', true)
-          .single()
+          .order('selected_at', { ascending: true })
+        const sel = selData && selData.length > 0 ? selData[0] : null
+        const allSlugs = (selData || []).map(s => s.product_slug).filter(Boolean) as string[]
 
         // Get package type from order
         const { data: order } = await supabase
@@ -84,7 +87,8 @@ export default function ProductsScreen() {
 
         setActivePackage({
           order_code: profile.order_code,
-          product_slug: sel?.product_slug || null,
+          product_slugs: allSlugs,
+          product_slug: allSlugs[0] || null,
           package_type: order?.sheet_source || (profile.order_code.startsWith('HY') ? 'ULTRA' : 'QUIK'),
           start_weight: wEntries[0]?.weight || null,
           current_weight: wEntries[wEntries.length - 1]?.weight || null,
@@ -170,44 +174,76 @@ export default function ProductsScreen() {
             </View>
 
             {/* Product name + instructions */}
-            {slug && productConfig ? (
+            {activePackage.product_slugs.length > 0 ? (
               <View style={s.instructionsCard}>
-                <Text style={s.productName}>{PRODUCT_NAMES[slug]}</Text>
-
-                <View style={s.infoRow}>
-                  <Text style={s.infoLabel}>⏰ Kur</Text>
-                  <Text style={s.infoVal}>{productConfig.when}</Text>
-                </View>
-                <View style={s.divider} />
-                <View style={s.infoRow}>
-                  <Text style={s.infoLabel}>📋 Si</Text>
-                  <Text style={s.infoVal}>{productConfig.how}</Text>
-                </View>
-                <View style={s.divider} />
-                <View style={s.infoRow}>
-                  <Text style={s.infoLabel}>🧊 Ruajtja</Text>
-                  <Text style={s.infoVal}>{productConfig.storage}</Text>
-                </View>
-                {productConfig.combo && (
-                  <>
-                    <View style={s.divider} />
-                    <View style={s.infoRow}>
-                      <Text style={s.infoLabel}>💡 Kombinim</Text>
-                      <Text style={s.infoVal}>{productConfig.combo}</Text>
+                {/* Product images row */}
+                <View style={s.productImagesRow}>
+                  {activePackage.product_slugs.map(s2 => (
+                    <View key={s2} style={s.productImgWrap}>
+                      {PRODUCT_IMAGES[s2]
+                        ? <Image source={{ uri: PRODUCT_IMAGES[s2] }} style={s.productImgSmall} resizeMode="contain" />
+                        : <Text style={{ fontSize: 32 }}>{PRODUCT_EMOJIS[s2]}</Text>
+                      }
+                      <Text style={s.productImgLabel}>{PRODUCT_NAMES[s2]}</Text>
                     </View>
-                  </>
-                )}
-
-                <View style={s.reminderBox}>
-                  <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
-                  <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
+                  ))}
                 </View>
+
+                {/* Combo schedule OR single product schedule */}
+                {(() => {
+                  const combo = getComboSchedule(activePackage.product_slugs)
+                  if (combo) {
+                    return (
+                      <>
+                        <Text style={s.scheduleTitle}>📅 Orari i Ditës</Text>
+                        {combo.map((item, i) => (
+                          <View key={i} style={s.scheduleRow}>
+                            <View style={s.scheduleTime}>
+                              <Text style={s.scheduleTimeText}>{item.time}</Text>
+                            </View>
+                            <View style={s.scheduleInfo}>
+                              {PRODUCT_IMAGES[item.slug]
+                                ? <Image source={{ uri: PRODUCT_IMAGES[item.slug] }} style={s.scheduleImg} resizeMode="contain" />
+                                : null
+                              }
+                              <Text style={s.scheduleInstruction}>{item.instruction}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </>
+                    )
+                  } else if (slug && productConfig) {
+                    return (
+                      <>
+                        <View style={s.infoRow}>
+                          <Text style={s.infoLabel}>⏰ Kur</Text>
+                          <Text style={s.infoVal}>{productConfig.when}</Text>
+                        </View>
+                        <View style={s.divider} />
+                        <View style={s.infoRow}>
+                          <Text style={s.infoLabel}>📋 Si</Text>
+                          <Text style={s.infoVal}>{productConfig.how}</Text>
+                        </View>
+                        <View style={s.divider} />
+                        <View style={s.infoRow}>
+                          <Text style={s.infoLabel}>🧊 Ruajtja</Text>
+                          <Text style={s.infoVal}>{productConfig.storage}</Text>
+                        </View>
+                        <View style={s.reminderBox}>
+                          <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
+                          <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
+                        </View>
+                      </>
+                    )
+                  }
+                  return null
+                })()}
 
                 <TouchableOpacity
                   style={s.changeBtn}
                   onPress={() => router.push('/(app)/my-packages')}
                 >
-                  <Text style={s.changeBtnText}>Ndrysho Produktin</Text>
+                  <Text style={s.changeBtnText}>Ndrysho Produktet</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -377,4 +413,15 @@ const s = StyleSheet.create({
     padding: 14, alignItems: 'center', marginBottom: 8,
   },
   historyBtnText: { color: Colors.pine, fontWeight: '600', fontSize: 14 },
+  productImagesRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
+  productImgWrap: { alignItems: 'center', maxWidth: 80 },
+  productImgSmall: { width: 60, height: 60 },
+  productImgLabel: { fontSize: 11, color: Colors.pine, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
+  scheduleTimeText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  scheduleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  scheduleImg: { width: 36, height: 36 },
+  scheduleInstruction: { flex: 1, fontSize: 13, color: '#444', lineHeight: 18 },
 })
