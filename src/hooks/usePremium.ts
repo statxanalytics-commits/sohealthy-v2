@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
 import { supabase } from '../lib/supabase'
 
 export function usePremium() {
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    checkPremium()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+  // Runs every time the screen comes into focus — catches post-activation
+  useFocusEffect(
+    useCallback(() => {
       checkPremium()
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+    }, [])
+  )
 
   async function checkPremium() {
     try {
