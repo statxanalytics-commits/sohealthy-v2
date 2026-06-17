@@ -6,9 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import { Colors } from '../../src/constants'
-
-const ANTHROPIC_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' // placeholder — set via env
+import { API, Colors } from '../../src/constants'
 
 type FoodItem = {
   name: string
@@ -119,34 +117,15 @@ export default function ScannerScreen() {
     setErrMsg(null)
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(API.scanner, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_KEY || '',
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5',
-          max_tokens: 1000,
-          system: `You are a professional nutritionist. Analyze the food image and return ONLY valid JSON, no markdown, no explanation, no backticks:
-{"total":{"calories":0,"protein":0,"carbs":0,"fat":0,"fiber":0,"sugar":0},"items":[{"name":"Emri shqip","portion":"Xg","calories":0,"protein":0,"carbs":0,"fat":0,"fiber":0,"sugar":0}]}
-All numbers must be integers. Food names must be in Albanian language.`,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-              { type: 'text', text: 'Analyze this plate and return JSON.' }
-            ]
-          }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mimeType })
       })
 
-      const data = await response.json()
-      if (data.error) throw new Error(data.error.message)
-
-      const text = data.content.map((c: any) => c.text || '').join('').replace(/```json|```/g, '').trim()
-      const parsed: ScanResult = JSON.parse(text)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const parsed: ScanResult = await response.json()
+      if ((parsed as any).error) throw new Error((parsed as any).error)
 
       setResult(parsed)
       setPlate(ratePlate(parsed.total, parsed.items))
