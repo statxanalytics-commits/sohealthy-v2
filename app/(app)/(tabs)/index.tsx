@@ -72,15 +72,15 @@ export default function HomeScreen() {
           <ActivityIndicator color={Colors.pine} style={{ marginVertical: 20 }} />
         ) : isPremium ? (
           <>
-            {/* My Product card — always visible for premium users */}
+            {/* My Packages card — always visible for premium users */}
             <TouchableOpacity
               style={[s.card, s.myProductCard]}
-              onPress={() => router.push('/(app)/select-product')}
+              onPress={() => router.push('/(app)/my-packages')}
             >
               <Text style={s.cardIcon}>📦</Text>
               <View style={s.cardText}>
-                <Text style={[s.cardName, { color: Colors.pine }]}>Produkti Im</Text>
-                <Text style={s.cardSub}>Shiko udhëzimet e produktit tënd</Text>
+                <Text style={[s.cardName, { color: Colors.pine }]}>Paketat e Mia</Text>
+                <Text style={s.cardSub}>Historia e blerjeve & produkti aktiv</Text>
               </View>
               <Text style={s.cardArrow}>›</Text>
             </TouchableOpacity>
