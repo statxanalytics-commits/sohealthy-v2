@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
+import LegalModal from '../../src/components/LegalModal'
 import { useState } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
@@ -14,6 +15,9 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [accepted, setAccepted] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+  const [legalType, setLegalType] = useState<'terms' | 'privacy'>('terms')
 
   const handleSignup = async () => {
     if (!name || !username || !email || !password) { setError('Plotëso të gjitha fushat.'); return }
@@ -52,12 +56,12 @@ export default function SignupScreen() {
             </View>
             <Text style={s.tcText}>
               Pranoj{' '}
-              <Text style={s.tcLink} onPress={() => Linking.openURL('https://sohealthy.al/terms')}>
-                Kushtet e Shërbimit
+              <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>
+                Kushtet e Sherbimit
               </Text>
               {' '}dhe{' '}
-              <Text style={s.tcLink} onPress={() => Linking.openURL('https://sohealthy.al/privacy')}>
-                Politikën e Privatësisë
+              <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>
+                Politiken e Privatesise
               </Text>
             </Text>
           </TouchableOpacity>
@@ -72,6 +76,11 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <LegalModal
+        visible={showTerms}
+        type={legalType}
+        onClose={() => setShowTerms(false)}
+      />
     </SafeAreaView>
   )
 }
