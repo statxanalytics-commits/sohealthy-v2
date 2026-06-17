@@ -15,7 +15,7 @@ type WeekData = {
 type WeightEntry = { date: string; weight: number }
 type ScanDay = { date: string; calories: number; protein_g: number; rating: string }
 
-const GOAL_CAL = 1500
+const DEFAULT_goalCal = 1400
 
 export default function ProgressScreen() {
   const router = useRouter()
@@ -25,6 +25,7 @@ export default function ProgressScreen() {
   const [totalScans, setTotalScans] = useState(0)
   const [avgCalories, setAvgCalories] = useState(0)
   const [bestDay, setBestDay] = useState<ScanDay | null>(null)
+  const [goalCal, setGoalCal] = useState(DEFAULT_goalCal)
 
   useFocusEffect(useCallback(() => {
     loadProgress()
@@ -35,6 +36,19 @@ export default function ProgressScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Load target calories from diet plan
+      const { data: dietPlan } = await supabase
+        .from('diet_plans')
+        .select('plan_content')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (dietPlan?.plan_content?.target_calories) {
+        setGoalCal(dietPlan.plan_content.target_calories)
+      }
 
       const { data: scanData, count } = await supabase
         .from('scan_history')
@@ -61,8 +75,8 @@ export default function ProgressScreen() {
         const avg = Math.round(days.reduce((s, d) => s + d.calories, 0) / days.length)
         setAvgCalories(avg)
         const best = [...days].sort((a, b) => {
-          const scoreA = Math.abs(a.calories - GOAL_CAL)
-          const scoreB = Math.abs(b.calories - GOAL_CAL)
+          const scoreA = Math.abs(a.calories - goalCal)
+          const scoreB = Math.abs(b.calories - goalCal)
           return scoreA - scoreB
         })[0]
         setBestDay(best)
@@ -96,7 +110,7 @@ export default function ProgressScreen() {
 
   // Simple bar chart data — last 7 days
   const last7 = scans.slice(0, 7).reverse()
-  const maxCal = Math.max(...last7.map(d => d.calories), GOAL_CAL)
+  const maxCal = Math.max(...last7.map(d => d.calories), goalCal)
 
   // Weight change
   const weightChange = weights.length >= 2 ? (weights[weights.length - 1].weight - weights[0].weight) : null
@@ -147,7 +161,7 @@ export default function ProgressScreen() {
                 {last7.map((day, i) => {
                   const height = Math.max(4, (day.calories / maxCal) * 120)
                   const isToday = day.date === new Date().toISOString().slice(0, 10)
-                  const color = day.calories > GOAL_CAL * 1.2 ? Colors.goji : day.calories > GOAL_CAL * 0.8 ? Colors.aloe : '#D58D3C'
+                  const color = day.calories > goalCal * 1.2 ? Colors.goji : day.calories > goalCal * 0.8 ? Colors.aloe : '#D58D3C'
                   return (
                     <View key={day.date} style={s.barCol}>
                       <Text style={s.barVal}>{day.calories > 0 ? day.calories : ''}</Text>
@@ -160,7 +174,7 @@ export default function ProgressScreen() {
               </View>
               <View style={s.goalLine}>
                 <View style={s.goalLineDash} />
-                <Text style={s.goalLineText}>Qëllimi: {GOAL_CAL} kcal</Text>
+                <Text style={s.goalLineText}>Qëllimi: {goalCal} kcal</Text>
               </View>
             </View>
           )}
@@ -221,7 +235,7 @@ export default function ProgressScreen() {
               <Text style={s.bestTitle}>🌟 Dita Juaj Më e Mirë</Text>
               <Text style={s.bestDate}>{formatDate(bestDay.date)}</Text>
               <Text style={s.bestVal}>{bestDay.calories} kcal</Text>
-              <Text style={s.bestSub}>Më afër qëllimit {GOAL_CAL} kcal</Text>
+              <Text style={s.bestSub}>Më afër qëllimit {goalCal} kcal</Text>
             </View>
           )}
 
