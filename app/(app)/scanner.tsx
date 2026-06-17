@@ -79,6 +79,7 @@ async function saveScan(result: ScanResult, rating: PlateRating) {
 export default function ScannerScreen() {
   const router = useRouter()
   const [state, setState] = useState<'home' | 'loading' | 'result' | 'error'>('home')
+  const [showAIDisclosure, setShowAIDisclosure] = useState(true)
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [result, setResult] = useState<ScanResult | null>(null)
   const [plate, setPlate] = useState<PlateRating | null>(null)
@@ -239,6 +240,29 @@ export default function ScannerScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* AI Disclosure Modal — required by Apple 2025 */}
+      <Modal visible={showAIDisclosure} transparent animationType="fade">
+        <View style={s.disclosureOverlay}>
+          <View style={s.disclosureCard}>
+            <Text style={s.disclosureTitle}>🤖 Analiza me AI</Text>
+            <Text style={s.disclosureText}>
+              Fotografitë e ushqimeve dërgohen te shërbimi{' '}
+              <Text style={{ fontWeight: '700' }}>Anthropic Claude AI</Text>{' '}
+              për analizë. Imazhet nuk ruhen nga Anthropic.{'
+
+'}
+              Të dhënat tuaja trajtohen sipas Politikës tonë të Privatësisë.
+            </Text>
+            <TouchableOpacity
+              style={s.disclosureBtn}
+              onPress={() => setShowAIDisclosure(false)}
+            >
+              <Text style={s.disclosureBtnText}>Kuptova, Vazhdo →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -291,6 +315,12 @@ const s = StyleSheet.create({
   macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   microBadge: { backgroundColor: Colors.alabaster, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   microText: { fontSize: 11, color: Colors.pine },
+  disclosureOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  disclosureCard: { backgroundColor: '#fff', borderRadius: 20, padding: 24, width: '100%' },
+  disclosureTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  disclosureText: { fontSize: 14, color: '#444', lineHeight: 22, marginBottom: 20 },
+  disclosureBtn: { backgroundColor: Colors.pine, borderRadius: 12, padding: 14, alignItems: 'center' },
+  disclosureBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   savedBadge: { backgroundColor: Colors.aloe + '20', borderRadius: 10, padding: 12, alignItems: 'center', marginBottom: 12 },
   savedText: { color: Colors.aloe, fontWeight: '700', fontSize: 13 },
 })
