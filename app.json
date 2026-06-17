@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "SoHealthy ka nevoj\u00eb p\u00ebr kamer\u00ebn p\u00ebr t\u00eb analizuar ushqimet tuaja.",
+        "NSPhotoLibraryUsageDescription": "SoHealthy ka nevoj\u00eb p\u00ebr galerin\u00eb p\u00ebr t\u00eb analizuar fotografit\u00eb e ushqimeve."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,6 +41,13 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SoHealthy ka nevoj\u00eb p\u00ebr galerin\u00eb p\u00ebr t\u00eb analizuar fotografit\u00eb e ushqimeve.",
+          "cameraPermission": "SoHealthy ka nevoj\u00eb p\u00ebr kamer\u00ebn p\u00ebr t\u00eb analizuar ushqimet tuaja."
         }
       ]
     ],
