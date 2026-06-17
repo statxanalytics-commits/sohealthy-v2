@@ -144,9 +144,36 @@ export default function HomeScreen() {
         ) : !loading ? (
           <>
             <Text style={s.sectionLabel}>PREMIUM</Text>
-            <TouchableOpacity style={s.activateCard} onPress={() => router.push('/(app)/activate')}>
-              <Text style={s.activateTitle}>Aktivizo Paketën →</Text>
-              <Text style={s.activateSub}>Fut kodin e porosisë për akses premium</Text>
+            {/* Locked premium tools */}
+            <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
+              <View>
+                <Text style={s.lockedDietTitle}>Plani i Dietes</Text>
+                <Text style={s.lockedDietSub}>Plan 14-ditor personal</Text>
+              </View>
+              <View style={s.lockIcon}>
+                <Text style={{ fontSize: 18 }}>🔒</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={s.lockedRow}>
+              {[
+                { icon: '📷', name: 'Skaner' },
+                { icon: '📈', name: 'Tracker' },
+                { icon: '🏆', name: 'Progresi' },
+              ].map(t => (
+                <TouchableOpacity key={t.name} style={s.lockedSmall} onPress={() => router.push('/(app)/activate')}>
+                  <Text style={s.lockedSmallIcon}>{t.icon}</Text>
+                  <Text style={s.lockedSmallName}>{t.name}</Text>
+                  <Text style={{ fontSize: 10 }}>🔒</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {/* Big activate CTA */}
+            <TouchableOpacity style={s.bigActivateCard} onPress={() => router.push('/(app)/activate')}>
+              <Text style={s.bigActivateTitle}>Aktivizo Paketën Tende</Text>
+              <Text style={s.bigActivateSub}>Fut kodin e porosise per akses te plote ne te gjitha mjetet premium</Text>
+              <View style={s.bigActivateBtn}>
+                <Text style={s.bigActivateBtnText}>Aktivizo Tani →</Text>
+              </View>
             </TouchableOpacity>
           </>
         ) : null}
