@@ -10,7 +10,7 @@ Duke perdorur aplikacionin SoHealthy, ju pranoni te gjitha kushtet e meposhtme. 
 
 2. SHERBIMET
 SoHealthy ofron:
-- Plane personale dietetike te gjeneruara me inteligjence artificiale
+- Plane personale dietetike te personalizuara nga nutritionisti
 - Skanim ushqimor me analize kalorish dhe makrosh
 - Tracker ditor i kalorive dhe peshe
 - Produkte wellness dhe suplemente ushqimore
