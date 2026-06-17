@@ -406,11 +406,7 @@ export default function MyPackagesScreen() {
                   </Text>
                   <Text style={s.historyCode}>{pkg.order_code}</Text>
                   <Text style={s.historyDate}>{formatDate(pkg.activated_at)}</Text>
-                  {pkg.package_type && (
-                    <View style={s.typeBadge}>
-                      <Text style={s.typeBadgeText}>{pkg.package_type}</Text>
-                    </View>
-                  )}
+  
                 </View>
                 {!pkg.product_slug && (
                   <TouchableOpacity
