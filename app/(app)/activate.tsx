@@ -1,104 +1,191 @@
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Colors } from '../../src/constants'
-import { supabase } from '../../src/lib/supabase'
-
-const WHAT_YOU_GET = [
-  { icon: '🥗', text: 'Plani i dietës — 14 ditë personal' },
-  { icon: '📷', text: 'Skaner ushqimesh' },
-  { icon: '⏰', text: 'Tracker + njoftime ditore' },
-  { icon: '📖', text: 'Guidat e plota të produkteve' },
-  { icon: '📈', text: 'Progresi dhe historia' },
-]
+import React, { useState } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform
+} from 'react-native';
+import { supabase } from '../../src/lib/supabase';
+import { useRouter } from 'expo-router';
 
 export default function ActivateScreen() {
-  const router = useRouter()
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleActivate = async () => {
-    if (!code.trim()) { setError('Fut kodin e porosisë.'); return }
-    setLoading(true); setError('')
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setError('Jo i kyçur.'); setLoading(false); return }
-    const { data: order, error: orderErr } = await supabase.from('orders').select('*').eq('order_code', code.toUpperCase().trim()).single()
-    if (orderErr || !order) { setError('Kodi nuk u gjet. Kontrollo dhe provo sërish.'); setLoading(false); return }
-    if (order.used && order.activated_by !== user.id) { setError('Ky kod është përdorur tashmë.'); setLoading(false); return }
-    await supabase.from('orders').update({ used: true, verified_at: new Date().toISOString(), activated_by: user.id }).eq('order_code', code.toUpperCase().trim())
-    await supabase.from('profiles').update({ is_premium: true, order_code: code.toUpperCase().trim(), plan_start: new Date().toISOString() }).eq('id', user.id)
-    setSuccess(true)
-    setTimeout(() => router.back(), 1500)
-    setLoading(false)
-  }
+    const trimmedCode = code.trim().toUpperCase();
+    if (!trimmedCode) {
+      Alert.alert('Gabim', 'Ju lutem shkruani kodin tuaj.');
+      return;
+    }
 
-  if (success) return (
-    <View style={{ flex: 1, backgroundColor: Colors.pine, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: 60, marginBottom: 20 }}>🎉</Text>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: Colors.white, marginBottom: 8 }}>Premium aktivizuar!</Text>
-      <Text style={{ fontSize: 14, color: Colors.aloe }}>Mirë se vjen në SoHealthy Premium</Text>
-    </View>
-  )
+    setLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Gabim', 'Ju duhet të jeni të kyçur.');
+        setLoading(false);
+        return;
+      }
+
+      const { data: order, error: fetchError } = await supabase
+        .from('orders')
+        .select('id, used, activated_by')
+        .eq('order_code', trimmedCode)
+        .single();
+
+      if (fetchError || !order) {
+        Alert.alert(
+          'Kod i Pavlefshëm',
+          'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (order.used) {
+        if (order.activated_by === user.id) {
+          Alert.alert('Llogaria Aktive ✅', 'Kodi është tashmë aktiv në llogarinë tuaj!');
+        } else {
+          Alert.alert('Kod i Përdorur', 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.');
+        }
+        setLoading(false);
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          used: true,
+          activated_by: user.id,
+          verified_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+        .eq('used', false);
+
+      if (updateError) {
+        Alert.alert('Gabim', 'Aktivizimi dështoi. Provoni përsëri.');
+        setLoading(false);
+        return;
+      }
+
+      Alert.alert(
+        'Urime! 🎉',
+        'Llogaria juaj premium u aktivizua me sukses!',
+        [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/(tabs)') }]
+      );
+
+    } catch (err) {
+      Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
-        <Text style={s.title}>Aktivizo premium</Text>
-        <Text style={s.subtitle}>Ke blerë? Fut kodin dhe hap gjithçka</Text>
-      </View>
-      <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
-        <View style={s.card}>
-          <Text style={s.cardLabel}>ÇFARË FITON</Text>
-          {WHAT_YOU_GET.map((item, i) => (
-            <View key={i} style={s.getRow}>
-              <View style={s.getIcon}><Text style={{ fontSize: 16 }}>{item.icon}</Text></View>
-              <Text style={s.getText}>{item.text}</Text>
-            </View>
-          ))}
-        </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.card}>
+        <Text style={styles.title}>Aktivizo Llogarinë</Text>
+        <Text style={styles.subtitle}>
+          Shkruani kodin që gjetët në paketën tuaj SoHealthy
+        </Text>
 
-        <Text style={s.label}>KODI I POROSISË</Text>
         <TextInput
-          style={s.input}
+          style={styles.input}
           value={code}
-          onChangeText={t => { setCode(t.toUpperCase()); setError('') }}
-          placeholder="HY8396670"
-          placeholderTextColor={Colors.mutedLight}
+          onChangeText={setCode}
+          placeholder="p.sh. HY8396670"
+          placeholderTextColor="#aaa"
           autoCapitalize="characters"
           autoCorrect={false}
+          returnKeyType="done"
+          onSubmitEditing={handleActivate}
         />
-        <Text style={s.postalNote}>📬 Kodin e gjen në letrën e shërbimit postar që erdhi me paketën tuaj.</Text>
 
-        {error ? <Text style={s.error}>{error}</Text> : null}
-
-        <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleActivate} disabled={loading}>
-          {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Aktivizo tani →</Text>}
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleActivate}
+          disabled={loading}
+        >
+          {loading
+            ? <ActivityIndicator color="#ECEFE8" />
+            : <Text style={styles.buttonText}>Aktivizo</Text>
+          }
         </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
-  )
+
+        <Text style={styles.hint}>
+          💡 Kodi gjendet brenda paketës suaj, shkruar në letër.
+        </Text>
+      </View>
+    </KeyboardAvoidingView>
+  );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.pine },
-  header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
-  back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  subtitle: { fontSize: 13, color: Colors.aloe },
-  body: { backgroundColor: Colors.alabaster, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
-  card: { backgroundColor: Colors.white, borderRadius: 12, padding: 16, marginBottom: 20 },
-  cardLabel: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1.2, marginBottom: 12 },
-  getRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  getIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  getText: { fontSize: 13, fontWeight: '500', color: Colors.pine, flex: 1 },
-  label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
-  input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 15, fontSize: 18, fontWeight: '600', color: Colors.pine, letterSpacing: 2, marginBottom: 8 },
-  postalNote: { fontSize: 12, color: Colors.muted, marginBottom: 16, lineHeight: 18 },
-  error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
-  btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
-  btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
-})
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ECEFE8',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 28,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1B3F2F',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 20,
+  },
+  input: {
+    borderWidth: 1.5,
+    borderColor: '#71B5A2',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1B3F2F',
+    letterSpacing: 1.5,
+    textAlign: 'center',
+    marginBottom: 20,
+    backgroundColor: '#ECEFE8',
+  },
+  button: {
+    backgroundColor: '#1B3F2F',
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  buttonDisabled: { backgroundColor: '#71B5A2' },
+  buttonText: {
+    color: '#ECEFE8',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  hint: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+});
