@@ -481,9 +481,9 @@ export default function MyPackagesScreen() {
               })}
             </ScrollView>
             <TouchableOpacity
-              style={[s.modalBtn, !selectedProduct && { opacity: 0.5 }]}
+              style={[s.modalBtn, selectedProducts.length === 0 && { opacity: 0.5 }]}
               onPress={saveProductSelection}
-              disabled={!selectedProduct || saving}
+              disabled={selectedProducts.length === 0 || saving}
             >
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.modalBtnText}>Konfirmo</Text>}
             </TouchableOpacity>
