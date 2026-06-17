@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
@@ -11,6 +11,27 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Email i nevojshëm', 'Shkruaj email-in tënd më sipër dhe kliko "Harrova fjalëkalimin".')
+      return
+    }
+    setLoading(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: 'sohealthy://reset-password',
+    })
+    setLoading(false)
+    if (err) {
+      Alert.alert('Gabim', err.message)
+    } else {
+      Alert.alert(
+        'Email u dërgua ✅',
+        'Kontrollo email-in tënd për linkun e rivendosjes së fjalëkalimit.',
+        [{ text: 'OK' }]
+      )
+    }
+  }
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
@@ -33,7 +54,7 @@ export default function LoginScreen() {
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
           <Text style={s.label}>FJALËKALIMI</Text>
           <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="••••••••" placeholderTextColor={Colors.mutedLight} secureTextEntry />
-          <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }}>
+          <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 16 }} onPress={handleForgotPassword}>
             <Text style={{ color: Colors.aloe, fontSize: 12, fontWeight: '500' }}>Harrova fjalëkalimin</Text>
           </TouchableOpacity>
           {error ? <Text style={s.error}>{error}</Text> : null}
