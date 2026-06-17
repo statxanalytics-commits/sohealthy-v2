@@ -61,11 +61,8 @@ export default function DietScreen() {
       if (plans && plans.length > 0 && plans[0].plan_content?.plan_text) {
         setPlan(plans[0])
         setState('saved')
-      } else if (code) {
-        // No saved plan — open diet web app to generate
-        setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(code)}`)
-        setState('webview')
       } else {
+        // No saved plan — show generate CTA
         setState('empty')
       }
     } catch (e) {
@@ -129,7 +126,7 @@ export default function DietScreen() {
     )
   }
 
-  // ── EMPTY ────────────────────────────────────────────────────
+  // ── EMPTY — show generate CTA ───────────────────────────────
   if (state === 'empty') {
     return (
       <SafeAreaView style={s.safe}>
@@ -141,8 +138,25 @@ export default function DietScreen() {
         </View>
         <View style={s.center}>
           <Text style={s.emptyEmoji}>🥗</Text>
-          <Text style={s.emptyTitle}>Plan nuk u gjet</Text>
-          <Text style={s.emptyText}>Aktivizoni llogarinë tuaj premium për të gjeneruar planin personal të dietës.</Text>
+          <Text style={s.emptyTitle}>
+            {orderCode ? 'Gjenero Planin Tënd' : 'Plan nuk u gjet'}
+          </Text>
+          <Text style={s.emptyText}>
+            {orderCode
+              ? 'Plani i dietës personalizohet bazuar në informacionin tuaj — moshën, peshën, aktivitetin dhe produktet SoHealthy.'
+              : 'Aktivizoni llogarinë tuaj premium për të gjeneruar planin personal të dietës.'}
+          </Text>
+          {orderCode ? (
+            <TouchableOpacity
+              style={s.generateBtn}
+              onPress={() => {
+                setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(orderCode)}`)
+                setState('webview')
+              }}
+            >
+              <Text style={s.generateBtnText}>✨ Gjenero Planin Tim →</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </SafeAreaView>
     )
@@ -315,4 +329,9 @@ const s = StyleSheet.create({
     padding: 8, marginTop: 12,
   },
   rawText: { fontSize: 14, color: '#444', lineHeight: 24, fontFamily: 'monospace' },
+  generateBtn: {
+    marginTop: 24, backgroundColor: Colors.pine,
+    borderRadius: 14, paddingHorizontal: 32, paddingVertical: 16,
+  },
+  generateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 16 },
 })
