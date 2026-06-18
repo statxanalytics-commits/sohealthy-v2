@@ -24,12 +24,22 @@ export default function SignupScreen() {
     if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
     if (password.length < 6) { setError('Fjalëkalimi duhet të ketë 6+ karaktere.'); return }
     setLoading(true); setError('')
-    const { data, error: err } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { name, username } } })
+    const cleanEmail = email.trim().toLowerCase()
+    const { data, error: err } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: { data: { name, username } }
+    })
     if (err) { setError(err.message); setLoading(false); return }
     if (data.user) {
-      await supabase.from('profiles').insert({ id: data.user.id, name, username, email: email.trim().toLowerCase(), is_premium: false })
+      await supabase.from('profiles').upsert({
+        id: data.user.id, name, username,
+        email: cleanEmail, is_premium: false
+      })
     }
     setLoading(false)
+    // Navigate to OTP verification screen
+    router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail } })
   }
 
   return (
