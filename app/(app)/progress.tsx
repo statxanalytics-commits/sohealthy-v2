@@ -37,15 +37,34 @@ export default function ProgressScreen() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Load target calories from diet plan
-      const { data: dietPlan } = await supabase
-        .from('diet_plans')
-        .select('plan_content')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('generated_at', { ascending: false })
-        .limit(1)
+      // Load target calories from diet plan — same lookup as the Diet screen
+      // (by order_code first, then user_id; no is_active filter)
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('order_code')
+        .eq('id', user.id)
         .single()
+      const code = prof?.order_code || ''
+
+      const { data: plansByCode } = code
+        ? await supabase
+            .from('diet_plans')
+            .select('plan_content')
+            .eq('order_code', code)
+            .order('generated_at', { ascending: false })
+            .limit(1)
+        : { data: null }
+
+      const { data: plansByUser } = plansByCode?.length
+        ? { data: null }
+        : await supabase
+            .from('diet_plans')
+            .select('plan_content')
+            .eq('user_id', user.id)
+            .order('generated_at', { ascending: false })
+            .limit(1)
+
+      const dietPlan = plansByCode?.[0] || plansByUser?.[0]
       if (dietPlan?.plan_content?.target_calories) {
         setGoalCal(dietPlan.plan_content.target_calories)
       }
