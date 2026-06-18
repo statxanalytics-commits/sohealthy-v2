@@ -307,7 +307,15 @@ export default function MyPackagesScreen() {
               <Text style={s.activeType}>{activePackage.package_type || 'Premium'}</Text>
               <Text style={s.activeDate}>Aktivizuar: {formatDate(activePackage.activated_at)}</Text>
             </View>
-            {activePackage.product_slug && PRODUCT_IMAGES[activePackage.product_slug] ? (
+            {isActiveCombo ? (
+              <View style={s.heroImagesRow}>
+                {comboSlugs.map(sg => (
+                  PRODUCT_IMAGES[sg] ? (
+                    <Image key={sg} source={{ uri: PRODUCT_IMAGES[sg] }} style={s.heroImgSmall} resizeMode="contain" />
+                  ) : null
+                ))}
+              </View>
+            ) : activePackage.product_slug && PRODUCT_IMAGES[activePackage.product_slug] ? (
               <Image
                 source={{ uri: PRODUCT_IMAGES[activePackage.product_slug] }}
                 style={s.activeProductImg}
@@ -609,6 +617,8 @@ const s = StyleSheet.create({
   activeDate: { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   activeProductImg: { width: 90, height: 90 },
   activeProductEmoji: { fontSize: 56 },
+  heroImagesRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  heroImgSmall: { width: 60, height: 60 },
   activeDetails: {
     backgroundColor: '#fff', borderRadius: 0, padding: 16, marginBottom: 12,
     borderBottomLeftRadius: 14, borderBottomRightRadius: 14,
