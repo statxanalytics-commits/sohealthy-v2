@@ -26,17 +26,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "single-page",
-      "favicon": "./assets/images/favicon.png",
-      "bundler": "metro",
-      "name": "SoHealthy",
-      "shortName": "SoHealthy",
-      "description": "Platforma jote e shendetit dhe wellnessit",
-      "themeColor": "#1B3F2F",
-      "backgroundColor": "#ECEFE8",
-      "display": "standalone",
-      "orientation": "portrait",
-      "lang": "sq"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -63,11 +53,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ]
+    }
   }
 }
