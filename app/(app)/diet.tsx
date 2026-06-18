@@ -5,7 +5,9 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { WebView } from 'react-native-webview'
+import { Platform } from 'react-native'
+// WebView only available on native
+const WebView = Platform.OS === 'web' ? null : require('react-native-webview').WebView
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
