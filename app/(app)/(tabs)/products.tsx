@@ -240,12 +240,20 @@ export default function ProductsScreen() {
                   return null
                 })()}
 
-                <TouchableOpacity
-                  style={s.changeBtn}
-                  onPress={() => router.push('/(app)/my-packages')}
-                >
-                  <Text style={s.changeBtnText}>Ndrysho Produktet</Text>
-                </TouchableOpacity>
+                <View style={s.btnRow}>
+                  <TouchableOpacity
+                    style={[s.changeBtn, s.btnFlex]}
+                    onPress={() => router.push('/(app)/my-packages')}
+                  >
+                    <Text style={s.changeBtnText}>Ndrysho Produktet</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[s.detailBtnP, s.btnFlex]}
+                    onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}
+                  >
+                    <Text style={s.detailBtnPText}>Detajet e Përdorimit →</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : (
               <View style={s.noProductCard}>
@@ -376,6 +384,13 @@ const s = StyleSheet.create({
     padding: 12, alignItems: 'center',
   },
   changeBtnText: { color: Colors.pine, fontWeight: '600', fontSize: 13 },
+  btnRow: { flexDirection: 'row', gap: 10 },
+  btnFlex: { flex: 1 },
+  detailBtnP: {
+    backgroundColor: Colors.pine, borderRadius: 10,
+    padding: 12, alignItems: 'center',
+  },
+  detailBtnPText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   noProductCard: {
     backgroundColor: '#fff', borderRadius: 16, padding: 24,
     alignItems: 'center', marginBottom: 12,
