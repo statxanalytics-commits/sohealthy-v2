@@ -265,6 +265,9 @@ export default function MyPackagesScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+          <Text style={s.backText}>← Kthehu</Text>
+        </TouchableOpacity>
         <Text style={s.headerSub}>SOHEALTHY</Text>
         <Text style={s.headerTitle}>Paketat e Mia</Text>
       </View>
@@ -522,6 +525,8 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: Colors.pine, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 },
+  backBtn: { marginBottom: 8 },
+  backText: { color: Colors.aloe, fontSize: 14, fontWeight: '600' },
   headerSub: { color: Colors.aloe, fontSize: 11, letterSpacing: 3, fontWeight: '700', marginBottom: 4 },
   headerTitle: { color: Colors.alabaster, fontSize: 24, fontWeight: '700' },
   scroll: { padding: 16 },

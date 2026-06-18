@@ -56,7 +56,6 @@ export default function DietScreen() {
         .from('diet_plans')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_active', true)
         .order('generated_at', { ascending: false })
         .limit(1)
 
@@ -167,7 +166,7 @@ export default function DietScreen() {
   // ── WEBVIEW (generate new plan) ──────────────────────────────
   if (state === 'webview') {
     return (
-      <SafeAreaView style={s.safe} edges={['top']}>
+      <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top']}>
         <View style={s.header}>
           <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
             <Text style={s.backText}>‹ Kthehu</Text>
@@ -175,11 +174,13 @@ export default function DietScreen() {
           <Text style={s.title}>🥗 Gjenero Planin</Text>
         </View>
         {Platform.OS === 'web' ? (
-          <iframe
-            src={webUrl}
-            style={{ flex: 1, border: 'none', width: '100%', height: '100%' } as any}
-            onLoad={() => setTimeout(loadPlan, 3000)}
-          />
+          <View style={{ flex: 1 }}>
+            <iframe
+              src={webUrl}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', border: 'none' } as any}
+              onLoad={() => setTimeout(loadPlan, 3000)}
+            />
+          </View>
         ) : (
           <WebView
             source={{ uri: webUrl }}
