@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
+import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 const PRODUCT_NAMES: Record<string, string> = {
@@ -51,6 +51,7 @@ export default function MyPackagesScreen() {
   const [showWeightModal, setShowWeightModal] = useState(false)
   const [weightInput, setWeightInput] = useState('')
   const [activePackageCode, setActivePackageCode] = useState('')
+  const [activeSlugs, setActiveSlugs] = useState<string[]>([])
 
   useFocusEffect(useCallback(() => { loadPackages() }, []))
 
@@ -65,6 +66,23 @@ export default function MyPackagesScreen() {
         .from('profiles').select('order_code').eq('id', user.id).single()
       const activeCode = profile?.order_code || ''
       setActivePackageCode(activeCode)
+
+      // Active selections for the current order (combo-aware: may be 2+ products)
+      if (activeCode) {
+        const { data: actSel } = await supabase
+          .from('product_selections')
+          .select('product_slug')
+          .eq('user_id', user.id)
+          .eq('order_code', activeCode)
+          .eq('is_active', true)
+          .order('selected_at', { ascending: true })
+        const aSlugs = (actSel || [])
+          .map(r => r.product_slug as string)
+          .filter(sg => sg && !!PRODUCTS[sg])
+        setActiveSlugs(aSlugs)
+      } else {
+        setActiveSlugs([])
+      }
 
       // Get all product selections (one per order_code)
       const { data: selections } = await supabase
@@ -261,6 +279,12 @@ export default function MyPackagesScreen() {
   }
 
   const activePackage = packages.find(p => p.is_active)
+  // Combo-aware active products: prefer the live active selections, fall back to the package's primary slug
+  const comboSlugs = activeSlugs.length > 0
+    ? activeSlugs
+    : (activePackage?.product_slug ? [activePackage.product_slug] : [])
+  const isActiveCombo = comboSlugs.length >= 2
+  const activeComboSchedule = isActiveCombo ? getComboSchedule(comboSlugs) : null
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -302,17 +326,60 @@ export default function MyPackagesScreen() {
           <View style={s.activeDetails}>
             {activePackage.product_slug ? (
               <>
-                <Text style={s.activeProductName}>
-                  {PRODUCT_NAMES[activePackage.product_slug] || activePackage.product_slug}
-                </Text>
-                {PRODUCTS[activePackage.product_slug] && (
+                {isActiveCombo ? (
                   <>
-                    <Text style={s.activeDetailRow}>
-                      ⏰ {PRODUCTS[activePackage.product_slug].when}
+                    <View style={s.comboImagesRow}>
+                      {comboSlugs.map(sg => (
+                        <View key={sg} style={s.comboImgWrap}>
+                          {PRODUCT_IMAGES[sg]
+                            ? <Image source={{ uri: PRODUCT_IMAGES[sg] }} style={s.comboImg} resizeMode="contain" />
+                            : null}
+                          <Text style={s.comboImgLabel}>{PRODUCT_NAMES[sg] || sg}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    {activeComboSchedule ? (
+                      <>
+                        <Text style={s.scheduleTitle}>📅 Orari i Ditës</Text>
+                        {activeComboSchedule.map((item, i) => (
+                          <View key={i} style={[s.scheduleRow, i === activeComboSchedule.length - 1 && s.scheduleRowLast]}>
+                            <View style={s.scheduleTime}>
+                              <Text style={s.scheduleTimeText}>{item.time}</Text>
+                            </View>
+                            <View style={s.scheduleInfo}>
+                              {PRODUCT_IMAGES[item.slug]
+                                ? <Image source={{ uri: PRODUCT_IMAGES[item.slug] }} style={s.scheduleImg} resizeMode="contain" />
+                                : null}
+                              <Text style={s.scheduleInstruction}>{item.instruction}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </>
+                    ) : (
+                      comboSlugs.map(sg => (
+                        PRODUCTS[sg] ? (
+                          <Text key={sg} style={s.activeDetailRow}>
+                            ⏰ {PRODUCT_NAMES[sg] || sg}: {PRODUCTS[sg].when}
+                          </Text>
+                        ) : null
+                      ))
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Text style={s.activeProductName}>
+                      {PRODUCT_NAMES[activePackage.product_slug] || activePackage.product_slug}
                     </Text>
-                    <Text style={s.activeDetailRow}>
-                      🔔 {PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}
-                    </Text>
+                    {PRODUCTS[activePackage.product_slug] && (
+                      <>
+                        <Text style={s.activeDetailRow}>
+                          ⏰ {PRODUCTS[activePackage.product_slug].when}
+                        </Text>
+                        <Text style={s.activeDetailRow}>
+                          🔔 {PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}
+                        </Text>
+                      </>
+                    )}
                   </>
                 )}
                 <View style={s.activeActions}>
@@ -320,7 +387,7 @@ export default function MyPackagesScreen() {
                     style={s.changeBtn}
                     onPress={() => {
                       setSelectedPackageCode(activePackage.order_code)
-                      setSelectedProducts(activePackage.product_slug)
+                      setSelectedProducts(comboSlugs)
                       setShowProductModal(true)
                     }}
                   >
@@ -549,6 +616,18 @@ const s = StyleSheet.create({
   },
   activeProductName: { fontSize: 18, fontWeight: '700', color: Colors.pine, marginBottom: 10 },
   activeDetailRow: { fontSize: 13, color: '#555', lineHeight: 22, marginBottom: 4 },
+  comboImagesRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 14, flexWrap: 'wrap' },
+  comboImgWrap: { alignItems: 'center', maxWidth: 110 },
+  comboImg: { width: 64, height: 64 },
+  comboImgLabel: { fontSize: 12, color: Colors.pine, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  scheduleRowLast: { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
+  scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
+  scheduleTimeText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  scheduleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  scheduleImg: { width: 36, height: 36 },
+  scheduleInstruction: { flex: 1, fontSize: 13, color: '#444', lineHeight: 18 },
   activeActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   changeBtn: {
     flex: 1, borderWidth: 1.5, borderColor: Colors.pine + '40',
