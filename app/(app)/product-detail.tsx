@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
+import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 const PRODUCT_LIST: Record<string, { name: string; emoji: string; desc: string }> = {
@@ -21,7 +21,7 @@ const PRODUCT_LIST: Record<string, { name: string; emoji: string; desc: string }
 export default function ProductDetailScreen() {
   const router = useRouter()
   const params = useLocalSearchParams<{ slug: string }>()
-  const [slug, setSlug] = useState(params.slug || '')
+  const [dbSlugs, setDbSlugs] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [orderCode, setOrderCode] = useState('')
   const [purchaseCount, setPurchaseCount] = useState(0)
@@ -34,28 +34,30 @@ export default function ProductDetailScreen() {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) { setLoading(false); return }
 
-      // Get current active selection + order code
       const { data: profile } = await supabase
         .from('profiles')
         .select('order_code')
         .eq('id', user.id)
         .single()
-      if (profile?.order_code) setOrderCode(profile.order_code)
+      const code = profile?.order_code || ''
+      if (code) setOrderCode(code)
 
-      // Get active product selection (in case navigating from profile)
-      const { data: sel } = await supabase
+      // Load ALL active product selections (combo-aware), filtered to known products.
+      let q = supabase
         .from('product_selections')
-        .select('product_slug')
+        .select('product_slug, selected_at')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('selected_at', { ascending: false })
-        .limit(1)
-        .single()
-      if (sel?.product_slug) setSlug(sel.product_slug)
+        .order('selected_at', { ascending: true })
+      if (code) q = q.eq('order_code', code)
+      const { data: selData } = await q
+      const slugs = (selData || [])
+        .map(r => r.product_slug as string)
+        .filter(sg => sg && !!PRODUCTS[sg])
+      if (slugs.length > 0) setDbSlugs(slugs)
 
-      // Get purchase count for loyalty message
       const { count } = await supabase
         .from('purchase_history')
         .select('*', { count: 'exact', head: true })
@@ -79,8 +81,15 @@ export default function ProductDetailScreen() {
     )
   }
 
-  const product = PRODUCT_LIST[slug]
-  const productConfig = PRODUCTS[slug]
+  // Resolve which products to show: prefer DB (combo-aware), fall back to the nav param.
+  const paramSlug = (params.slug as string) || ''
+  const baseSlugs = dbSlugs.length > 0 ? dbSlugs : (paramSlug ? [paramSlug] : [])
+  const validSlugs = baseSlugs.filter(sg => PRODUCT_LIST[sg] && PRODUCTS[sg])
+  const primary = validSlugs[0] || ''
+  const product = PRODUCT_LIST[primary]
+  const productConfig = PRODUCTS[primary]
+  const isCombo = validSlugs.length >= 2
+  const comboSchedule = isCombo ? getComboSchedule(validSlugs) : null
 
   if (loading) {
     return (
@@ -110,18 +119,37 @@ export default function ProductDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Text style={s.backText}>‹ Kthehu</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Produkti Im</Text>
+        <Text style={s.headerTitle}>{isCombo ? 'Paketa Ime' : 'Produkti Im'}</Text>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Hero */}
         <View style={s.hero}>
-          {PRODUCT_IMAGES[slug]
-          ? <Image source={{ uri: PRODUCT_IMAGES[slug] }} style={s.heroImg} resizeMode="contain" />
-          : <Text style={s.heroEmoji}>{product.emoji}</Text>}
-          <Text style={s.heroName}>{product.name}</Text>
-          <Text style={s.heroDesc}>{product.desc}</Text>
+          {isCombo ? (
+            <>
+              <View style={s.heroImagesRow}>
+                {validSlugs.map(sg => (
+                  <View key={sg} style={s.heroImgWrap}>
+                    {PRODUCT_IMAGES[sg]
+                      ? <Image source={{ uri: PRODUCT_IMAGES[sg] }} style={s.heroImgSmall} resizeMode="contain" />
+                      : <Text style={s.heroEmoji}>{PRODUCT_LIST[sg]?.emoji}</Text>}
+                    <Text style={s.heroImgLabel}>{PRODUCT_LIST[sg]?.name}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={s.heroName}>Paketa Juaj</Text>
+              <Text style={s.heroDesc}>{validSlugs.map(sg => PRODUCT_LIST[sg]?.name).join('  +  ')}</Text>
+            </>
+          ) : (
+            <>
+              {PRODUCT_IMAGES[primary]
+                ? <Image source={{ uri: PRODUCT_IMAGES[primary] }} style={s.heroImg} resizeMode="contain" />
+                : <Text style={s.heroEmoji}>{product.emoji}</Text>}
+              <Text style={s.heroName}>{product.name}</Text>
+              <Text style={s.heroDesc}>{product.desc}</Text>
+            </>
+          )}
           {purchaseCount > 1 && (
             <View style={s.loyaltyBadge}>
               <Text style={s.loyaltyText}>⭐ Klient besnik — {purchaseCount} paketa</Text>
@@ -129,46 +157,101 @@ export default function ProductDetailScreen() {
           )}
         </View>
 
-        {/* How to use */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>📋 Si të përdorni</Text>
-          <View style={s.infoCard}>
-            <Text style={s.infoText}>{productConfig.how}</Text>
-          </View>
-        </View>
+        {isCombo ? (
+          <>
+            {comboSchedule ? (
+              /* Combined daily schedule for the two products */
+              <View style={s.section}>
+                <Text style={s.sectionTitle}>📅 Orari i Ditës</Text>
+                <View style={s.infoCard}>
+                  {comboSchedule.map((item, i) => (
+                    <View
+                      key={i}
+                      style={[s.scheduleRow, i === comboSchedule.length - 1 && s.scheduleRowLast]}
+                    >
+                      <View style={s.scheduleTime}>
+                        <Text style={s.scheduleTimeText}>{item.time}</Text>
+                      </View>
+                      <View style={s.scheduleInfo}>
+                        {PRODUCT_IMAGES[item.slug]
+                          ? <Image source={{ uri: PRODUCT_IMAGES[item.slug] }} style={s.scheduleImg} resizeMode="contain" />
+                          : null}
+                        <Text style={s.scheduleInstruction}>{item.instruction}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              /* No predefined combo schedule — show each product's own instructions */
+              validSlugs.map(sg => {
+                const cfg = PRODUCTS[sg]
+                if (!cfg) return null
+                return (
+                  <View key={sg} style={s.section}>
+                    <Text style={s.sectionTitle}>{PRODUCT_LIST[sg]?.emoji} {PRODUCT_LIST[sg]?.name}</Text>
+                    <View style={s.infoCard}>
+                      <Text style={s.infoText}>⏰ {cfg.when}</Text>
+                      <Text style={[s.infoText, { marginTop: 8 }]}>📋 {cfg.how}</Text>
+                      <Text style={[s.infoText, { marginTop: 8 }]}>🔔 {cfg.notif_time} — {cfg.notif_msg}</Text>
+                    </View>
+                  </View>
+                )
+              })
+            )}
 
-        {/* When */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>⏰ Kur ta përdorni</Text>
-          <View style={s.infoCard}>
-            <Text style={s.infoText}>{productConfig.when}</Text>
-          </View>
-        </View>
-
-        {/* Storage */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
-          <View style={s.infoCard}>
-            <Text style={s.infoText}>{productConfig.storage}</Text>
-          </View>
-        </View>
-
-        {/* Combo tip if available */}
-        {productConfig.combo && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>💡 Kombinim i rekomanduar</Text>
-            <View style={[s.infoCard, { borderLeftColor: Colors.aloe }]}>
-              <Text style={s.infoText}>{productConfig.combo}</Text>
+            {/* Storage note (shared) */}
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
+              <View style={s.infoCard}>
+                <Text style={s.infoText}>{productConfig.storage}</Text>
+              </View>
             </View>
-          </View>
-        )}
+          </>
+        ) : (
+          <>
+            {/* How to use */}
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>📋 Si të përdorni</Text>
+              <View style={s.infoCard}>
+                <Text style={s.infoText}>{productConfig.how}</Text>
+              </View>
+            </View>
 
-        {/* Reminder time */}
-        <View style={s.reminderCard}>
-          <Text style={s.reminderTitle}>🔔 Kujtues ditor</Text>
-          <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
-          <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
-        </View>
+            {/* When */}
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>⏰ Kur ta përdorni</Text>
+              <View style={s.infoCard}>
+                <Text style={s.infoText}>{productConfig.when}</Text>
+              </View>
+            </View>
+
+            {/* Storage */}
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
+              <View style={s.infoCard}>
+                <Text style={s.infoText}>{productConfig.storage}</Text>
+              </View>
+            </View>
+
+            {/* Combo tip if available */}
+            {productConfig.combo && (
+              <View style={s.section}>
+                <Text style={s.sectionTitle}>💡 Kombinim i rekomanduar</Text>
+                <View style={[s.infoCard, { borderLeftColor: Colors.aloe }]}>
+                  <Text style={s.infoText}>{productConfig.combo}</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Reminder time */}
+            <View style={s.reminderCard}>
+              <Text style={s.reminderTitle}>🔔 Kujtues ditor</Text>
+              <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
+              <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
+            </View>
+          </>
+        )}
 
         {/* Order code */}
         <View style={s.codeCard}>
@@ -208,6 +291,10 @@ const s = StyleSheet.create({
   heroImg: { width: 160, height: 160, marginBottom: 8 },
   heroName: { fontSize: 26, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
   heroDesc: { fontSize: 14, color: Colors.aloe, textAlign: 'center', lineHeight: 20 },
+  heroImagesRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 14, flexWrap: 'wrap' },
+  heroImgWrap: { alignItems: 'center', maxWidth: 110 },
+  heroImgSmall: { width: 90, height: 90 },
+  heroImgLabel: { fontSize: 12, color: Colors.alabaster, fontWeight: '600', textAlign: 'center', marginTop: 6 },
   loyaltyBadge: {
     marginTop: 14, backgroundColor: Colors.aloe + '30',
     borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6,
@@ -221,6 +308,13 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
   infoText: { fontSize: 14, color: '#444', lineHeight: 22 },
+  scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  scheduleRowLast: { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
+  scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
+  scheduleTimeText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  scheduleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  scheduleImg: { width: 36, height: 36 },
+  scheduleInstruction: { flex: 1, fontSize: 13, color: '#444', lineHeight: 18 },
   reminderCard: {
     marginHorizontal: 16, marginTop: 16, backgroundColor: Colors.pine + '10',
     borderRadius: 14, padding: 16, alignItems: 'center',
