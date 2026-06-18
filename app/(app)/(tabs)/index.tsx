@@ -245,4 +245,38 @@ const s = StyleSheet.create({
   },
   activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
   activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
+  // Locked premium styles
+  lockedDiet: {
+    backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 8,
+    borderRadius: 14, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    opacity: 0.75,
+  },
+  lockedDietTitle: { fontSize: 15, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
+  lockedDietSub: { fontSize: 11, color: '#6B7F72' },
+  lockIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#ECEFE8', alignItems: 'center', justifyContent: 'center',
+  },
+  lockedRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8, marginBottom: 12 },
+  lockedSmall: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    opacity: 0.75,
+  },
+  lockedSmallIcon: { fontSize: 20, marginBottom: 4 },
+  lockedSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
+  // Big activate CTA card
+  bigActivateCard: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 4,
+    borderRadius: 16, padding: 20,
+  },
+  bigActivateTitle: { fontSize: 17, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
+  bigActivateSub: { fontSize: 12, color: 'rgba(236,239,232,0.65)', lineHeight: 17, marginBottom: 16 },
+  bigActivateBtn: {
+    backgroundColor: Colors.aloe, borderRadius: 10,
+    paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start',
+  },
+  bigActivateBtnText: { fontSize: 14, fontWeight: '600', color: Colors.pine },
 })
