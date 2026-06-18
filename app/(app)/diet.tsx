@@ -113,9 +113,9 @@ export default function DietScreen() {
     let currentDay: { title: string; lines: string[] } | null = null
 
     for (const line of lines) {
-      if (line.match(/^═+\s*DIT[Ëë]\s*\d+/i) || line.match(/^═+\s*DAY\s*\d+/i)) {
+      if (line.match(/^[═=]+\s*DIT[ËëEeAa]\s*\d+/i) || line.match(/^[═=]+\s*DAY\s*\d+/i)) {
         if (currentDay) days.push(currentDay)
-        currentDay = { title: line.replace(/═/g, '').trim(), lines: [] }
+        currentDay = { title: line.replace(/[═=]/g, '').trim(), lines: [] }
       } else if (currentDay) {
         currentDay.lines.push(line)
       } else {
@@ -233,12 +233,6 @@ export default function DietScreen() {
           <Text style={s.targetText}>
             🎯 Qëllimi: <Text style={s.targetNum}>{plan!.plan_content.target_calories} kcal/ditë</Text>
           </Text>
-          <TouchableOpacity onPress={() => {
-            setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(orderCode)}`)
-            setState('webview')
-          }}>
-            <Text style={s.regenText}>🔄 Rigjenero</Text>
-          </TouchableOpacity>
         </View>
       )}
 
@@ -258,7 +252,7 @@ export default function DietScreen() {
                 onPress={() => setActiveTab(i)}
               >
                 <Text style={[s.tabText, activeTab === i && s.tabTextActive]}>
-                  {d.title.replace(/DITË\s*/i, 'D').replace(/DAY\s*/i, 'D')}
+                  {d.title.replace(/DIT[ËëEeAa]\s*/i, 'D').replace(/DAY\s*/i, 'D')}
                 </Text>
               </TouchableOpacity>
             ))}
