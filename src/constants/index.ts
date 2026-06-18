@@ -80,6 +80,7 @@ export const API = {
   challenge: 'https://index-blush-phi.vercel.app',
   calculator: 'https://kalkulatori-zeta.vercel.app',
   bodyCalc: 'https://llogaritje-trupi.vercel.app',
+  resetBook: 'https://rquoydwzulecmttrjdzo.supabase.co/storage/v1/object/public/books/reset-book.pdf',
 }
 
 export const PRODUCTS: Record<string, any> = {
