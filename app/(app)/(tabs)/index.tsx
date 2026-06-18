@@ -9,8 +9,8 @@ import { useFocusEffect } from 'expo-router'
 
 const FREE_TOOLS = [
   { id: 'challenge', icon: '📅', name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
-  { id: 'calculator', icon: '⚖️', name: 'Llogarit Humbjen', sub: 'Kalkulator peshe', url: API.calculator },
-  { id: 'quiz', icon: '✨', name: 'Gjej Paketën', sub: 'Quiz produktesh', url: API.quiz },
+  { id: 'calculator', icon: '⚖️', name: 'Gjej Sa Kg Humb Me Paketat SoHealthy', sub: 'Kalkulator peshe', url: API.calculator },
+  { id: 'quiz', icon: '✨', name: 'Gjej Paketën Perfekte Për Ty Nga SoHealthy', sub: 'Quiz produktesh', url: API.quiz },
   { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
 ]
 
