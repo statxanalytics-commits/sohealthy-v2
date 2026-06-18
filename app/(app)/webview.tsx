@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Platform } from 'react-native'
-// WebView only available on native
+// WebView only available on native — web uses iframe
 const WebView = Platform.OS === 'web' ? null : require('react-native-webview').WebView
 import { Colors } from '../../src/constants'
 
@@ -26,17 +26,27 @@ export default function WebViewScreen() {
           <ActivityIndicator color={Colors.pine} size="large" />
         </View>
       )}
-      <WebView
-        source={{ uri: url }}
-        style={{ flex: 1 }}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        allowsInlineMediaPlayback={true}
-        userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
-        onError={() => setLoading(false)}
-      />
+      {Platform.OS === 'web' ? (
+        <View style={{ flex: 1 }}>
+          <iframe
+            src={url}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', border: 'none' } as any}
+            onLoad={() => setLoading(false)}
+          />
+        </View>
+      ) : (
+        <WebView
+          source={{ uri: url }}
+          style={{ flex: 1 }}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          allowsInlineMediaPlayback={true}
+          userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+          onError={() => setLoading(false)}
+        />
+      )}
     </SafeAreaView>
   )
 }
