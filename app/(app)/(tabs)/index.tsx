@@ -107,6 +107,23 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* RESET Book — featured premium */}
+        {isPremium && (
+          <TouchableOpacity
+            style={s.bookCard}
+            onPress={() => router.push({ pathname: '/(app)/webview', params: { url: API.resetBook, title: 'Libri RESET — Nga Pavli' } })}
+          >
+            <View style={s.bookCardLeft}>
+              <Text style={s.bookLabel}>PREMIUM</Text>
+              <Text style={s.bookTitle}>📖 Libri RESET</Text>
+              <Text style={s.bookSub}>Udhëzuesi i shpejtë nga Pavli</Text>
+            </View>
+            <View style={s.bookArrow}>
+              <Text style={s.bookArrowText}>Lexo →</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Free tools */}
         <Text style={s.sectionLabel}>MJETET FALAS</Text>
         <View style={s.freeGrid}>
@@ -219,6 +236,18 @@ const s = StyleSheet.create({
   dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
+  bookCard: {
+    backgroundColor: Colors.aloe,
+    borderRadius: 14, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookCardLeft: { flex: 1 },
+  bookLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', marginBottom: 4, opacity: 0.7 },
+  bookTitle: { fontSize: 17, color: Colors.pine, fontWeight: '700', marginBottom: 2 },
+  bookSub: { fontSize: 12, color: Colors.pine, opacity: 0.7, marginTop: 2 },
+  bookArrow: { backgroundColor: Colors.pine, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 12 },
+  bookArrowText: { fontSize: 13, fontWeight: '600', color: Colors.alabaster },
   sectionLabel: {
     fontSize: 10, letterSpacing: 2, color: '#6B7F72', fontWeight: '600',
     marginHorizontal: 16, marginTop: 20, marginBottom: 10,
