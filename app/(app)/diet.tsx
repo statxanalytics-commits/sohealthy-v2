@@ -40,27 +40,44 @@ export default function DietScreen() {
     setState('loading')
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) { setState('empty'); return }
 
-      const { data: profile } = await supabase
-        .from('profiles')
+      // Get order_code from orders table (activated_by = user.id)
+      const { data: orders } = await supabase
+        .from('orders')
         .select('order_code')
-        .eq('id', user.id)
-        .single()
+        .eq('activated_by', user.id)
+        .eq('used', true)
+        .order('verified_at', { ascending: false })
+        .limit(1)
 
-      const code = profile?.order_code || ''
+      const code = orders?.[0]?.order_code || ''
       setOrderCode(code)
 
-      // Check if plan exists in Supabase
-      const { data: plans } = await supabase
+      if (!code) { setState('empty'); return }
+
+      // Check if plan exists — query by order_code (works with RLS + service key saves)
+      const { data: plansByCode } = await supabase
         .from('diet_plans')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('order_code', code)
         .order('generated_at', { ascending: false })
         .limit(1)
 
-      if (plans && plans.length > 0 && plans[0].plan_content?.plan_text) {
-        setPlan(plans[0])
+      // Fallback: also try by user_id in case order_code wasn't saved
+      const { data: plansByUser } = plansByCode?.length
+        ? { data: null }
+        : await supabase
+            .from('diet_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('generated_at', { ascending: false })
+            .limit(1)
+
+      const found = plansByCode?.[0] || plansByUser?.[0]
+
+      if (found?.plan_content?.plan_text) {
+        setPlan(found)
         setState('saved')
       } else {
         // No saved plan — show generate CTA
