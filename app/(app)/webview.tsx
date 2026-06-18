@@ -2,9 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Platform } from 'react-native'
-// WebView only available on native
-const WebView = Platform.OS === 'web' ? null : require('react-native-webview').WebView
+import { WebView } from 'react-native-webview'
 import { Colors } from '../../src/constants'
 
 export default function WebViewScreen() {
