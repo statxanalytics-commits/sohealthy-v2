@@ -200,11 +200,17 @@ export default function ProductDetailScreen() {
               })
             )}
 
-            {/* Storage note (shared) */}
+            {/* Storage — per product (shots = fridge, sachets = dry place) */}
             <View style={s.section}>
               <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
               <View style={s.infoCard}>
-                <Text style={s.infoText}>{productConfig.storage}</Text>
+                {validSlugs.map((sg, i) => (
+                  PRODUCTS[sg] ? (
+                    <Text key={sg} style={[s.infoText, i > 0 && { marginTop: 8 }]}>
+                      <Text style={{ fontWeight: '700' }}>{PRODUCT_LIST[sg]?.name}: </Text>{PRODUCTS[sg].storage}
+                    </Text>
+                  ) : null
+                ))}
               </View>
             </View>
           </>
