@@ -73,7 +73,9 @@ export default function ActivateScreen() {
       }, { onConflict: 'order_code' });
 
       setSuccess('Llogaria juaj premium u aktivizua me sukses! 🎉');
-      setTimeout(() => router.replace('/(app)/my-packages'), 1500);
+      setTimeout(() => {
+        router.replace('/(app)/(tabs)/')
+      }, 1500);
 
     } catch (err) {
       setError('Diçka shkoi keq. Provoni përsëri.');

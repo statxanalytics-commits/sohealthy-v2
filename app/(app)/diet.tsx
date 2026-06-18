@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Platform } from 'react-native'
-// WebView only available on native
+// WebView only available on native — web uses iframe
 const WebView = Platform.OS === 'web' ? null : require('react-native-webview').WebView
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
@@ -174,17 +174,22 @@ export default function DietScreen() {
           </TouchableOpacity>
           <Text style={s.title}>🥗 Gjenero Planin</Text>
         </View>
-        <WebView
-          source={{ uri: webUrl }}
-          style={{ flex: 1 }}
-          javaScriptEnabled
-          domStorageEnabled
-          onNavigationStateChange={handleWebViewNavChange}
-          onLoadEnd={() => {
-            // After load, check if plan was saved
-            setTimeout(loadPlan, 3000)
-          }}
-        />
+        {Platform.OS === 'web' ? (
+          <iframe
+            src={webUrl}
+            style={{ flex: 1, border: 'none', width: '100%', height: '100%' } as any}
+            onLoad={() => setTimeout(loadPlan, 3000)}
+          />
+        ) : (
+          <WebView
+            source={{ uri: webUrl }}
+            style={{ flex: 1 }}
+            javaScriptEnabled
+            domStorageEnabled
+            onNavigationStateChange={handleWebViewNavChange}
+            onLoadEnd={() => setTimeout(loadPlan, 3000)}
+          />
+        )}
       </SafeAreaView>
     )
   }
