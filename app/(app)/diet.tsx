@@ -42,16 +42,27 @@ export default function DietScreen() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setState('empty'); return }
 
-      // Get order_code from orders table (activated_by = user.id)
-      const { data: orders } = await supabase
-        .from('orders')
+      // Get order_code from the user's own profile (always readable; set on activation)
+      const { data: prof } = await supabase
+        .from('profiles')
         .select('order_code')
-        .eq('activated_by', user.id)
-        .eq('used', true)
-        .order('verified_at', { ascending: false })
-        .limit(1)
+        .eq('id', user.id)
+        .single()
 
-      const code = orders?.[0]?.order_code || ''
+      let code = prof?.order_code || ''
+
+      // Fallback: older accounts may only have it on the orders table
+      if (!code) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('order_code')
+          .eq('activated_by', user.id)
+          .eq('used', true)
+          .order('verified_at', { ascending: false })
+          .limit(1)
+        code = orders?.[0]?.order_code || ''
+      }
+
       setOrderCode(code)
 
       if (!code) { setState('empty'); return }
