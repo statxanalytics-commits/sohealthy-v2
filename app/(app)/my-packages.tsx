@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { Package, Calendar, Clock, Bell, Scale, ClipboardList, Leaf, Check } from 'lucide-react-native'
 import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -17,16 +18,16 @@ const PRODUCT_NAMES: Record<string, string> = {
 }
 
 const ALL_PRODUCTS = [
-  { slug: 'detox-shot', name: 'Detox Shot', emoji: '🌿' },
-  { slug: 'detox-2', name: 'Detox 2.0', emoji: '⚡' },
-  { slug: 'green-shot', name: 'Green Shot', emoji: '💚' },
-  { slug: 'berry-bliss', name: 'Berry Bliss', emoji: '🫐' },
-  { slug: 'aloe-shot', name: 'Aloe Shot', emoji: '🌵' },
-  { slug: 'metabolic-shot', name: 'Metabolic Shot', emoji: '🔥' },
-  { slug: 'g1', name: 'G1 Sachet', emoji: '🌿' },
-  { slug: 'nf01', name: 'NF-01', emoji: '🌙' },
-  { slug: 'fiber-plus', name: 'Fiber+', emoji: '🌾' },
-  { slug: 'green-organics', name: 'Green Organics', emoji: '🌱' },
+  { slug: 'detox-shot', name: 'Detox Shot' },
+  { slug: 'detox-2', name: 'Detox 2.0' },
+  { slug: 'green-shot', name: 'Green Shot' },
+  { slug: 'berry-bliss', name: 'Berry Bliss' },
+  { slug: 'aloe-shot', name: 'Aloe Shot' },
+  { slug: 'metabolic-shot', name: 'Metabolic Shot' },
+  { slug: 'g1', name: 'G1 Sachet' },
+  { slug: 'nf01', name: 'NF-01' },
+  { slug: 'fiber-plus', name: 'Fiber+' },
+  { slug: 'green-organics', name: 'Green Organics' },
 ]
 
 type Package = {
@@ -302,7 +303,7 @@ export default function MyPackagesScreen() {
         {activePackage && (
           <View style={s.activeHero}>
             <View style={s.activeHeroLeft}>
-              <Text style={s.activeLabel}>📦 PAKETA AKTIVE</Text>
+              <View style={s.activeLabelRow}><Package size={12} color={Colors.aloe} strokeWidth={2} /><Text style={s.activeLabel}>PAKETA AKTIVE</Text></View>
               <Text style={s.activeCode}>{activePackage.order_code}</Text>
               <Text style={s.activeType}>{activePackage.package_type || 'Premium'}</Text>
               <Text style={s.activeDate}>Aktivizuar: {formatDate(activePackage.activated_at)}</Text>
@@ -322,9 +323,7 @@ export default function MyPackagesScreen() {
                 resizeMode="contain"
               />
             ) : (
-              <Text style={s.activeProductEmoji}>
-                {ALL_PRODUCTS.find(p => p.slug === activePackage.product_slug)?.emoji || '📦'}
-              </Text>
+              <Leaf size={48} color={Colors.alabaster} strokeWidth={1.5} />
             )}
           </View>
         )}
@@ -348,7 +347,7 @@ export default function MyPackagesScreen() {
                     </View>
                     {activeComboSchedule ? (
                       <>
-                        <Text style={s.scheduleTitle}>📅 Orari i Ditës</Text>
+                        <View style={s.scheduleTitleRow}><Calendar size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.scheduleTitle}>Orari i Ditës</Text></View>
                         {activeComboSchedule.map((item, i) => (
                           <View key={i} style={[s.scheduleRow, i === activeComboSchedule.length - 1 && s.scheduleRowLast]}>
                             <View style={s.scheduleTime}>
@@ -366,9 +365,10 @@ export default function MyPackagesScreen() {
                     ) : (
                       comboSlugs.map(sg => (
                         PRODUCTS[sg] ? (
-                          <Text key={sg} style={s.activeDetailRow}>
-                            ⏰ {PRODUCT_NAMES[sg] || sg}: {PRODUCTS[sg].when}
-                          </Text>
+                          <View key={sg} style={s.infoLine}>
+                            <Clock size={14} color={Colors.pine} strokeWidth={1.75} />
+                            <Text style={[s.activeDetailRow, { flex: 1 }]}>{PRODUCT_NAMES[sg] || sg}: {PRODUCTS[sg].when}</Text>
+                          </View>
                         ) : null
                       ))
                     )}
@@ -380,12 +380,14 @@ export default function MyPackagesScreen() {
                     </Text>
                     {PRODUCTS[activePackage.product_slug] && (
                       <>
-                        <Text style={s.activeDetailRow}>
-                          ⏰ {PRODUCTS[activePackage.product_slug].when}
-                        </Text>
-                        <Text style={s.activeDetailRow}>
-                          🔔 {PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}
-                        </Text>
+                        <View style={s.infoLine}>
+                          <Clock size={14} color={Colors.pine} strokeWidth={1.75} />
+                          <Text style={[s.activeDetailRow, { flex: 1 }]}>{PRODUCTS[activePackage.product_slug].when}</Text>
+                        </View>
+                        <View style={s.infoLine}>
+                          <Bell size={14} color={Colors.pine} strokeWidth={1.75} />
+                          <Text style={[s.activeDetailRow, { flex: 1 }]}>{PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}</Text>
+                        </View>
                       </>
                     )}
                   </>
@@ -428,7 +430,7 @@ export default function MyPackagesScreen() {
         {activePackage && (
           <View style={s.weightSection}>
             <View style={s.weightHeader}>
-              <Text style={s.sectionTitle}>⚖️ Humbja e Peshës</Text>
+              <View style={s.sectionTitleRow}><Scale size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Humbja e Peshës</Text></View>
               <TouchableOpacity style={s.addWeightBtn} onPress={() => setShowWeightModal(true)}>
                 <Text style={s.addWeightText}>+ Shto Peshën</Text>
               </TouchableOpacity>
@@ -458,7 +460,7 @@ export default function MyPackagesScreen() {
               </View>
             ) : (
               <TouchableOpacity style={s.emptyWeight} onPress={() => setShowWeightModal(true)}>
-                <Text style={s.emptyWeightText}>Shto peshën fillestare për të gjurmuar progresin tuaj 📊</Text>
+                <Text style={s.emptyWeightText}>Shto peshën fillestare për të gjurmuar progresin tuaj</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -467,15 +469,13 @@ export default function MyPackagesScreen() {
         {/* Purchase history */}
         {packages.filter(p => !p.is_active).length > 0 && (
           <View style={s.historySection}>
-            <Text style={s.sectionTitle}>📋 Historia e Blerjeve</Text>
+            <View style={[s.sectionTitleRow, { marginBottom: 10 }]}><ClipboardList size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Historia e Blerjeve</Text></View>
             {packages.filter(p => !p.is_active).map(pkg => (
               <View key={pkg.order_code} style={s.historyCard}>
                 <View style={s.historyLeft}>
                   {pkg.product_slug && PRODUCT_IMAGES[pkg.product_slug]
                     ? <Image source={{ uri: PRODUCT_IMAGES[pkg.product_slug] }} style={s.historyImg} resizeMode="contain" />
-                    : <Text style={s.historyEmoji}>
-                        {ALL_PRODUCTS.find(p => p.slug === pkg.product_slug)?.emoji || '📦'}
-                      </Text>
+                    : <Leaf size={28} color={Colors.aloe} strokeWidth={1.5} />
                   }
                 </View>
                 <View style={s.historyInfo}>
@@ -506,7 +506,7 @@ export default function MyPackagesScreen() {
         {/* Empty state */}
         {packages.length === 0 && (
           <View style={s.emptyState}>
-            <Text style={s.emptyEmoji}>📦</Text>
+            <View style={s.emptyIconWrap}><Package size={40} color={Colors.pine} strokeWidth={1.5} /></View>
             <Text style={s.emptyTitle}>Nuk keni paketa aktive</Text>
             <Text style={s.emptyText}>Aktivizoni llogarinë tuaj me kodin e porosisë.</Text>
             <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/activate')}>
@@ -544,12 +544,12 @@ export default function MyPackagesScreen() {
                   >
                     {PRODUCT_IMAGES[p.slug]
                       ? <Image source={{ uri: PRODUCT_IMAGES[p.slug] }} style={s.productRowImg} resizeMode="contain" />
-                      : <Text style={s.productRowEmoji}>{p.emoji}</Text>
+                      : <View style={s.productRowIconWrap}><Leaf size={26} color={Colors.aloe} strokeWidth={1.5} /></View>
                     }
                     <Text style={[s.productRowName, isSelected && { color: Colors.pine, fontWeight: '700' }]}>
                       {p.name}
                     </Text>
-                    {isSelected && <Text style={s.checkMark}>✓</Text>}
+                    {isSelected && <Check size={16} color={Colors.pine} strokeWidth={3} />}
                   </TouchableOpacity>
                 )
               })}
@@ -611,12 +611,12 @@ const s = StyleSheet.create({
     borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
   },
   activeHeroLeft: { flex: 1 },
-  activeLabel: { fontSize: 10, letterSpacing: 2, color: Colors.aloe, fontWeight: '700', marginBottom: 8 },
+  activeLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  activeLabel: { fontSize: 10, letterSpacing: 2, color: Colors.aloe, fontWeight: '700' },
   activeCode: { fontSize: 22, fontWeight: '700', color: Colors.alabaster, letterSpacing: 1, marginBottom: 4 },
   activeType: { fontSize: 13, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   activeDate: { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   activeProductImg: { width: 90, height: 90 },
-  activeProductEmoji: { fontSize: 56 },
   heroImagesRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   heroImgSmall: { width: 60, height: 60 },
   activeDetails: {
@@ -625,12 +625,14 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
   activeProductName: { fontSize: 18, fontWeight: '700', color: Colors.pine, marginBottom: 10 },
-  activeDetailRow: { fontSize: 13, color: '#555', lineHeight: 22, marginBottom: 4 },
+  activeDetailRow: { fontSize: 13, color: '#555', lineHeight: 20 },
+  infoLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
   comboImagesRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 14, flexWrap: 'wrap' },
   comboImgWrap: { alignItems: 'center', maxWidth: 110 },
   comboImg: { width: 64, height: 64 },
   comboImgLabel: { fontSize: 12, color: Colors.pine, fontWeight: '600', textAlign: 'center', marginTop: 4 },
-  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  scheduleTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   scheduleRowLast: { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
   scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
@@ -656,6 +658,7 @@ const s = StyleSheet.create({
   selectBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   weightSection: { marginBottom: 16 },
   weightHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine },
   addWeightBtn: { backgroundColor: Colors.pine, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   addWeightText: { color: '#fff', fontWeight: '700', fontSize: 12 },
@@ -683,23 +686,17 @@ const s = StyleSheet.create({
   },
   historyLeft: { width: 56, alignItems: 'center' },
   historyImg: { width: 50, height: 50 },
-  historyEmoji: { fontSize: 32 },
   historyInfo: { flex: 1, paddingHorizontal: 12 },
   historyProduct: { fontSize: 14, fontWeight: '700', color: Colors.pine },
   historyCode: { fontSize: 12, color: '#888', marginTop: 2, letterSpacing: 1 },
   historyDate: { fontSize: 11, color: '#aaa', marginTop: 2 },
-  typeBadge: {
-    marginTop: 4, backgroundColor: Colors.pine + '15',
-    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start',
-  },
-  typeBadgeText: { fontSize: 10, color: Colors.pine, fontWeight: '700' },
   historySelectBtn: {
     backgroundColor: Colors.pine + '15', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 6,
   },
   historySelectText: { fontSize: 12, color: Colors.pine, fontWeight: '600' },
   emptyState: { alignItems: 'center', padding: 40 },
-  emptyEmoji: { fontSize: 52, marginBottom: 16 },
+  emptyIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.pine + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
   emptyText: { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 22, marginBottom: 20 },
   activateBtn: { backgroundColor: Colors.pine, borderRadius: 12, paddingHorizontal: 28, paddingVertical: 14 },
@@ -715,9 +712,8 @@ const s = StyleSheet.create({
   },
   productRowSelected: { backgroundColor: Colors.pine + '12', borderWidth: 1.5, borderColor: Colors.pine },
   productRowImg: { width: 44, height: 44, marginRight: 12 },
-  productRowEmoji: { fontSize: 28, marginRight: 12, width: 44, textAlign: 'center' },
+  productRowIconWrap: { width: 44, marginRight: 12, alignItems: 'center' },
   productRowName: { flex: 1, fontSize: 14, color: '#444', fontWeight: '500' },
-  checkMark: { fontSize: 16, color: Colors.pine, fontWeight: '700' },
   modalBtn: { backgroundColor: Colors.pine, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 12 },
   modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   modalCancel: { alignItems: 'center', padding: 12 },
