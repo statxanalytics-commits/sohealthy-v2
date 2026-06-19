@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useState } from 'react'
+import { Package, Star, Calendar, Clock, ClipboardList, Snowflake, Scale, Leaf, ArrowRight } from 'lucide-react-native'
 import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
@@ -12,12 +13,6 @@ const PRODUCT_NAMES: Record<string, string> = {
   'aloe-shot': 'Aloe Shot', 'metabolic-shot': 'Metabolic Shot',
   'g1': 'G1 Sachet', 'nf01': 'NF-01',
   'fiber-plus': 'Fiber+', 'green-organics': 'Green Organics',
-}
-
-const PRODUCT_EMOJIS: Record<string, string> = {
-  'detox-shot': '🌿', 'detox-2': '⚡', 'green-shot': '💚',
-  'berry-bliss': '🫐', 'aloe-shot': '🌵', 'metabolic-shot': '🔥',
-  'g1': '🌿', 'nf01': '🌙', 'fiber-plus': '🌾', 'green-organics': '🌱',
 }
 
 type ActivePackage = {
@@ -140,7 +135,7 @@ export default function ProductsScreen() {
         {/* NOT PREMIUM */}
         {!isPremium && (
           <View style={s.emptyState}>
-            <Text style={s.emptyEmoji}>📦</Text>
+            <View style={s.emptyIconWrap}><Package size={40} color={Colors.pine} strokeWidth={1.5} /></View>
             <Text style={s.emptyTitle}>Nuk keni paketë aktive</Text>
             <Text style={s.emptyText}>Aktivizoni llogarinë tuaj me kodin e porosisë për të parë produktin tuaj.</Text>
             <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/activate')}>
@@ -159,17 +154,18 @@ export default function ProductsScreen() {
                   <Text style={s.codeBadgeLabel}>KOD AKTIV</Text>
                   <Text style={s.codeBadgeVal}>{activePackage.order_code}</Text>
                 </View>
-                
+
                 {purchaseCount > 1 && (
                   <View style={s.loyaltyBadge}>
-                    <Text style={s.loyaltyText}>⭐ {purchaseCount} paketa</Text>
+                    <Star size={11} color="rgba(255,255,255,0.8)" strokeWidth={2} />
+                    <Text style={s.loyaltyText}>{purchaseCount} paketa</Text>
                   </View>
                 )}
               </View>
               <View style={s.heroRight}>
                 {slug && PRODUCT_IMAGES[slug]
                   ? <Image source={{ uri: PRODUCT_IMAGES[slug] }} style={s.heroImg} resizeMode="contain" />
-                  : <Text style={s.heroEmoji}>{slug ? PRODUCT_EMOJIS[slug] : '📦'}</Text>
+                  : <View style={s.heroIconWrap}><Leaf size={48} color={Colors.alabaster} strokeWidth={1.5} /></View>
                 }
               </View>
             </View>
@@ -183,7 +179,7 @@ export default function ProductsScreen() {
                     <View key={s2} style={s.productImgWrap}>
                       {PRODUCT_IMAGES[s2]
                         ? <Image source={{ uri: PRODUCT_IMAGES[s2] }} style={s.productImgSmall} resizeMode="contain" />
-                        : <Text style={{ fontSize: 32 }}>{PRODUCT_EMOJIS[s2]}</Text>
+                        : <Leaf size={32} color={Colors.aloe} strokeWidth={1.5} />
                       }
                       <Text style={s.productImgLabel}>{PRODUCT_NAMES[s2]}</Text>
                     </View>
@@ -196,7 +192,7 @@ export default function ProductsScreen() {
                   if (combo) {
                     return (
                       <>
-                        <Text style={s.scheduleTitle}>📅 Orari i Ditës</Text>
+                        <View style={s.scheduleTitleRow}><Calendar size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.scheduleTitle}>Orari i Ditës</Text></View>
                         {combo.map((item, i) => (
                           <View key={i} style={s.scheduleRow}>
                             <View style={s.scheduleTime}>
@@ -217,17 +213,17 @@ export default function ProductsScreen() {
                     return (
                       <>
                         <View style={s.infoRow}>
-                          <Text style={s.infoLabel}>⏰ Kur</Text>
+                          <View style={s.infoLabelWrap}><Clock size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Kur</Text></View>
                           <Text style={s.infoVal}>{productConfig.when}</Text>
                         </View>
                         <View style={s.divider} />
                         <View style={s.infoRow}>
-                          <Text style={s.infoLabel}>📋 Si</Text>
+                          <View style={s.infoLabelWrap}><ClipboardList size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Si</Text></View>
                           <Text style={s.infoVal}>{productConfig.how}</Text>
                         </View>
                         <View style={s.divider} />
                         <View style={s.infoRow}>
-                          <Text style={s.infoLabel}>🧊 Ruajtja</Text>
+                          <View style={s.infoLabelWrap}><Snowflake size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Ruajtja</Text></View>
                           <Text style={s.infoVal}>{productConfig.storage}</Text>
                         </View>
                         <View style={s.reminderBox}>
@@ -269,14 +265,14 @@ export default function ProductsScreen() {
 
             {/* Weight loss card */}
             <View style={s.weightCard}>
-              <Text style={s.weightTitle}>⚖️ Humbja e Peshës</Text>
+              <View style={s.weightTitleRow}><Scale size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.weightTitle}>Humbja e Peshës</Text></View>
               {weightLoss !== null ? (
                 <View style={s.weightRow}>
                   <View style={s.weightStat}>
                     <Text style={s.weightStatLbl}>Fillimi</Text>
                     <Text style={s.weightStatVal}>{activePackage.start_weight} kg</Text>
                   </View>
-                  <Text style={s.weightArrow}>→</Text>
+                  <ArrowRight size={18} color="#ccc" strokeWidth={2} style={{ marginHorizontal: 4 }} />
                   <View style={s.weightStat}>
                     <Text style={s.weightStatLbl}>Tani</Text>
                     <Text style={s.weightStatVal}>{activePackage.current_weight} kg</Text>
@@ -315,7 +311,8 @@ export default function ProductsScreen() {
               style={s.historyBtn}
               onPress={() => router.push('/(app)/my-packages')}
             >
-              <Text style={s.historyBtnText}>📋 Shiko Historinë e Blerjeve</Text>
+              <ClipboardList size={16} color={Colors.pine} strokeWidth={1.75} />
+              <Text style={s.historyBtnText}>Shiko Historinë e Blerjeve</Text>
             </TouchableOpacity>
           </>
         )}
@@ -340,7 +337,7 @@ const s = StyleSheet.create({
   headerTitle: { color: Colors.alabaster, fontSize: 24, fontWeight: '700' },
   scroll: { padding: 16 },
   emptyState: { alignItems: 'center', padding: 40 },
-  emptyEmoji: { fontSize: 52, marginBottom: 16 },
+  emptyIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.pine + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
   emptyText: { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 22, marginBottom: 20 },
   heroCard: {
@@ -350,7 +347,7 @@ const s = StyleSheet.create({
   heroLeft: { flex: 1, gap: 8 },
   heroRight: { alignItems: 'center' },
   heroImg: { width: 100, height: 100 },
-  heroEmoji: { fontSize: 64 },
+  heroIconWrap: { width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   codeBadge: { marginBottom: 4 },
   codeBadgeLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '700' },
   codeBadgeVal: { fontSize: 20, fontWeight: '700', color: Colors.alabaster, letterSpacing: 1 },
@@ -360,8 +357,9 @@ const s = StyleSheet.create({
   },
   typeBadgeText: { color: Colors.aloe, fontSize: 11, fontWeight: '700' },
   loyaltyBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start',
   },
   loyaltyText: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
   instructionsCard: {
@@ -369,8 +367,9 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   productName: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 16 },
-  infoRow: { flexDirection: 'row', gap: 12, paddingVertical: 10 },
-  infoLabel: { fontSize: 13, fontWeight: '700', color: Colors.pine, width: 80 },
+  infoRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
+  infoLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 92 },
+  infoLabel: { fontSize: 13, fontWeight: '700', color: Colors.pine },
   infoVal: { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
   divider: { height: 1, backgroundColor: '#f0f0f0' },
   reminderBox: {
@@ -402,7 +401,8 @@ const s = StyleSheet.create({
     backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1,
   },
-  weightTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  weightTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  weightTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine },
   weightRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   weightStat: { alignItems: 'center', flex: 1 },
   weightLossStat: {
@@ -410,7 +410,6 @@ const s = StyleSheet.create({
   },
   weightStatLbl: { fontSize: 11, color: '#888', marginBottom: 4 },
   weightStatVal: { fontSize: 18, fontWeight: '700', color: Colors.pine },
-  weightArrow: { fontSize: 18, color: '#ccc', marginHorizontal: 4 },
   addWeightBtn: {
     backgroundColor: Colors.aloe + '20', borderRadius: 10,
     padding: 12, alignItems: 'center',
@@ -428,15 +427,17 @@ const s = StyleSheet.create({
   },
   newCodeBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   historyBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     borderWidth: 1.5, borderColor: Colors.pine + '30', borderRadius: 10,
-    padding: 14, alignItems: 'center', marginBottom: 8,
+    padding: 14, marginBottom: 8,
   },
   historyBtnText: { color: Colors.pine, fontWeight: '600', fontSize: 14 },
   productImagesRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' },
   productImgWrap: { alignItems: 'center', maxWidth: 80 },
   productImgSmall: { width: 60, height: 60 },
   productImgLabel: { fontSize: 11, color: Colors.pine, fontWeight: '600', textAlign: 'center', marginTop: 4 },
-  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 12 },
+  scheduleTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  scheduleTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
   scheduleTimeText: { color: '#fff', fontWeight: '700', fontSize: 14 },
