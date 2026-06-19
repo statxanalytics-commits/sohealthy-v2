@@ -2,21 +2,22 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { Leaf, Check } from 'lucide-react-native'
 import { Colors, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 // All selectable products with display info
 const PRODUCT_LIST = [
-  { slug: 'detox-shot', name: 'Detox Shot', emoji: '🌿', desc: 'Nxit metabolizmin & pastron trupin' },
-  { slug: 'detox-2', name: 'Detox 2.0', emoji: '⚡', desc: 'Djeg dhjamin e barkut & ul fryrjen' },
-  { slug: 'green-shot', name: 'Green Shot', emoji: '💚', desc: 'Heq fryrjen & djeg yndyrnat' },
-  { slug: 'berry-bliss', name: 'Berry Bliss', emoji: '🫐', desc: 'Stabilizon sheqerin & pastron mëlçinë' },
-  { slug: 'aloe-shot', name: 'Aloe Shot', emoji: '🌵', desc: 'Qetëson zorrët & pastron lëkurën' },
-  { slug: 'metabolic-shot', name: 'Metabolic Shot', emoji: '🔥', desc: 'Nxit metabolizmin & rrit energjinë' },
-  { slug: 'g1', name: 'G1 Sachet', emoji: '🌿', desc: 'Efekt Ozempik natyral & ngopje' },
-  { slug: 'nf01', name: 'NF-01', emoji: '🌙', desc: 'Zëvendëso darkën & përmirëso gjumin' },
-  { slug: 'fiber-plus', name: 'Fiber+', emoji: '🌾', desc: 'Rregullon tretjen & ngop' },
-  { slug: 'green-organics', name: 'Green Organics', emoji: '🌱', desc: 'Zëvendëso 2 vakte & humb deri 4kg/10 ditë' },
+  { slug: 'detox-shot', name: 'Detox Shot', desc: 'Nxit metabolizmin & pastron trupin' },
+  { slug: 'detox-2', name: 'Detox 2.0', desc: 'Djeg dhjamin e barkut & ul fryrjen' },
+  { slug: 'green-shot', name: 'Green Shot', desc: 'Heq fryrjen & djeg yndyrnat' },
+  { slug: 'berry-bliss', name: 'Berry Bliss', desc: 'Stabilizon sheqerin & pastron mëlçinë' },
+  { slug: 'aloe-shot', name: 'Aloe Shot', desc: 'Qetëson zorrët & pastron lëkurën' },
+  { slug: 'metabolic-shot', name: 'Metabolic Shot', desc: 'Nxit metabolizmin & rrit energjinë' },
+  { slug: 'g1', name: 'G1 Sachet', desc: 'Efekt Ozempik natyral & ngopje' },
+  { slug: 'nf01', name: 'NF-01', desc: 'Zëvendëso darkën & përmirëso gjumin' },
+  { slug: 'fiber-plus', name: 'Fiber+', desc: 'Rregullon tretjen & ngop' },
+  { slug: 'green-organics', name: 'Green Organics', desc: 'Zëvendëso 2 vakte & humb deri 4kg/10 ditë' },
 ]
 
 export default function SelectProductScreen() {
@@ -121,10 +122,10 @@ export default function SelectProductScreen() {
                 onPress={() => setSelected(p.slug)}
                 activeOpacity={0.7}
               >
-                {isSelected && <View style={s.checkBadge}><Text style={s.checkText}>✓</Text></View>}
+                {isSelected && <View style={s.checkBadge}><Check size={13} color="#fff" strokeWidth={3} /></View>}
                 {PRODUCT_IMAGES[p.slug]
                   ? <Image source={{ uri: PRODUCT_IMAGES[p.slug] }} style={s.productImg} resizeMode="contain" />
-                  : <Text style={s.productEmoji}>{p.emoji}</Text>}
+                  : <Leaf size={32} color={Colors.aloe} strokeWidth={1.5} style={{ marginBottom: 10 }} />}
                 <Text style={[s.productName, isSelected && s.productNameSelected]}>{p.name}</Text>
                 <Text style={s.productDesc}>{p.desc}</Text>
               </TouchableOpacity>
@@ -185,8 +186,6 @@ const s = StyleSheet.create({
     width: 22, height: 22, borderRadius: 11,
     backgroundColor: Colors.pine, alignItems: 'center', justifyContent: 'center',
   },
-  checkText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  productEmoji: { fontSize: 32, marginBottom: 10 },
   productImg: { width: 80, height: 80, marginBottom: 8 },
   productName: { fontSize: 13, fontWeight: '700', color: Colors.pine, textAlign: 'center', marginBottom: 4 },
   productNameSelected: { color: Colors.pine },

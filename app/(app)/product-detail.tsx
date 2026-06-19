@@ -2,20 +2,21 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { Star, Calendar, Clock, ClipboardList, Bell, Snowflake, Lightbulb, Leaf } from 'lucide-react-native'
 import { Colors, getComboSchedule, PRODUCT_IMAGES, PRODUCTS } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
-const PRODUCT_LIST: Record<string, { name: string; emoji: string; desc: string }> = {
-  'detox-shot':     { name: 'Detox Shot',      emoji: '🌿', desc: 'Nxit metabolizmin & pastron trupin' },
-  'detox-2':        { name: 'Detox 2.0',        emoji: '⚡', desc: 'Djeg dhjamin e barkut & ul fryrjen' },
-  'green-shot':     { name: 'Green Shot',       emoji: '💚', desc: 'Heq fryrjen & djeg yndyrnat' },
-  'berry-bliss':    { name: 'Berry Bliss',      emoji: '🫐', desc: 'Stabilizon sheqerin & pastron mëlçinë' },
-  'aloe-shot':      { name: 'Aloe Shot',        emoji: '🌵', desc: 'Qetëson zorrët & pastron lëkurën' },
-  'metabolic-shot': { name: 'Metabolic Shot',   emoji: '🔥', desc: 'Nxit metabolizmin & rrit energjinë' },
-  'g1':             { name: 'G1 Sachet',        emoji: '🌿', desc: 'Efekt Ozempik natyral & ngopje' },
-  'nf01':           { name: 'NF-01',            emoji: '🌙', desc: 'Zëvendëso darkën & përmirëso gjumin' },
-  'fiber-plus':     { name: 'Fiber+',           emoji: '🌾', desc: 'Rregullon tretjen & ngop' },
-  'green-organics': { name: 'Green Organics',   emoji: '🌱', desc: 'Zëvendëso 2 vakte & humb deri 4kg/10 ditë' },
+const PRODUCT_LIST: Record<string, { name: string; desc: string }> = {
+  'detox-shot':     { name: 'Detox Shot',      desc: 'Nxit metabolizmin & pastron trupin' },
+  'detox-2':        { name: 'Detox 2.0',        desc: 'Djeg dhjamin e barkut & ul fryrjen' },
+  'green-shot':     { name: 'Green Shot',       desc: 'Heq fryrjen & djeg yndyrnat' },
+  'berry-bliss':    { name: 'Berry Bliss',      desc: 'Stabilizon sheqerin & pastron mëlçinë' },
+  'aloe-shot':      { name: 'Aloe Shot',        desc: 'Qetëson zorrët & pastron lëkurën' },
+  'metabolic-shot': { name: 'Metabolic Shot',   desc: 'Nxit metabolizmin & rrit energjinë' },
+  'g1':             { name: 'G1 Sachet',        desc: 'Efekt Ozempik natyral & ngopje' },
+  'nf01':           { name: 'NF-01',            desc: 'Zëvendëso darkën & përmirëso gjumin' },
+  'fiber-plus':     { name: 'Fiber+',           desc: 'Rregullon tretjen & ngop' },
+  'green-organics': { name: 'Green Organics',   desc: 'Zëvendëso 2 vakte & humb deri 4kg/10 ditë' },
 }
 
 export default function ProductDetailScreen() {
@@ -133,7 +134,7 @@ export default function ProductDetailScreen() {
                   <View key={sg} style={s.heroImgWrap}>
                     {PRODUCT_IMAGES[sg]
                       ? <Image source={{ uri: PRODUCT_IMAGES[sg] }} style={s.heroImgSmall} resizeMode="contain" />
-                      : <Text style={s.heroEmoji}>{PRODUCT_LIST[sg]?.emoji}</Text>}
+                      : <Leaf size={48} color={Colors.alabaster} strokeWidth={1.5} />}
                     <Text style={s.heroImgLabel}>{PRODUCT_LIST[sg]?.name}</Text>
                   </View>
                 ))}
@@ -145,14 +146,15 @@ export default function ProductDetailScreen() {
             <>
               {PRODUCT_IMAGES[primary]
                 ? <Image source={{ uri: PRODUCT_IMAGES[primary] }} style={s.heroImg} resizeMode="contain" />
-                : <Text style={s.heroEmoji}>{product.emoji}</Text>}
+                : <Leaf size={56} color={Colors.alabaster} strokeWidth={1.5} />}
               <Text style={s.heroName}>{product.name}</Text>
               <Text style={s.heroDesc}>{product.desc}</Text>
             </>
           )}
           {purchaseCount > 1 && (
             <View style={s.loyaltyBadge}>
-              <Text style={s.loyaltyText}>⭐ Klient besnik — {purchaseCount} paketa</Text>
+              <Star size={12} color={Colors.aloe} strokeWidth={2} />
+              <Text style={s.loyaltyText}>Klient besnik — {purchaseCount} paketa</Text>
             </View>
           )}
         </View>
@@ -162,7 +164,7 @@ export default function ProductDetailScreen() {
             {comboSchedule ? (
               /* Combined daily schedule for the two products */
               <View style={s.section}>
-                <Text style={s.sectionTitle}>📅 Orari i Ditës</Text>
+                <View style={s.sectionTitleRow}><Calendar size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Orari i Ditës</Text></View>
                 <View style={s.infoCard}>
                   {comboSchedule.map((item, i) => (
                     <View
@@ -189,11 +191,11 @@ export default function ProductDetailScreen() {
                 if (!cfg) return null
                 return (
                   <View key={sg} style={s.section}>
-                    <Text style={s.sectionTitle}>{PRODUCT_LIST[sg]?.emoji} {PRODUCT_LIST[sg]?.name}</Text>
+                    <View style={s.sectionTitleRow}><Leaf size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>{PRODUCT_LIST[sg]?.name}</Text></View>
                     <View style={s.infoCard}>
-                      <Text style={s.infoText}>⏰ {cfg.when}</Text>
-                      <Text style={[s.infoText, { marginTop: 8 }]}>📋 {cfg.how}</Text>
-                      <Text style={[s.infoText, { marginTop: 8 }]}>🔔 {cfg.notif_time} — {cfg.notif_msg}</Text>
+                      <View style={s.infoLine}><Clock size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoText}>{cfg.when}</Text></View>
+                      <View style={[s.infoLine, { marginTop: 8 }]}><ClipboardList size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoText}>{cfg.how}</Text></View>
+                      <View style={[s.infoLine, { marginTop: 8 }]}><Bell size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoText}>{cfg.notif_time} — {cfg.notif_msg}</Text></View>
                     </View>
                   </View>
                 )
@@ -202,7 +204,7 @@ export default function ProductDetailScreen() {
 
             {/* Storage — per product (shots = fridge, sachets = dry place) */}
             <View style={s.section}>
-              <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
+              <View style={s.sectionTitleRow}><Snowflake size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Ruajtja</Text></View>
               <View style={s.infoCard}>
                 {validSlugs.map((sg, i) => (
                   PRODUCTS[sg] ? (
@@ -218,7 +220,7 @@ export default function ProductDetailScreen() {
           <>
             {/* How to use */}
             <View style={s.section}>
-              <Text style={s.sectionTitle}>📋 Si të përdorni</Text>
+              <View style={s.sectionTitleRow}><ClipboardList size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Si të përdorni</Text></View>
               <View style={s.infoCard}>
                 <Text style={s.infoText}>{productConfig.how}</Text>
               </View>
@@ -226,7 +228,7 @@ export default function ProductDetailScreen() {
 
             {/* When */}
             <View style={s.section}>
-              <Text style={s.sectionTitle}>⏰ Kur ta përdorni</Text>
+              <View style={s.sectionTitleRow}><Clock size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Kur ta përdorni</Text></View>
               <View style={s.infoCard}>
                 <Text style={s.infoText}>{productConfig.when}</Text>
               </View>
@@ -234,7 +236,7 @@ export default function ProductDetailScreen() {
 
             {/* Storage */}
             <View style={s.section}>
-              <Text style={s.sectionTitle}>🧊 Ruajtja</Text>
+              <View style={s.sectionTitleRow}><Snowflake size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Ruajtja</Text></View>
               <View style={s.infoCard}>
                 <Text style={s.infoText}>{productConfig.storage}</Text>
               </View>
@@ -243,7 +245,7 @@ export default function ProductDetailScreen() {
             {/* Combo tip if available */}
             {productConfig.combo && (
               <View style={s.section}>
-                <Text style={s.sectionTitle}>💡 Kombinim i rekomanduar</Text>
+                <View style={s.sectionTitleRow}><Lightbulb size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Kombinim i rekomanduar</Text></View>
                 <View style={[s.infoCard, { borderLeftColor: Colors.aloe }]}>
                   <Text style={s.infoText}>{productConfig.combo}</Text>
                 </View>
@@ -252,7 +254,7 @@ export default function ProductDetailScreen() {
 
             {/* Reminder time */}
             <View style={s.reminderCard}>
-              <Text style={s.reminderTitle}>🔔 Kujtues ditor</Text>
+              <View style={s.reminderTitleRow}><Bell size={13} color={Colors.pine} strokeWidth={2} /><Text style={s.reminderTitle}>Kujtues ditor</Text></View>
               <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
               <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
             </View>
@@ -293,7 +295,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.pine, paddingTop: 24, paddingBottom: 32,
     paddingHorizontal: 24, alignItems: 'center',
   },
-  heroEmoji: { fontSize: 64, marginBottom: 12 },
   heroImg: { width: 160, height: 160, marginBottom: 8 },
   heroName: { fontSize: 26, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
   heroDesc: { fontSize: 14, color: Colors.aloe, textAlign: 'center', lineHeight: 20 },
@@ -302,18 +303,21 @@ const s = StyleSheet.create({
   heroImgSmall: { width: 90, height: 90 },
   heroImgLabel: { fontSize: 12, color: Colors.alabaster, fontWeight: '600', textAlign: 'center', marginTop: 6 },
   loyaltyBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: 14, backgroundColor: Colors.aloe + '30',
     borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6,
   },
   loyaltyText: { color: Colors.aloe, fontSize: 13, fontWeight: '600' },
   section: { paddingHorizontal: 16, marginTop: 16 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.pine },
   infoCard: {
     backgroundColor: '#fff', borderRadius: 12, padding: 16,
     borderLeftWidth: 3, borderLeftColor: Colors.pine,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
-  infoText: { fontSize: 14, color: '#444', lineHeight: 22 },
+  infoText: { fontSize: 14, color: '#444', lineHeight: 22, flex: 1 },
+  infoLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   scheduleRowLast: { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
   scheduleTime: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
@@ -326,7 +330,8 @@ const s = StyleSheet.create({
     borderRadius: 14, padding: 16, alignItems: 'center',
     borderWidth: 1, borderColor: Colors.pine + '20',
   },
-  reminderTitle: { fontSize: 12, fontWeight: '700', color: Colors.pine, marginBottom: 8, letterSpacing: 1 },
+  reminderTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  reminderTitle: { fontSize: 12, fontWeight: '700', color: Colors.pine, letterSpacing: 1 },
   reminderTime: { fontSize: 36, fontWeight: '700', color: Colors.pine, marginBottom: 4 },
   reminderMsg: { fontSize: 13, color: '#555', textAlign: 'center' },
   codeCard: {

@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
+import { Lightbulb } from 'lucide-react-native';
 import { supabase } from '../../src/lib/supabase';
 import { useRouter } from 'expo-router';
 
@@ -72,7 +73,7 @@ export default function ActivateScreen() {
         source: orderData?.sheet_source || 'unknown',
       }, { onConflict: 'order_code' });
 
-      setSuccess('Llogaria juaj premium u aktivizua me sukses! 🎉');
+      setSuccess('Llogaria juaj premium u aktivizua me sukses!');
       setTimeout(() => {
         router.replace('/(app)/(tabs)/')
       }, 1500);
@@ -117,9 +118,10 @@ export default function ActivateScreen() {
             : <Text style={styles.buttonText}>Aktivizo</Text>
           }
         </TouchableOpacity>
-        <Text style={styles.hint}>
-          💡 Kodi gjendet brenda paketës suaj, shkruar në letër.
-        </Text>
+        <View style={styles.hintRow}>
+          <Lightbulb size={14} color="#999" strokeWidth={1.75} />
+          <Text style={styles.hint}>Kodi gjendet brenda paketës suaj, shkruar në letër.</Text>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -137,5 +139,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#1B3F2F', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
   buttonDisabled: { backgroundColor: '#71B5A2' },
   buttonText: { color: '#ECEFE8', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
+  hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   hint: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
 });
