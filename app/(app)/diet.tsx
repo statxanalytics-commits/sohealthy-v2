@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { WebView } from 'react-native-webview'
+import { Target, Droplets, CheckSquare, Utensils, Upload, Sparkles, RefreshCw } from 'lucide-react-native'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -74,7 +75,7 @@ export default function DietScreen() {
     if (!plan) return
     try {
       await Share.share({
-        message: `🥗 Plani im i Dietës — SoHealthy\n\n${plan.plan_content.plan_text}`,
+        message: `Plani im i Dietës — SoHealthy\n\n${plan.plan_content.plan_text}`,
         title: 'Plani i Dietës — SoHealthy',
       })
     } catch (e) {}
@@ -108,7 +109,7 @@ export default function DietScreen() {
     return { header, days }
   }
 
-  // ── LOADING ──────────────────────────────────────────────────
+  // ── LOADING ────────────────────────────────────────
   if (state === 'loading') {
     return (
       <SafeAreaView style={s.safe}>
@@ -116,7 +117,7 @@ export default function DietScreen() {
           <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
             <Text style={s.backText}>‹ Kthehu</Text>
           </TouchableOpacity>
-          <Text style={s.title}>🥗 Plani i Dietës</Text>
+          <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
         </View>
         <View style={s.center}>
           <ActivityIndicator size="large" color={Colors.pine} />
@@ -126,7 +127,7 @@ export default function DietScreen() {
     )
   }
 
-  // ── EMPTY — show generate CTA ───────────────────────────────
+  // ── EMPTY — show generate CTA ────────────────────────
   if (state === 'empty') {
     return (
       <SafeAreaView style={s.safe}>
@@ -134,10 +135,10 @@ export default function DietScreen() {
           <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
             <Text style={s.backText}>‹ Kthehu</Text>
           </TouchableOpacity>
-          <Text style={s.title}>🥗 Plani i Dietës</Text>
+          <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
         </View>
         <View style={s.center}>
-          <Text style={s.emptyEmoji}>🥗</Text>
+          <View style={s.emptyIconWrap}><Utensils size={40} color={Colors.pine} strokeWidth={1.5} /></View>
           <Text style={s.emptyTitle}>
             {orderCode ? 'Gjenero Planin Tënd' : 'Plan nuk u gjet'}
           </Text>
@@ -154,7 +155,8 @@ export default function DietScreen() {
                 setState('webview')
               }}
             >
-              <Text style={s.generateBtnText}>✨ Gjenero Planin Tim →</Text>
+              <Sparkles size={16} color={Colors.alabaster} strokeWidth={1.75} />
+              <Text style={s.generateBtnText}>Gjenero Planin Tim →</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -162,7 +164,7 @@ export default function DietScreen() {
     )
   }
 
-  // ── WEBVIEW (generate new plan) ──────────────────────────────
+  // ── WEBVIEW (generate new plan) ───────────────────────
   if (state === 'webview') {
     return (
       <SafeAreaView style={s.safe} edges={['top']}>
@@ -170,7 +172,7 @@ export default function DietScreen() {
           <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
             <Text style={s.backText}>‹ Kthehu</Text>
           </TouchableOpacity>
-          <Text style={s.title}>🥗 Gjenero Planin</Text>
+          <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Gjenero Planin</Text></View>
         </View>
         <WebView
           source={{ uri: webUrl }}
@@ -187,7 +189,7 @@ export default function DietScreen() {
     )
   }
 
-  // ── SAVED PLAN — show in app ─────────────────────────────────
+  // ── SAVED PLAN — show in app ─────────────────────────
   const { header, days } = parsePlan(plan!.plan_content.plan_text)
 
   return (
@@ -197,23 +199,24 @@ export default function DietScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Text style={s.backText}>‹ Kthehu</Text>
         </TouchableOpacity>
-        <Text style={s.title}>🥗 Plani i Dietës</Text>
+        <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
         <TouchableOpacity onPress={handleShare} style={s.shareBtn}>
-          <Text style={s.shareText}>⬆️ Nda</Text>
+          <Upload size={16} color={Colors.aloe} strokeWidth={1.75} /><Text style={s.shareText}>Nda</Text>
         </TouchableOpacity>
       </View>
 
       {/* Target calories bar */}
       {plan!.plan_content.target_calories && (
         <View style={s.targetBar}>
-          <Text style={s.targetText}>
-            🎯 Qëllimi: <Text style={s.targetNum}>{plan!.plan_content.target_calories} kcal/ditë</Text>
-          </Text>
-          <TouchableOpacity onPress={() => {
+          <View style={s.targetLeft}>
+            <Target size={14} color={Colors.pine} strokeWidth={2} />
+            <Text style={s.targetText}>Qëllimi: <Text style={s.targetNum}>{plan!.plan_content.target_calories} kcal/ditë</Text></Text>
+          </View>
+          <TouchableOpacity style={s.regenBtn} onPress={() => {
             setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(orderCode)}`)
             setState('webview')
           }}>
-            <Text style={s.regenText}>🔄 Rigjenero</Text>
+            <RefreshCw size={13} color={Colors.aloe} strokeWidth={2} /><Text style={s.regenText}>Rigjenero</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -234,7 +237,7 @@ export default function DietScreen() {
                 onPress={() => setActiveTab(i)}
               >
                 <Text style={[s.tabText, activeTab === i && s.tabTextActive]}>
-                  {d.title.replace(/DITË\s*/i, 'D').replace(/DAY\s*/i, 'D')}
+                  {d.title.replace(/DIT[Ëë]\s*/i, 'D').replace(/DAY\s*/i, 'D')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -243,14 +246,17 @@ export default function DietScreen() {
           {/* Day content */}
           <ScrollView contentContainerStyle={s.scroll}>
             {/* Header (hydration + habits) — only on day 1 */}
-            {activeTab === 0 && header.filter(l => l.trim()).map((line, i) => (
-              <Text key={i} style={[
-                s.planLine,
-                line.startsWith('💧') && s.planHighlight,
-                line.startsWith('✅') && s.planSection,
-                line.startsWith('📦') && s.planSection,
-              ]}>{line}</Text>
-            ))}
+            {activeTab === 0 && header.filter(l => l.trim()).map((line, i) => {
+              const isHydration = line.startsWith('💧') || line.toLowerCase().includes('hidrat')
+              const isSection = line.startsWith('✅') || line.startsWith('📦') || line.startsWith('📝')
+              return (
+                <View key={i} style={[s.planLineWrap, isHydration && s.hydrationWrap, isSection && s.sectionWrap]}>
+                  {isHydration && <Droplets size={14} color={Colors.pine} strokeWidth={2} style={{ marginRight: 6, marginTop: 2 }} />}
+                  {isSection && !isHydration && <CheckSquare size={14} color={Colors.pine} strokeWidth={2} style={{ marginRight: 6, marginTop: 2 }} />}
+                  <Text style={[s.planLine, isHydration && s.planHighlight, isSection && s.planSection]}>{line.replace(/^[💧✅📦📝]\s*/, '')}</Text>
+                </View>
+              )
+            })}
 
             {/* Day meals */}
             {days[activeTab].lines.map((line, i) => {
@@ -287,14 +293,15 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
     backgroundColor: Colors.pine, gap: 12,
   },
+  titleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   backBtn: { padding: 4 },
   backText: { color: Colors.alabaster, fontSize: 17, fontWeight: '600' },
-  title: { color: Colors.alabaster, fontSize: 18, fontWeight: '700', flex: 1 },
-  shareBtn: { padding: 4 },
+  title: { color: Colors.alabaster, fontSize: 18, fontWeight: '700' },
+  shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 },
   shareText: { color: Colors.aloe, fontSize: 14, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   loadingText: { marginTop: 16, color: Colors.pine, fontSize: 15 },
-  emptyEmoji: { fontSize: 52, marginBottom: 16 },
+  emptyIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.pine + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
   emptyText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22 },
   targetBar: {
@@ -303,8 +310,10 @@ const s = StyleSheet.create({
     justifyContent: 'space-between', alignItems: 'center',
     borderBottomWidth: 1, borderBottomColor: Colors.pine + '20',
   },
+  targetLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   targetText: { fontSize: 13, color: Colors.pine },
   targetNum: { fontWeight: '700' },
+  regenBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   regenText: { fontSize: 13, color: Colors.aloe, fontWeight: '600' },
   tabsScroll: { maxHeight: 48, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
   tabs: { paddingHorizontal: 10, paddingVertical: 8, gap: 6, flexDirection: 'row', alignItems: 'center' },
@@ -313,9 +322,12 @@ const s = StyleSheet.create({
   tabText: { fontSize: 12, fontWeight: '600', color: '#666' },
   tabTextActive: { color: '#fff' },
   scroll: { padding: 16 },
-  planLine: { fontSize: 14, color: '#444', lineHeight: 22, marginBottom: 2 },
-  planHighlight: { fontSize: 14, color: Colors.pine, fontWeight: '600', marginBottom: 8, marginTop: 4 },
-  planSection: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginTop: 12, marginBottom: 6 },
+  planLineWrap: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 },
+  hydrationWrap: { backgroundColor: Colors.pine + '08', borderRadius: 8, padding: 8, marginBottom: 8 },
+  sectionWrap: { marginTop: 12, marginBottom: 6 },
+  planLine: { fontSize: 14, color: '#444', lineHeight: 22, marginBottom: 2, flex: 1 },
+  planHighlight: { fontSize: 14, color: Colors.pine, fontWeight: '600' },
+  planSection: { fontSize: 14, fontWeight: '700', color: Colors.pine },
   mealHeader: {
     fontSize: 15, fontWeight: '700', color: Colors.pine,
     marginTop: 16, marginBottom: 4,
@@ -332,6 +344,7 @@ const s = StyleSheet.create({
   generateBtn: {
     marginTop: 24, backgroundColor: Colors.pine,
     borderRadius: 14, paddingHorizontal: 32, paddingVertical: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   generateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 16 },
 })

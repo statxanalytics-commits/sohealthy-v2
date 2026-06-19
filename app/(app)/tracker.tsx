@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { Scale, Flame, TrendingUp, Plus } from 'lucide-react-native'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -160,7 +161,7 @@ export default function TrackerScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Text style={s.backText}>‹ Kthehu</Text>
         </TouchableOpacity>
-        <Text style={s.title}>📈 Tracker</Text>
+        <View style={s.titleRow}><TrendingUp size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Tracker</Text></View>
       </View>
 
       {loading ? (
@@ -194,9 +195,9 @@ export default function TrackerScreen() {
           {/* Weight */}
           <View style={s.section}>
             <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>⚖️ Pesha</Text>
+              <View style={s.sectionTitleRow}><Scale size={16} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Pesha</Text></View>
               <TouchableOpacity style={s.addBtn} onPress={() => setShowWeightModal(true)}>
-                <Text style={s.addBtnText}>+ Shto</Text>
+                <Plus size={14} color="#fff" strokeWidth={2} /><Text style={s.addBtnText}>Shto</Text>
               </TouchableOpacity>
             </View>
             {latestWeight ? (
@@ -234,7 +235,7 @@ export default function TrackerScreen() {
 
           {/* Calorie history */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>🔥 Historia e Kalorive</Text>
+            <View style={s.sectionTitleRow}><Flame size={16} color={Colors.pine} strokeWidth={1.75} /><Text style={s.sectionTitle}>Historia e Kalorive</Text></View>
             {scans.length === 0 ? (
               <View style={s.emptyCard}>
                 <Text style={s.emptyText}>Skano ushqimet tuaja për të parë historikun</Text>
@@ -243,6 +244,7 @@ export default function TrackerScreen() {
               scans.slice(0, 10).map(day => {
                 const pct = Math.min(100, (day.calories / goalCalories) * 100)
                 const isToday = day.date === new Date().toISOString().slice(0, 10)
+                const barColor = pct > 100 ? Colors.goji : pct > 80 ? '#D58D3C' : Colors.aloe
                 return (
                   <View key={day.date} style={[s.dayRow, isToday && s.dayRowToday]}>
                     <View style={s.dayLeft}>
@@ -251,12 +253,8 @@ export default function TrackerScreen() {
                     </View>
                     <View style={s.dayRight}>
                       <Text style={s.dayKcal}>{day.calories} kcal</Text>
-                      <View style={s.dayBar}>
-                        <View style={[s.dayBarFill, {
-                          width: `${pct}%` as any,
-                          backgroundColor: pct > 100 ? Colors.goji : pct > 80 ? '#D58D3C' : Colors.aloe
-                        }]} />
-                      </View>
+                      <View style={s.dayBarTrack}><View style={[s.dayBarFill, { width: `${pct}%` as any, backgroundColor: barColor }]} /></View>
+                      <Text style={[s.dayPct, { color: barColor }]}>{Math.round(pct)}%</Text>
                     </View>
                   </View>
                 )
@@ -299,9 +297,10 @@ export default function TrackerScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.pine, gap: 12 },
+  titleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   backBtn: { padding: 4 },
   backText: { color: Colors.alabaster, fontSize: 17, fontWeight: '600' },
-  title: { color: Colors.alabaster, fontSize: 18, fontWeight: '700', flex: 1 },
+  title: { color: Colors.alabaster, fontSize: 18, fontWeight: '700' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 16 },
   todayCard: { backgroundColor: Colors.pine, borderRadius: 16, padding: 20, marginBottom: 16 },
@@ -318,8 +317,9 @@ const s = StyleSheet.create({
   noScanText: { fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 8 },
   section: { marginBottom: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine },
-  addBtn: { backgroundColor: Colors.pine, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  addBtn: { backgroundColor: Colors.pine, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 4 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   weightCard: { backgroundColor: '#fff', borderRadius: 14, padding: 20, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   weightNum: { fontSize: 48, fontWeight: '700', color: Colors.pine },
@@ -340,7 +340,8 @@ const s = StyleSheet.create({
   daySubs: { fontSize: 11, color: '#aaa', marginTop: 2 },
   dayRight: { flex: 1, paddingLeft: 12 },
   dayKcal: { fontSize: 14, fontWeight: '700', color: Colors.pine, marginBottom: 4 },
-  dayBar: { height: 5, backgroundColor: '#f0f0f0', borderRadius: 3, overflow: 'hidden' },
+  dayPct: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  dayBarTrack: { height: 6, backgroundColor: '#f0f0f0', borderRadius: 3, overflow: 'hidden' },
   dayBarFill: { height: '100%', borderRadius: 3 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: '#fff', borderRadius: 24, padding: 28, paddingBottom: 40 },
