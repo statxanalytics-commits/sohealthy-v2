@@ -195,7 +195,7 @@ export const PROFILES: Record<string, Profile> = {
     ],
     habits: [
       'Ha brenda 1 ore pas zgjimit — mos e kapërce mëngjesin',
-      'Mos agjëro dhe mos i kapërce vaktet',
+      'Mos bëj fasting dhe mos i kapërce vaktet',
       'Kufizo kafeinën pas mesditës',
     ],
     showFasting: false,
@@ -245,7 +245,7 @@ export const PROFILES: Record<string, Profile> = {
       'Mbyll dritaren e ngrënies maksimumi në orën 20:00',
     ],
     showFasting: true,
-    fastingText: 'Një dritare e butë ngrënieje (12:12), e zhvendosur më herët gradualisht, është mënyra për të mbyllur ciklin e ngrënies vonë.',
+    fastingText: 'Një dritare e butë ngrënieje (12:12), e zhvendosur më herët gradualisht, është mënyra për të mbyllur ciklin e fasting-ut të vonë.',
     primaryProducts: [
       {
         slug: 'nf01',
@@ -277,7 +277,7 @@ export const PROFILES: Record<string, Profile> = {
       'Lëvizje e lehtë 10 min pas vaktit kryesor',
     ],
     showFasting: true,
-    fastingText: 'Agjërimi me ndërprerje (14:10 ose 16:8) të përshtatet — ndihmon ndjeshmërinë ndaj insulinës dhe stabilizon energjinë.',
+    fastingText: 'Fasting me ndërprerje (14:10 ose 16:8) të përshtatet — ndihmon ndjeshmërinë ndaj insulinës dhe stabilizon energjinë.',
     primaryProducts: [
       {
         slug: 'g1',
