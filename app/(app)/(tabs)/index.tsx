@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
-  ScanLine, TrendingUp, Trophy, Package, Lock,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
@@ -97,6 +97,21 @@ export default function HomeScreen() {
             }
           </TouchableOpacity>
         )}
+
+        {/* Quiz Nutricional — featured free card */}
+        <TouchableOpacity style={s.quizCard} onPress={() => router.push('/(app)/profili' as any)}>
+          <View style={s.quizCardIcon}>
+            <ClipboardList size={22} color={Colors.pine} strokeWidth={1.75} />
+          </View>
+          <View style={s.quizCardLeft}>
+            <Text style={s.quizCardBadge}>FALAS</Text>
+            <Text style={s.quizCardTitle}>Zbulo Profilin Tënd Nutricional</Text>
+            <Text style={s.quizCardSub}>12 pyetje · 2 minuta · plan personal</Text>
+          </View>
+          <View style={s.quizCardArrow}>
+            <ArrowRight size={16} color={Colors.pine} strokeWidth={2.5} />
+          </View>
+        </TouchableOpacity>
 
         {/* Free tools */}
         <Text style={s.sectionLabel}>MJETET FALAS</Text>
@@ -241,6 +256,48 @@ const s = StyleSheet.create({
   packageBannerLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   packageBannerCode: { fontSize: 17, color: Colors.alabaster, fontWeight: '600', letterSpacing: 0.5 },
   packageBannerImg: { width: 56, height: 56 },
+
+  // Quiz card
+  quizCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.aloe,
+  },
+  quizCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(113,181,162,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  quizCardLeft: { flex: 1, marginRight: 10 },
+  quizCardBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 9,
+    letterSpacing: 2,
+    fontWeight: '700',
+    color: Colors.aloe,
+    marginBottom: 4,
+  },
+  quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 20 },
+  quizCardSub: { fontSize: 12, color: Colors.muted, marginTop: 3 },
+  quizCardArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.aloe,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   dietCard: {
     backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10,
     borderRadius: 16, padding: 16,
