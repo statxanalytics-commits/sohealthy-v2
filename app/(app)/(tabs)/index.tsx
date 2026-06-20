@@ -107,6 +107,18 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Quiz Nutricional — featured free card */}
+        <TouchableOpacity style={s.quizCard} onPress={() => router.push('/(app)/profili' as any)}>
+          <View style={s.quizCardLeft}>
+            <Text style={s.quizCardBadge}>FALAS</Text>
+            <Text style={s.quizCardTitle}>Zbulo Profilin Tënd Nutricional</Text>
+            <Text style={s.quizCardSub}>12 pyetje · 2 minuta · plan personal</Text>
+          </View>
+          <View style={s.quizCardArrow}>
+            <Text style={s.quizCardArrowText}>→</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Free tools */}
         <Text style={s.sectionLabel}>MJETET FALAS</Text>
         <View style={s.freeGrid}>
@@ -219,6 +231,46 @@ const s = StyleSheet.create({
   dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
+
+  // Quiz card
+  quizCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: Colors.aloe,
+  },
+  quizCardLeft: { flex: 1, marginRight: 12 },
+  quizCardBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 9,
+    letterSpacing: 2,
+    fontWeight: '700',
+    color: Colors.aloe,
+    backgroundColor: 'rgba(113,181,162,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 21 },
+  quizCardSub: { fontSize: 12, color: Colors.muted, marginTop: 3 },
+  quizCardArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.aloe,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quizCardArrowText: { fontSize: 16, fontWeight: '700', color: Colors.pine },
+
   sectionLabel: {
     fontSize: 10, letterSpacing: 2, color: '#6B7F72', fontWeight: '600',
     marginHorizontal: 16, marginTop: 20, marginBottom: 10,
