@@ -24,7 +24,7 @@ export default function QuizScreen() {
           </View>
           <Text style={s.introTitle}>Zbulo Profilin Tënd Nutricional</Text>
           <Text style={s.introSub}>
-            12 pyetje. 2 minuta. Një plan i personalizuar ushqimi, zakonesh dhe agjërimi — bazuar në biologjinë tënde.
+            12 pyetje. 2 minuta. Një plan i personalizuar ushqimi, zakonesh dhe fasting-u — bazuar në biologjinë tënde.
           </Text>
           <TouchableOpacity style={s.introBtn} onPress={() => setStep('quiz')}>
             <Text style={s.introBtnText}>Fillo Testin →</Text>
