@@ -61,7 +61,7 @@ export default function ResultScreen() {
 
         {/* Fasting — only when genuinely recommended */}
         {profile.showFasting && (
-          <Section title="Agjërimi për ty">
+          <Section title="Fasting për ty">
             <View style={[s.fastingBox, { borderColor: Colors.aloe }]}>
               <Text style={[s.fastingBadge, { backgroundColor: Colors.aloe }]}>
                 Po — i rekomanduar
