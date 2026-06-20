@@ -122,7 +122,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 10,
-    text: 'Në ç\'orë ha zakonisht vaktin më të madh?',
+    text: "Në ç'orë ha zakonisht vaktin më të madh?",
     options: [
       { text: 'Drekë', scores: { CIR: 0 } },
       { text: 'Darkë', scores: { CIR: 2 } },
@@ -151,14 +151,11 @@ export const QUESTIONS: Question[] = [
 
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 
-export function computeAxes(answers: number[][]): Record<Axis, number> {
-  // answers[i] = scores array from the chosen option of question i
-  // (each answer is AnswerOption.scores, pre-mapped before calling this)
+export function computeAxes(answers: Partial<Record<Axis, number>>[]): Record<Axis, number> {
   const totals: Record<Axis, number> = { INS: 0, HUN: 0, GUT: 0, CIR: 0, STR: 0 }
   for (const scores of answers) {
-    // scores is passed as Partial<Record<Axis, number>>
     for (const [axis, val] of Object.entries(scores) as [Axis, number][]) {
-      totals[axis] = (totals[axis] || 0) + val
+      totals[axis] = (totals[axis] ?? 0) + val
     }
   }
   return totals

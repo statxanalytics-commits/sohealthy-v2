@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -113,7 +114,7 @@ export default function ResultScreen() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={s.section}>
       <Text style={s.sectionTitle}>{title}</Text>
@@ -152,7 +153,6 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
   scroll: { paddingBottom: 20 },
 
-  // Hero
   hero: {
     backgroundColor: Colors.pine,
     paddingHorizontal: 24,
@@ -179,7 +179,6 @@ const s = StyleSheet.create({
     lineHeight: 21,
   },
 
-  // Section
   section: {
     marginHorizontal: 16,
     marginTop: 20,
@@ -196,12 +195,10 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // Bullet
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, gap: 10 },
   bullet: { width: 7, height: 7, borderRadius: 3.5, marginTop: 7, flexShrink: 0 },
   bulletText: { fontSize: 14, color: Colors.pine, lineHeight: 22, flex: 1 },
 
-  // Habits
   habitRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 12 },
   habitNum: {
     width: 26,
@@ -215,12 +212,10 @@ const s = StyleSheet.create({
   habitNumText: { fontSize: 12, fontWeight: '700', color: Colors.pine },
   habitText: { fontSize: 14, color: Colors.pine, lineHeight: 22, flex: 1 },
 
-  // Fasting
   fastingBox: {
     borderWidth: 1.5,
     borderRadius: 12,
     padding: 16,
-    overflow: 'hidden',
   },
   fastingBadge: {
     alignSelf: 'flex-start',
@@ -236,7 +231,6 @@ const s = StyleSheet.create({
   },
   fastingText: { fontSize: 14, color: Colors.pine, lineHeight: 21 },
 
-  // Product
   prodCard: {
     backgroundColor: Colors.alabaster,
     borderRadius: 14,
@@ -271,7 +265,6 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // Balanced
   balancedBox: {
     marginHorizontal: 16,
     marginTop: 20,
@@ -283,7 +276,6 @@ const s = StyleSheet.create({
   balancedTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
   balancedText: { fontSize: 14, color: Colors.pine, lineHeight: 21, textAlign: 'center', opacity: 0.8 },
 
-  // Actions
   actions: { marginHorizontal: 16, marginTop: 24, gap: 12 },
   retakeBtn: {
     borderWidth: 1.5,
