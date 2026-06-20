@@ -22,8 +22,8 @@ export interface Profile {
   foods: string[]
   avoid: string[]
   habits: string[]
-  fasting: string
-  fastingOk: boolean
+  showFasting: boolean
+  fastingText: string
   primaryProducts: ProductRec[]
   secondaryProduct?: ProductRec
 }
@@ -198,8 +198,8 @@ export const PROFILES: Record<string, Profile> = {
       'Mos agjëro dhe mos i kapërce vaktet',
       'Kufizo kafeinën pas mesditës',
     ],
-    fasting: 'Jo i rekomanduar. Agjërimi me ndërprerje rrit kortizolin dhe humbjen e masës muskulare.',
-    fastingOk: false,
+    showFasting: false,
+    fastingText: '',
     primaryProducts: [
       {
         slug: 'detox-shot',
@@ -244,8 +244,8 @@ export const PROFILES: Record<string, Profile> = {
       'Vakti më i madh në drekë, jo në darkë',
       'Mbyll dritaren e ngrënies maksimumi në orën 20:00',
     ],
-    fasting: 'Po, i butë (12:12). Zhvendos dritaren e ngrënies më herët gradualisht.',
-    fastingOk: true,
+    showFasting: true,
+    fastingText: 'Një dritare e butë ngrënieje (12:12), e zhvendosur më herët gradualisht, është mënyra për të mbyllur ciklin e ngrënies vonë.',
     primaryProducts: [
       {
         slug: 'nf01',
@@ -276,8 +276,8 @@ export const PROFILES: Record<string, Profile> = {
       'Pa ushqime ndërmjet vakteve',
       'Lëvizje e lehtë 10 min pas vaktit kryesor',
     ],
-    fasting: 'Po, i përshtatshëm (14:10 ose 16:8). Ndihmon ndjeshmërinë ndaj insulinës.',
-    fastingOk: true,
+    showFasting: true,
+    fastingText: 'Agjërimi me ndërprerje (14:10 ose 16:8) të përshtatet — ndihmon ndjeshmërinë ndaj insulinës dhe stabilizon energjinë.',
     primaryProducts: [
       {
         slug: 'g1',
@@ -315,8 +315,8 @@ export const PROFILES: Record<string, Profile> = {
       'Fillo çdo vakt me fibra ose proteina',
       'Pa ushqim pas orës 20:00',
     ],
-    fasting: 'Me kujdes. Agjërimi i gjatë mund të ketë efekt të kundërt — fillo butë (12:12).',
-    fastingOk: false,
+    showFasting: false,
+    fastingText: '',
     primaryProducts: [
       {
         slug: 'g1',
@@ -354,8 +354,8 @@ export const PROFILES: Record<string, Profile> = {
       'Mos ha kur je nën stres',
       'Lë të paktën 3–4 orë mes vakteve',
     ],
-    fasting: 'Neutral. Hapësira mes vakteve ndihmon tretjen — por mos shko agresiv.',
-    fastingOk: false,
+    showFasting: false,
+    fastingText: '',
     primaryProducts: [
       {
         slug: 'detox-shot',
@@ -391,8 +391,8 @@ export const PROFILES: Record<string, Profile> = {
       'Lëviz çdo ditë — edhe 30 min ecje mjafton',
       'Hidratim i mirë — 2L ujë/ditë',
     ],
-    fasting: 'Opsional. Trupi yt e menaxhon mirë sipas preferencës.',
-    fastingOk: true,
+    showFasting: false,
+    fastingText: '',
     primaryProducts: [],
   },
 }
