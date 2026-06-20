@@ -59,15 +59,17 @@ export default function ResultScreen() {
           ))}
         </Section>
 
-        {/* Fasting */}
-        <Section title="Udhëzim për agjërim">
-          <View style={[s.fastingBox, { borderColor: profile.fastingOk ? Colors.aloe : '#B74949' }]}>
-            <Text style={[s.fastingBadge, { backgroundColor: profile.fastingOk ? Colors.aloe : '#B74949' }]}>
-              {profile.fastingOk ? 'Po — i rekomanduar' : 'Jo — mos agjëro'}
-            </Text>
-            <Text style={s.fastingText}>{profile.fasting}</Text>
-          </View>
-        </Section>
+        {/* Fasting — only when genuinely recommended */}
+        {profile.showFasting && (
+          <Section title="Agjërimi për ty">
+            <View style={[s.fastingBox, { borderColor: Colors.aloe }]}>
+              <Text style={[s.fastingBadge, { backgroundColor: Colors.aloe }]}>
+                Po — i rekomanduar
+              </Text>
+              <Text style={s.fastingText}>{profile.fastingText}</Text>
+            </View>
+          </Section>
+        )}
 
         {/* Products */}
         {!isBalanced && profile.primaryProducts.length > 0 && (
