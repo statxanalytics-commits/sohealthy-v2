@@ -1,5 +1,6 @@
 import { Slot, useRouter, useSegments } from 'expo-router'
 import { useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { supabase } from '../src/lib/supabase'
 
 export default function RootLayout() {
@@ -26,5 +27,10 @@ export default function RootLayout() {
     else if (session && inAuth) router.replace('/(app)/(tabs)')
   }, [session, loading, segments])
 
-  return <Slot />
+  return (
+    <>
+      <Slot />
+      <Analytics />
+    </>
+  )
 }
