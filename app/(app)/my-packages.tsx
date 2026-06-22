@@ -60,38 +60,14 @@ export default function MyPackagesScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      const { data: profile } = await supabase
-        .from('profiles').select('order_code').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('order_code').eq('id', user.id).single()
       const activeCode = profile?.order_code || ''
       setActivePackageCode(activeCode)
-
-      const { data: selections } = await supabase
-        .from('product_selections')
-        .select('order_code, product_slug, selected_at, is_active')
-        .eq('user_id', user.id)
-        .order('selected_at', { ascending: false })
-
-      const { data: history } = await supabase
-        .from('purchase_history')
-        .select('order_code, package_type, activated_at')
-        .eq('user_id', user.id)
-        .order('activated_at', { ascending: false })
-
-      const { data: weights } = await supabase
-        .from('tracker_entries')
-        .select('product_slug, date')
-        .eq('user_id', user.id)
-        .ilike('product_slug', 'weight:%')
-        .order('date', { ascending: true })
-
-      const weightEntries = (weights || []).map(w => ({
-        date: w.date,
-        weight: parseFloat(w.product_slug.replace('weight:', ''))
-      })).filter(w => !isNaN(w.weight))
-
+      const { data: selections } = await supabase.from('product_selections').select('order_code, product_slug, selected_at, is_active').eq('user_id', user.id).order('selected_at', { ascending: false })
+      const { data: history } = await supabase.from('purchase_history').select('order_code, package_type, activated_at').eq('user_id', user.id).order('activated_at', { ascending: false })
+      const { data: weights } = await supabase.from('tracker_entries').select('product_slug, date').eq('user_id', user.id).ilike('product_slug', 'weight:%').order('date', { ascending: true })
+      const weightEntries = (weights || []).map(w => ({ date: w.date, weight: parseFloat(w.product_slug.replace('weight:', '')) })).filter(w => !isNaN(w.weight))
       const codeMap: Record<string, Package> = {}
-
       const selByCode: Record<string, string[]> = {}
       for (const sel of selections || []) {
         if (!selByCode[sel.order_code]) selByCode[sel.order_code] = []
@@ -100,73 +76,29 @@ export default function MyPackagesScreen() {
       for (const [code, slugs] of Object.entries(selByCode)) {
         if (!codeMap[code]) {
           const firstSel = (selections || []).find(s => s.order_code === code)
-          codeMap[code] = {
-            order_code: code,
-            product_slug: slugs[0] || null,
-            product_slugs: slugs,
-            package_type: null,
-            activated_at: firstSel?.selected_at || new Date().toISOString(),
-            is_active: code === activeCode,
-            start_weight: null,
-            current_weight: null,
-          }
+          codeMap[code] = { order_code: code, product_slug: slugs[0] || null, product_slugs: slugs, package_type: null, activated_at: firstSel?.selected_at || new Date().toISOString(), is_active: code === activeCode, start_weight: null, current_weight: null }
         }
       }
-
       for (const h of history || []) {
         if (!codeMap[h.order_code]) {
-          codeMap[h.order_code] = {
-            order_code: h.order_code,
-            product_slug: null,
-            product_slugs: [],
-            package_type: h.package_type,
-            activated_at: h.activated_at,
-            is_active: h.order_code === activeCode,
-            start_weight: null,
-            current_weight: null,
-          }
+          codeMap[h.order_code] = { order_code: h.order_code, product_slug: null, product_slugs: [], package_type: h.package_type, activated_at: h.activated_at, is_active: h.order_code === activeCode, start_weight: null, current_weight: null }
         }
         codeMap[h.order_code].package_type = h.package_type
       }
-
       if (activeCode && !codeMap[activeCode]) {
-        const { data: activeSel } = await supabase
-          .from('product_selections')
-          .select('product_slug')
-          .eq('user_id', user.id)
-          .eq('order_code', activeCode)
-          .eq('is_active', true)
-          .single()
-        codeMap[activeCode] = {
-          order_code: activeCode,
-          product_slug: activeSel?.product_slug || null,
-          product_slugs: activeSel?.product_slug ? [activeSel.product_slug] : [],
-          package_type: activeCode.startsWith('HY') ? 'ULTRA' : 'QUIK',
-          activated_at: new Date().toISOString(),
-          is_active: true,
-          start_weight: null,
-          current_weight: null,
-        }
+        const { data: activeSel } = await supabase.from('product_selections').select('product_slug').eq('user_id', user.id).eq('order_code', activeCode).eq('is_active', true).single()
+        codeMap[activeCode] = { order_code: activeCode, product_slug: activeSel?.product_slug || null, product_slugs: activeSel?.product_slug ? [activeSel.product_slug] : [], package_type: activeCode.startsWith('HY') ? 'ULTRA' : 'QUIK', activated_at: new Date().toISOString(), is_active: true, start_weight: null, current_weight: null }
       }
-
       if (weightEntries.length > 0) {
-        const pkgList = Object.values(codeMap).sort((a, b) =>
-          new Date(a.activated_at).getTime() - new Date(b.activated_at).getTime()
-        )
+        const pkgList = Object.values(codeMap).sort((a, b) => new Date(a.activated_at).getTime() - new Date(b.activated_at).getTime())
         if (pkgList.length > 0) {
           pkgList[pkgList.length - 1].start_weight = weightEntries[0].weight
           pkgList[pkgList.length - 1].current_weight = weightEntries[weightEntries.length - 1].weight
         }
       }
-
-      setPackages(Object.values(codeMap).sort((a, b) =>
-        new Date(b.activated_at).getTime() - new Date(a.activated_at).getTime()
-      ))
-    } catch (e) {
-      console.log('loadPackages error:', e)
-    } finally {
-      setLoading(false)
-    }
+      setPackages(Object.values(codeMap).sort((a, b) => new Date(b.activated_at).getTime() - new Date(a.activated_at).getTime()))
+    } catch (e) { console.log('loadPackages error:', e) }
+    finally { setLoading(false) }
   }
 
   async function saveProductSelection() {
@@ -177,37 +109,26 @@ export default function MyPackagesScreen() {
       if (!user) return
       const isActive = selectedPackageCode === activePackageCode
       await supabase.from('product_selections').delete().eq('user_id', user.id).eq('order_code', selectedPackageCode)
-      const rows = selectedProducts.map(slug => ({
-        user_id: user.id,
-        order_code: selectedPackageCode,
-        product_slug: slug,
-        is_active: isActive,
-        selected_at: new Date().toISOString(),
-      }))
+      const rows = selectedProducts.map(slug => ({ user_id: user.id, order_code: selectedPackageCode, product_slug: slug, is_active: isActive, selected_at: new Date().toISOString() }))
       await supabase.from('product_selections').insert(rows)
       setShowProductModal(false)
       setSelectedProducts([])
       await loadPackages()
-    } catch (e) {
-      Alert.alert('Gabim', 'Nuk u ruajt produkti.')
-    } finally {
-      setSaving(false)
-    }
+    } catch (e) { Alert.alert('Gabim', 'Nuk u ruajt produkti.') }
+    finally { setSaving(false) }
   }
 
   async function saveWeight() {
     const kg = parseFloat(weightInput.replace(',', '.'))
     if (isNaN(kg) || kg < 30 || kg > 300) {
-      Alert.alert('Vler\u00eb e pavlefshme', 'Fut pesh\u00ebn n\u00eb kg (p.sh. 65.5)')
+      Alert.alert('Vlerë e pavlefshme', 'Fut peshën në kg (p.sh. 65.5)')
       return
     }
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const today = new Date().toISOString().slice(0, 10)
-      const { data: existing } = await supabase
-        .from('tracker_entries').select('id')
-        .eq('user_id', user.id).eq('date', today).ilike('product_slug', 'weight:%').single()
+      const { data: existing } = await supabase.from('tracker_entries').select('id').eq('user_id', user.id).eq('date', today).ilike('product_slug', 'weight:%').single()
       if (existing) {
         await supabase.from('tracker_entries').update({ product_slug: `weight:${kg}` }).eq('id', existing.id)
       } else {
@@ -216,9 +137,7 @@ export default function MyPackagesScreen() {
       setShowWeightModal(false)
       setWeightInput('')
       await loadPackages()
-    } catch (e) {
-      Alert.alert('Gabim', 'Nuk u ruajt pesha.')
-    }
+    } catch (e) { Alert.alert('Gabim', 'Nuk u ruajt pesha.') }
   }
 
   function formatDate(iso: string) {
@@ -241,7 +160,7 @@ export default function MyPackagesScreen() {
       <View style={s.header}>
         <View style={s.headerTop}>
           <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-            <Text style={s.backText}>\u2039 Kthehu</Text>
+            <Text style={s.backText}>‹ Kthehu</Text>
           </TouchableOpacity>
         </View>
         <Text style={s.headerSub}>SOHEALTHY</Text>
@@ -270,43 +189,24 @@ export default function MyPackagesScreen() {
           <View style={s.activeDetails}>
             {activePackage.product_slug ? (
               <>
-                <Text style={s.activeProductName}>
-                  {PRODUCT_NAMES[activePackage.product_slug] || activePackage.product_slug}
-                </Text>
+                <Text style={s.activeProductName}>{PRODUCT_NAMES[activePackage.product_slug] || activePackage.product_slug}</Text>
                 {PRODUCTS[activePackage.product_slug] && (
                   <>
-                    <Text style={s.activeDetailRow}>\u23f0 {PRODUCTS[activePackage.product_slug].when}</Text>
-                    <Text style={s.activeDetailRow}>\uD83D\uDD14 {PRODUCTS[activePackage.product_slug].notif_time} \u2014 {PRODUCTS[activePackage.product_slug].notif_msg}</Text>
+                    <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kur:</Text><Text style={s.detailLineVal}>{PRODUCTS[activePackage.product_slug].when}</Text></View>
+                    <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kujtues:</Text><Text style={s.detailLineVal}>{PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}</Text></View>
                   </>
                 )}
                 <View style={s.activeActions}>
-                  <TouchableOpacity
-                    style={s.changeBtn}
-                    onPress={() => {
-                      setSelectedPackageCode(activePackage.order_code)
-                      setSelectedProducts(activePackage.product_slugs)
-                      setShowProductModal(true)
-                    }}
-                  >
+                  <TouchableOpacity style={s.changeBtn} onPress={() => { setSelectedPackageCode(activePackage.order_code); setSelectedProducts(activePackage.product_slugs); setShowProductModal(true) }}>
                     <Text style={s.changeBtnText}>Ndrysho Produktin</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={s.detailBtn}
-                    onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}
-                  >
-                    <Text style={s.detailBtnText}>Shiko Detajet \u2192</Text>
+                  <TouchableOpacity style={s.detailBtn} onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}>
+                    <Text style={s.detailBtnText}>Shiko Detajet →</Text>
                   </TouchableOpacity>
                 </View>
               </>
             ) : (
-              <TouchableOpacity
-                style={s.selectBtn}
-                onPress={() => {
-                  setSelectedPackageCode(activePackage.order_code)
-                  setSelectedProducts([])
-                  setShowProductModal(true)
-                }}
-              >
+              <TouchableOpacity style={s.selectBtn} onPress={() => { setSelectedPackageCode(activePackage.order_code); setSelectedProducts([]); setShowProductModal(true) }}>
                 <Text style={s.selectBtnText}>+ Zgjidh Produktin Tuaj</Text>
               </TouchableOpacity>
             )}
@@ -318,10 +218,10 @@ export default function MyPackagesScreen() {
             <View style={s.weightHeader}>
               <View style={s.weightTitleRow}>
                 <Scale size={15} color={Colors.pine} strokeWidth={1.75} />
-                <Text style={s.sectionTitle}>Humbja e Pesh\u00ebs</Text>
+                <Text style={s.sectionTitle}>Humbja e Peshës</Text>
               </View>
               <TouchableOpacity style={s.addWeightBtn} onPress={() => setShowWeightModal(true)}>
-                <Text style={s.addWeightText}>+ Shto Pesh\u00ebn</Text>
+                <Text style={s.addWeightText}>+ Shto Peshën</Text>
               </TouchableOpacity>
             </View>
             {activePackage.start_weight ? (
@@ -340,16 +240,14 @@ export default function MyPackagesScreen() {
                     <View style={s.weightDivider} />
                     <View style={s.weightStat}>
                       <Text style={s.weightStatLabel}>Humbur</Text>
-                      <Text style={[s.weightStatVal, { color: Colors.aloe }]}>
-                        {(activePackage.start_weight - activePackage.current_weight).toFixed(1)} kg
-                      </Text>
+                      <Text style={[s.weightStatVal, { color: Colors.aloe }]}>{(activePackage.start_weight - activePackage.current_weight).toFixed(1)} kg</Text>
                     </View>
                   </>
                 )}
               </View>
             ) : (
               <TouchableOpacity style={s.emptyWeight} onPress={() => setShowWeightModal(true)}>
-                <Text style={s.emptyWeightText}>Shto pesh\u00ebn fillestare p\u00ebr t\u00eb gjurmuar progresin tuaj</Text>
+                <Text style={s.emptyWeightText}>Shto peshën fillestare për të gjurmuar progresin tuaj</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -370,21 +268,12 @@ export default function MyPackagesScreen() {
                   }
                 </View>
                 <View style={s.historyInfo}>
-                  <Text style={s.historyProduct}>
-                    {pkg.product_slug ? PRODUCT_NAMES[pkg.product_slug] : 'Produkt i pap\u00ebrcaktuar'}
-                  </Text>
+                  <Text style={s.historyProduct}>{pkg.product_slug ? PRODUCT_NAMES[pkg.product_slug] : 'Produkt i papërcaktuar'}</Text>
                   <Text style={s.historyCode}>{pkg.order_code}</Text>
                   <Text style={s.historyDate}>{formatDate(pkg.activated_at)}</Text>
                 </View>
                 {!pkg.product_slug && (
-                  <TouchableOpacity
-                    style={s.historySelectBtn}
-                    onPress={() => {
-                      setSelectedPackageCode(pkg.order_code)
-                      setSelectedProducts([])
-                      setShowProductModal(true)
-                    }}
-                  >
+                  <TouchableOpacity style={s.historySelectBtn} onPress={() => { setSelectedPackageCode(pkg.order_code); setSelectedProducts([]); setShowProductModal(true) }}>
                     <Text style={s.historySelectText}>Cakto</Text>
                   </TouchableOpacity>
                 )}
@@ -397,9 +286,9 @@ export default function MyPackagesScreen() {
           <View style={s.emptyState}>
             <View style={s.emptyIconWrap}><Package size={40} color={Colors.pine} strokeWidth={1.5} /></View>
             <Text style={s.emptyTitle}>Nuk keni paketa aktive</Text>
-            <Text style={s.emptyText}>Aktivizoni llogarin\u00eb tuaj me kodin e porosis\u00eb.</Text>
+            <Text style={s.emptyText}>Aktivizoni llogarinë tuaj me kodin e porosisë.</Text>
             <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/activate')}>
-              <Text style={s.activateBtnText}>Aktivizo Tani \u2192</Text>
+              <Text style={s.activateBtnText}>Aktivizo Tani →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -407,39 +296,28 @@ export default function MyPackagesScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Product selection modal */}
       <Modal visible={showProductModal} transparent animationType="slide">
         <View style={s.modalOverlay}>
           <View style={s.modalSheet}>
             <Text style={s.modalTitle}>Zgjidh Produktin</Text>
-            <Text style={s.modalSub}>Cili produkt ishte n\u00eb paket\u00ebn tuaj?</Text>
+            <Text style={s.modalSub}>Cili produkt ishte në paketën tuaj?</Text>
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
-              <Text style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Mund t\u00eb zgjidhni m\u00eb shum\u00eb se nj\u00eb produkt</Text>
+              <Text style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Mund të zgjidhni më shumë se një produkt</Text>
               {ALL_PRODUCTS.map(p => {
                 const isSelected = selectedProducts.includes(p.slug)
                 return (
-                  <TouchableOpacity
-                    key={p.slug}
-                    style={[s.productRow, isSelected && s.productRowSelected]}
-                    onPress={() => setSelectedProducts(prev =>
-                      prev.includes(p.slug) ? prev.filter(x => x !== p.slug) : [...prev, p.slug]
-                    )}
-                  >
+                  <TouchableOpacity key={p.slug} style={[s.productRow, isSelected && s.productRowSelected]} onPress={() => setSelectedProducts(prev => prev.includes(p.slug) ? prev.filter(x => x !== p.slug) : [...prev, p.slug])}>
                     {PRODUCT_IMAGES[p.slug]
                       ? <Image source={{ uri: PRODUCT_IMAGES[p.slug] }} style={s.productRowImg} resizeMode="contain" />
                       : <View style={s.productRowIconWrap}><Package size={24} color={Colors.pine} strokeWidth={1.5} /></View>
                     }
                     <Text style={[s.productRowName, isSelected && { color: Colors.pine, fontWeight: '700' }]}>{p.name}</Text>
-                    {isSelected && <Text style={s.checkMark}>\u2713</Text>}
+                    {isSelected && <Text style={s.checkMark}>✓</Text>}
                   </TouchableOpacity>
                 )
               })}
             </ScrollView>
-            <TouchableOpacity
-              style={[s.modalBtn, selectedProducts.length === 0 && { opacity: 0.5 }]}
-              onPress={saveProductSelection}
-              disabled={selectedProducts.length === 0 || saving}
-            >
+            <TouchableOpacity style={[s.modalBtn, selectedProducts.length === 0 && { opacity: 0.5 }]} onPress={saveProductSelection} disabled={selectedProducts.length === 0 || saving}>
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.modalBtnText}>Konfirmo</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={s.modalCancel} onPress={() => { setShowProductModal(false); setSelectedProducts([]) }}>
@@ -449,21 +327,12 @@ export default function MyPackagesScreen() {
         </View>
       </Modal>
 
-      {/* Weight modal */}
       <Modal visible={showWeightModal} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.modalOverlay}>
           <View style={s.modalSheet}>
-            <Text style={s.modalTitle}>Regjistro Pesh\u00ebn</Text>
-            <Text style={s.modalSub}>Fut pesh\u00ebn e sotme n\u00eb kg</Text>
-            <TextInput
-              style={s.weightInput}
-              value={weightInput}
-              onChangeText={setWeightInput}
-              placeholder="p.sh. 65.5"
-              keyboardType="decimal-pad"
-              autoFocus
-              placeholderTextColor="#aaa"
-            />
+            <Text style={s.modalTitle}>Regjistro Peshën</Text>
+            <Text style={s.modalSub}>Fut peshën e sotme në kg</Text>
+            <TextInput style={s.weightInput} value={weightInput} onChangeText={setWeightInput} placeholder="p.sh. 65.5" keyboardType="decimal-pad" autoFocus placeholderTextColor="#aaa" />
             <TouchableOpacity style={s.modalBtn} onPress={saveWeight}>
               <Text style={s.modalBtnText}>Ruaj</Text>
             </TouchableOpacity>
@@ -497,7 +366,9 @@ const s = StyleSheet.create({
   activeIconWrap: { width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   activeDetails: { backgroundColor: '#fff', borderBottomLeftRadius: 14, borderBottomRightRadius: 14, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   activeProductName: { fontSize: 18, fontWeight: '700', color: Colors.pine, marginBottom: 10 },
-  activeDetailRow: { fontSize: 13, color: '#555', lineHeight: 22, marginBottom: 4 },
+  detailLineRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
+  detailLineLabel: { fontSize: 13, fontWeight: '700', color: Colors.pine, width: 64 },
+  detailLineVal: { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
   activeActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   changeBtn: { flex: 1, borderWidth: 1.5, borderColor: Colors.pine + '40', borderRadius: 10, padding: 10, alignItems: 'center' },
   changeBtnText: { color: Colors.pine, fontWeight: '600', fontSize: 13 },
