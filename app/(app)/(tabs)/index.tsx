@@ -25,9 +25,14 @@ const PREMIUM_TOOLS: PremiumTool[] = [
   { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
 ]
 
+// Albanian day label: 1 ditë / N ditë
+function daysLabel(n: number) {
+  return n === 1 ? '1 ditë e mbetur' : `${n} ditë të mbetura`
+}
+
 export default function HomeScreen() {
   const router = useRouter()
-  const { isPremium, loading } = usePremium()
+  const { isPremium, daysRemaining, loading } = usePremium()
   const [userName, setUserName] = useState('')
   const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
 
@@ -64,6 +69,9 @@ export default function HomeScreen() {
     return 'Mirembrema'
   }
 
+  const showCountdown = isPremium && daysRemaining !== null
+  const countdownUrgent = showCountdown && (daysRemaining as number) <= 5
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -85,12 +93,31 @@ export default function HomeScreen() {
             <View style={s.packageBannerLeft}>
               <Text style={s.packageBannerLabel}>PAKETA AKTIVE</Text>
               <Text style={s.packageBannerCode}>{activeProduct.code}</Text>
+              {showCountdown && (
+                <View style={[s.countdownPill, countdownUrgent && s.countdownPillUrgent]}>
+                  <Text style={[s.countdownText, countdownUrgent && s.countdownTextUrgent]}>
+                    {daysLabel(daysRemaining as number)}
+                  </Text>
+                </View>
+              )}
             </View>
             {PRODUCT_IMAGES[activeProduct.slug]
               ? <Image source={{ uri: PRODUCT_IMAGES[activeProduct.slug] }} style={s.packageBannerImg} resizeMode="contain" />
               : <Text style={{ fontSize: 40 }}>📦</Text>
             }
           </TouchableOpacity>
+        )}
+
+        {/* Premium without a selected product yet — still show countdown */}
+        {isPremium && !activeProduct && showCountdown && (
+          <View style={s.countdownBanner}>
+            <Text style={s.packageBannerLabel}>PAKETA AKTIVE</Text>
+            <View style={[s.countdownPill, countdownUrgent && s.countdownPillUrgent, { marginTop: 6 }]}>
+              <Text style={[s.countdownText, countdownUrgent && s.countdownTextUrgent]}>
+                {daysLabel(daysRemaining as number)}
+              </Text>
+            </View>
+          </View>
         )}
 
         {/* Diet Plan — featured */}
@@ -221,6 +248,28 @@ const s = StyleSheet.create({
   packageBannerLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   packageBannerCode: { fontSize: 17, color: Colors.alabaster, fontWeight: '600', letterSpacing: 0.5 },
   packageBannerImg: { width: 56, height: 56 },
+
+  // Countdown pill (inside banner)
+  countdownPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(113,181,162,0.25)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 8,
+  },
+  countdownPillUrgent: {
+    backgroundColor: 'rgba(183,73,73,0.9)',
+  },
+  countdownText: { fontSize: 11, fontWeight: '700', color: Colors.alabaster, letterSpacing: 0.3 },
+  countdownTextUrgent: { color: '#fff' },
+
+  // Standalone countdown banner (premium but no product selected)
+  countdownBanner: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 12,
+    borderRadius: 16, padding: 16,
+  },
+
   dietCard: {
     backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10,
     borderRadius: 16, padding: 16,
@@ -297,4 +346,39 @@ const s = StyleSheet.create({
   },
   activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
   activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
+
+  // Locked premium styles
+  lockedDiet: {
+    backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 8,
+    borderRadius: 14, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    opacity: 0.75,
+  },
+  lockedDietTitle: { fontSize: 15, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
+  lockedDietSub: { fontSize: 11, color: '#6B7F72' },
+  lockIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#ECEFE8', alignItems: 'center', justifyContent: 'center',
+  },
+  lockedRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8, marginBottom: 12 },
+  lockedSmall: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
+    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    opacity: 0.75,
+  },
+  lockedSmallIcon: { fontSize: 20, marginBottom: 4 },
+  lockedSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
+  // Big activate CTA card
+  bigActivateCard: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 4,
+    borderRadius: 16, padding: 20,
+  },
+  bigActivateTitle: { fontSize: 17, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
+  bigActivateSub: { fontSize: 12, color: 'rgba(236,239,232,0.65)', lineHeight: 17, marginBottom: 16 },
+  bigActivateBtn: {
+    backgroundColor: Colors.aloe, borderRadius: 10,
+    paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start',
+  },
+  bigActivateBtnText: { fontSize: 14, fontWeight: '600', color: Colors.pine },
 })
