@@ -31,51 +31,21 @@ export default function ProductsScreen() {
   const [activePackage, setActivePackage] = useState<ActivePackage | null>(null)
   const [purchaseCount, setPurchaseCount] = useState(0)
 
-  useFocusEffect(useCallback(() => {
-    loadData()
-  }, []))
+  useFocusEffect(useCallback(() => { loadData() }, []))
 
   async function loadData() {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_premium, order_code')
-        .eq('id', user.id)
-        .single()
-
+      const { data: profile } = await supabase.from('profiles').select('is_premium, order_code').eq('id', user.id).single()
       setIsPremium(profile?.is_premium || false)
-
       if (profile?.order_code) {
-        const { data: selData } = await supabase
-          .from('product_selections')
-          .select('product_slug')
-          .eq('user_id', user.id)
-          .eq('order_code', profile.order_code)
-          .eq('is_active', true)
-          .order('selected_at', { ascending: true })
+        const { data: selData } = await supabase.from('product_selections').select('product_slug').eq('user_id', user.id).eq('order_code', profile.order_code).eq('is_active', true).order('selected_at', { ascending: true })
         const allSlugs = (selData || []).map(s => s.product_slug).filter(Boolean) as string[]
-
-        const { data: order } = await supabase
-          .from('orders')
-          .select('sheet_source')
-          .eq('order_code', profile.order_code)
-          .single()
-
-        const { data: weights } = await supabase
-          .from('tracker_entries')
-          .select('product_slug, date')
-          .eq('user_id', user.id)
-          .ilike('product_slug', 'weight:%')
-          .order('date', { ascending: true })
-
-        const wEntries = (weights || []).map(w => ({
-          weight: parseFloat(w.product_slug.replace('weight:', ''))
-        })).filter(w => !isNaN(w.weight))
-
+        const { data: order } = await supabase.from('orders').select('sheet_source').eq('order_code', profile.order_code).single()
+        const { data: weights } = await supabase.from('tracker_entries').select('product_slug, date').eq('user_id', user.id).ilike('product_slug', 'weight:%').order('date', { ascending: true })
+        const wEntries = (weights || []).map(w => ({ weight: parseFloat(w.product_slug.replace('weight:', '')) })).filter(w => !isNaN(w.weight))
         setActivePackage({
           order_code: profile.order_code,
           product_slugs: allSlugs,
@@ -85,55 +55,38 @@ export default function ProductsScreen() {
           current_weight: wEntries[wEntries.length - 1]?.weight || null,
         })
       }
-
-      const { count } = await supabase
-        .from('product_selections')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+      const { count } = await supabase.from('product_selections').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
       setPurchaseCount(count || 0)
-
-    } catch (e) {
-      console.log('products load error:', e)
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { console.log('products load error:', e) }
+    finally { setLoading(false) }
   }
 
-  if (loading) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <View style={s.center}><ActivityIndicator size="large" color={Colors.pine} /></View>
-      </SafeAreaView>
-    )
-  }
+  if (loading) return (
+    <SafeAreaView style={s.safe}><View style={s.center}><ActivityIndicator size="large" color={Colors.pine} /></View></SafeAreaView>
+  )
 
   const slug = activePackage?.product_slug
   const productConfig = slug ? PRODUCTS[slug] : null
   const weightLoss = activePackage?.start_weight && activePackage?.current_weight
-    ? (activePackage.start_weight - activePackage.current_weight).toFixed(1)
-    : null
+    ? (activePackage.start_weight - activePackage.current_weight).toFixed(1) : null
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* Header — no back button, this is a tab */}
       <View style={s.header}>
         <Text style={s.headerSub}>SOHEALTHY</Text>
         <Text style={s.headerTitle}>Paketat e Mia</Text>
       </View>
-
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-
         {!isPremium && (
           <View style={s.emptyState}>
             <View style={s.emptyIconWrap}><Package size={40} color={Colors.pine} strokeWidth={1.5} /></View>
-            <Text style={s.emptyTitle}>Nuk keni paket\u00eb aktive</Text>
-            <Text style={s.emptyText}>Aktivizoni llogarin\u00eb tuaj me kodin e porosis\u00eb p\u00ebr t\u00eb par\u00eb produktin tuaj.</Text>
+            <Text style={s.emptyTitle}>Nuk keni paketë aktive</Text>
+            <Text style={s.emptyText}>Aktivizoni llogarinë tuaj me kodin e porosisë për të parë produktin tuaj.</Text>
             <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/activate')}>
-              <Text style={s.activateBtnText}>Aktivizo Kodin \u2192</Text>
+              <Text style={s.activateBtnText}>Aktivizo Kodin →</Text>
             </TouchableOpacity>
           </View>
         )}
-
         {isPremium && activePackage && (
           <>
             <View style={s.heroCard}>
@@ -156,83 +109,53 @@ export default function ProductsScreen() {
                 }
               </View>
             </View>
-
             {activePackage.product_slugs.length > 0 ? (
               <View style={s.instructionsCard}>
                 <View style={s.productImagesRow}>
                   {activePackage.product_slugs.map(s2 => (
                     <View key={s2} style={s.productImgWrap}>
-                      {PRODUCT_IMAGES[s2]
-                        ? <Image source={{ uri: PRODUCT_IMAGES[s2] }} style={s.productImgSmall} resizeMode="contain" />
-                        : <Leaf size={32} color={Colors.aloe} strokeWidth={1.5} />
-                      }
+                      {PRODUCT_IMAGES[s2] ? <Image source={{ uri: PRODUCT_IMAGES[s2] }} style={s.productImgSmall} resizeMode="contain" /> : <Leaf size={32} color={Colors.aloe} strokeWidth={1.5} />}
                       <Text style={s.productImgLabel}>{PRODUCT_NAMES[s2]}</Text>
                     </View>
                   ))}
                 </View>
-
                 {(() => {
                   const combo = getComboSchedule(activePackage.product_slugs)
-                  if (combo) {
-                    return (
-                      <>
-                        <View style={s.scheduleTitleRow}>
-                          <Calendar size={15} color={Colors.pine} strokeWidth={1.75} />
-                          <Text style={s.scheduleTitle}>Orari i Dit\u00ebs</Text>
-                        </View>
-                        {combo.map((item, i) => (
-                          <View key={i} style={s.scheduleRow}>
-                            <View style={s.scheduleTime}><Text style={s.scheduleTimeText}>{item.time}</Text></View>
-                            <View style={s.scheduleInfo}>
-                              {PRODUCT_IMAGES[item.slug]
-                                ? <Image source={{ uri: PRODUCT_IMAGES[item.slug] }} style={s.scheduleImg} resizeMode="contain" />
-                                : null
-                              }
-                              <Text style={s.scheduleInstruction}>{item.instruction}</Text>
-                            </View>
+                  if (combo) return (
+                    <>
+                      <View style={s.scheduleTitleRow}><Calendar size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.scheduleTitle}>Orari i Ditës</Text></View>
+                      {combo.map((item, i) => (
+                        <View key={i} style={s.scheduleRow}>
+                          <View style={s.scheduleTime}><Text style={s.scheduleTimeText}>{item.time}</Text></View>
+                          <View style={s.scheduleInfo}>
+                            {PRODUCT_IMAGES[item.slug] ? <Image source={{ uri: PRODUCT_IMAGES[item.slug] }} style={s.scheduleImg} resizeMode="contain" /> : null}
+                            <Text style={s.scheduleInstruction}>{item.instruction}</Text>
                           </View>
-                        ))}
-                      </>
-                    )
-                  } else if (slug && productConfig) {
-                    return (
-                      <>
-                        <View style={s.infoRow}>
-                          <View style={s.infoLabelWrap}><Clock size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Kur</Text></View>
-                          <Text style={s.infoVal}>{productConfig.when}</Text>
                         </View>
-                        <View style={s.divider} />
-                        <View style={s.infoRow}>
-                          <View style={s.infoLabelWrap}><ClipboardList size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Si</Text></View>
-                          <Text style={s.infoVal}>{productConfig.how}</Text>
-                        </View>
-                        <View style={s.divider} />
-                        <View style={s.infoRow}>
-                          <View style={s.infoLabelWrap}><Snowflake size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Ruajtja</Text></View>
-                          <Text style={s.infoVal}>{productConfig.storage}</Text>
-                        </View>
-                        <View style={s.reminderBox}>
-                          <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
-                          <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
-                        </View>
-                      </>
-                    )
-                  }
+                      ))}
+                    </>
+                  )
+                  if (slug && productConfig) return (
+                    <>
+                      <View style={s.infoRow}><View style={s.infoLabelWrap}><Clock size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Kur</Text></View><Text style={s.infoVal}>{productConfig.when}</Text></View>
+                      <View style={s.divider} />
+                      <View style={s.infoRow}><View style={s.infoLabelWrap}><ClipboardList size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Si</Text></View><Text style={s.infoVal}>{productConfig.how}</Text></View>
+                      <View style={s.divider} />
+                      <View style={s.infoRow}><View style={s.infoLabelWrap}><Snowflake size={14} color={Colors.pine} strokeWidth={1.75} /><Text style={s.infoLabel}>Ruajtja</Text></View><Text style={s.infoVal}>{productConfig.storage}</Text></View>
+                      <View style={s.reminderBox}>
+                        <Text style={s.reminderTime}>{productConfig.notif_time}</Text>
+                        <Text style={s.reminderMsg}>{productConfig.notif_msg}</Text>
+                      </View>
+                    </>
+                  )
                   return null
                 })()}
-
                 <View style={s.btnRow}>
-                  <TouchableOpacity
-                    style={[s.changeBtn, s.btnFlex]}
-                    onPress={() => router.push('/(app)/my-packages')}
-                  >
+                  <TouchableOpacity style={[s.changeBtn, s.btnFlex]} onPress={() => router.push('/(app)/my-packages')}>
                     <Text style={s.changeBtnText}>Ndrysho Produktet</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[s.detailBtnP, s.btnFlex]}
-                    onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}
-                  >
-                    <Text style={s.detailBtnPText}>Detajet e P\u00ebrdorimit \u2192</Text>
+                  <TouchableOpacity style={[s.detailBtnP, s.btnFlex]} onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}>
+                    <Text style={s.detailBtnPText}>Detajet e Përdorimit →</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -240,51 +163,38 @@ export default function ProductsScreen() {
               <View style={s.noProductCard}>
                 <Text style={s.noProductText}>Nuk keni zgjedhur produktin ende.</Text>
                 <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/my-packages')}>
-                  <Text style={s.activateBtnText}>Zgjidh Produktin \u2192</Text>
+                  <Text style={s.activateBtnText}>Zgjidh Produktin →</Text>
                 </TouchableOpacity>
               </View>
             )}
-
             <View style={s.weightCard}>
-              <View style={s.weightTitleRow}><Scale size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.weightTitle}>Humbja e Pesh\u00ebs</Text></View>
+              <View style={s.weightTitleRow}><Scale size={15} color={Colors.pine} strokeWidth={1.75} /><Text style={s.weightTitle}>Humbja e Peshës</Text></View>
               {weightLoss !== null ? (
                 <View style={s.weightRow}>
-                  <View style={s.weightStat}>
-                    <Text style={s.weightStatLbl}>Fillimi</Text>
-                    <Text style={s.weightStatVal}>{activePackage.start_weight} kg</Text>
-                  </View>
+                  <View style={s.weightStat}><Text style={s.weightStatLbl}>Fillimi</Text><Text style={s.weightStatVal}>{activePackage.start_weight} kg</Text></View>
                   <ArrowRight size={18} color="#ccc" strokeWidth={2} style={{ marginHorizontal: 4 }} />
-                  <View style={s.weightStat}>
-                    <Text style={s.weightStatLbl}>Tani</Text>
-                    <Text style={s.weightStatVal}>{activePackage.current_weight} kg</Text>
-                  </View>
-                  <View style={[s.weightStat, s.weightLossStat]}>
-                    <Text style={s.weightStatLbl}>Humbur</Text>
-                    <Text style={[s.weightStatVal, { color: Colors.aloe, fontSize: 22 }]}>-{weightLoss} kg</Text>
-                  </View>
+                  <View style={s.weightStat}><Text style={s.weightStatLbl}>Tani</Text><Text style={s.weightStatVal}>{activePackage.current_weight} kg</Text></View>
+                  <View style={[s.weightStat, s.weightLossStat]}><Text style={s.weightStatLbl}>Humbur</Text><Text style={[s.weightStatVal, { color: Colors.aloe, fontSize: 22 }]}>-{weightLoss} kg</Text></View>
                 </View>
               ) : (
                 <TouchableOpacity style={s.addWeightBtn} onPress={() => router.push('/(app)/tracker')}>
-                  <Text style={s.addWeightText}>+ Shto Pesh\u00ebn n\u00eb Tracker \u2192</Text>
+                  <Text style={s.addWeightText}>+ Shto Peshën në Tracker →</Text>
                 </TouchableOpacity>
               )}
             </View>
-
             <View style={s.newCodeSection}>
-              <Text style={s.newCodeTitle}>Bleve paket\u00eb t\u00eb re?</Text>
-              <Text style={s.newCodeSub}>Aktivizo kodin e ri p\u00ebr t\u00eb filluar me produktin dhe diet\u00ebn e re.</Text>
+              <Text style={s.newCodeTitle}>Bleve paketë të re?</Text>
+              <Text style={s.newCodeSub}>Aktivizo kodin e ri për të filluar me produktin dhe dietën e re.</Text>
               <TouchableOpacity style={s.newCodeBtn} onPress={() => router.push('/(app)/activate')}>
-                <Text style={s.newCodeBtnText}>+ Aktivizo Kod t\u00eb Ri</Text>
+                <Text style={s.newCodeBtnText}>+ Aktivizo Kod të Ri</Text>
               </TouchableOpacity>
             </View>
-
             <TouchableOpacity style={s.historyBtn} onPress={() => router.push('/(app)/my-packages')}>
               <ClipboardList size={16} color={Colors.pine} strokeWidth={1.75} />
-              <Text style={s.historyBtnText}>Shiko Historin\u00eb e Blerjeve</Text>
+              <Text style={s.historyBtnText}>Shiko Historinë e Blerjeve</Text>
             </TouchableOpacity>
           </>
         )}
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -310,12 +220,9 @@ const s = StyleSheet.create({
   codeBadge: { marginBottom: 4 },
   codeBadgeLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '700' },
   codeBadgeVal: { fontSize: 20, fontWeight: '700', color: Colors.alabaster, letterSpacing: 1 },
-  typeBadge: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
-  typeBadgeText: { color: Colors.aloe, fontSize: 11, fontWeight: '700' },
   loyaltyBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
   loyaltyText: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
   instructionsCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  productName: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 16 },
   infoRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
   infoLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 92 },
   infoLabel: { fontSize: 13, fontWeight: '700', color: Colors.pine },
