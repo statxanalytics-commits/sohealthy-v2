@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
+import { Lightbulb } from 'lucide-react-native';
 import { supabase } from '../../src/lib/supabase';
 import { useRouter } from 'expo-router';
 
@@ -26,21 +27,17 @@ export default function ActivateScreen() {
         setLoading(false); return;
       }
 
-      // Check if already premium
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_premium, order_code')
         .eq('id', user.id)
         .single();
 
-      // Allow adding new code even if already premium (new package)
-      // But prevent reusing the same code
       if (profile?.is_premium && profile?.order_code === trimmedCode) {
         Alert.alert('Kod i Njëjtë', 'Ky kod është i njëjtë me atë aktual. Futni kodin e paketës suaj të re.');
         setLoading(false); return;
       }
 
-      // Check order code
       const { data: order, error: fetchError } = await supabase
         .from('orders')
         .select('id, used, activated_by')
@@ -52,18 +49,16 @@ export default function ActivateScreen() {
         setLoading(false); return;
       }
 
-      if (order.used) {
+      if (order.used && order.activated_by !== user.id) {
         Alert.alert('Kod i Përdorur', 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.');
         setLoading(false); return;
       }
 
-      // Update order as used
       await supabase
         .from('orders')
         .update({ used: true, activated_by: user.id, verified_at: new Date().toISOString() })
         .eq('id', order.id);
 
-      // Upsert profile as premium
       await supabase
         .from('profiles')
         .upsert({
@@ -76,8 +71,6 @@ export default function ActivateScreen() {
           plan_start: new Date().toISOString(),
         });
 
-      // New code = new package: deactivate old diet plan and product selections
-      // so user can generate fresh diet and select new products
       await supabase
         .from('diet_plans')
         .update({ is_active: false })
@@ -90,7 +83,6 @@ export default function ActivateScreen() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      // Save to purchase_history for loyalty/discount tracking
       const { data: orderData } = await supabase
         .from('orders')
         .select('sheet_source')
@@ -105,28 +97,10 @@ export default function ActivateScreen() {
         source: orderData?.sheet_source || 'unknown',
       }, { onConflict: 'order_code' });
 
-      // Check if already selected a product for this code
-      const { data: existingSelection } = await supabase
-        .from('product_selections')
-        .select('product_slug')
-        .eq('user_id', user.id)
-        .eq('order_code', trimmedCode)
-        .eq('is_active', true)
-        .single();
-
       Alert.alert(
-        'Urime! 🎉',
+        'Urime!',
         'Llogaria juaj premium u aktivizua me sukses!',
-        [{
-          text: 'Vazhdo',
-          onPress: () => {
-            if (existingSelection?.product_slug) {
-              router.replace('/(app)/my-packages');
-            } else {
-              router.replace('/(app)/my-packages');
-            }
-          }
-        }]
+        [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/my-packages') }]
       );
 
     } catch (err) {
@@ -167,9 +141,10 @@ export default function ActivateScreen() {
             : <Text style={styles.buttonText}>Aktivizo</Text>
           }
         </TouchableOpacity>
-        <Text style={styles.hint}>
-          💡 Kodi gjendet brenda paketës suaj, shkruar në letër.
-        </Text>
+        <View style={styles.hintRow}>
+          <Lightbulb size={14} color="#999" strokeWidth={1.75} />
+          <Text style={styles.hint}>Kodi gjendet brenda paketës suaj, shkruar në letër.</Text>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -184,5 +159,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#1B3F2F', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
   buttonDisabled: { backgroundColor: '#71B5A2' },
   buttonText: { color: '#ECEFE8', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
+  hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   hint: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
 });
