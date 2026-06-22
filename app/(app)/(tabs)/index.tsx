@@ -2,27 +2,32 @@ import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import {
+  BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight,
+} from 'lucide-react-native'
+import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
 import { usePremium } from '../../../src/hooks/usePremium'
 import { supabase } from '../../../src/lib/supabase'
 import { useFocusEffect } from 'expo-router'
 
 const FREE_TOOLS = [
-  { id: 'challenge', icon: '📅', name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
-  { id: 'calculator', icon: '⚖️', name: 'Llogarit Humbjen', sub: 'Kalkulator peshe', url: API.calculator },
-  { id: 'quiz', icon: '✨', name: 'Gjej Paketën', sub: 'Quiz produktesh', url: API.quiz },
-  { id: 'bodyCalc', icon: '📊', name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
+  { id: 'challenge', Icon: CalendarCheck, name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
+  { id: 'calculator', Icon: Scale, name: 'Gjej Sa Kg Humb Me Paketat SoHealthy', sub: 'Kalkulator peshe', url: API.calculator },
+  { id: 'quiz', Icon: Sparkles, name: 'Gjej Paketën Perfekte Për Ty Nga SoHealthy', sub: 'Quiz produktesh', url: API.quiz },
+  { id: 'bodyCalc', Icon: Calculator, name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
 ]
 
 type PremiumTool = {
-  id: string; icon: string; name: string; sub: string
+  id: string; Icon: LucideIcon; name: string; sub: string
   route: string; params?: Record<string, string>
 }
 
 const PREMIUM_TOOLS: PremiumTool[] = [
-  { id: 'scanner', icon: '📷', name: 'Skaner', sub: 'Skano ushqimet', route: '/(app)/scanner' },
-  { id: 'tracker', icon: '📈', name: 'Tracker', sub: 'Gjurmo kalorite', route: '/(app)/tracker' },
-  { id: 'progress', icon: '🏆', name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
+  { id: 'scanner', Icon: ScanLine, name: 'Skaner', sub: 'Skano ushqimet', route: '/(app)/scanner' },
+  { id: 'tracker', Icon: TrendingUp, name: 'Tracker', sub: 'Gjurmo kalorite', route: '/(app)/tracker' },
+  { id: 'progress', Icon: Trophy, name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
 ]
 
 // Albanian day label: 1 ditë / N ditë
@@ -103,7 +108,7 @@ export default function HomeScreen() {
             </View>
             {PRODUCT_IMAGES[activeProduct.slug]
               ? <Image source={{ uri: PRODUCT_IMAGES[activeProduct.slug] }} style={s.packageBannerImg} resizeMode="contain" />
-              : <Text style={{ fontSize: 40 }}>📦</Text>
+              : <Package size={40} color={Colors.alabaster} strokeWidth={1.75} />
             }
           </TouchableOpacity>
         )}
@@ -120,64 +125,91 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Diet Plan — featured */}
-        {isPremium && (
-          <TouchableOpacity style={s.dietCard} onPress={() => router.push('/(app)/diet')}>
-            <View>
-              <Text style={s.dietLabel}>PREMIUM</Text>
-              <Text style={s.dietTitle}>Plani i Dietes</Text>
-              <Text style={s.dietSub}>Plan 14-ditor personal</Text>
-            </View>
-            <View style={s.dietArrow}>
-              <Text style={s.dietArrowText}>Hap →</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
         {/* Quiz Nutricional — featured free card */}
         <TouchableOpacity style={s.quizCard} onPress={() => router.push('/(app)/profili' as any)}>
+          <View style={s.quizCardIcon}>
+            <ClipboardList size={22} color={Colors.pine} strokeWidth={1.75} />
+          </View>
           <View style={s.quizCardLeft}>
             <Text style={s.quizCardBadge}>FALAS</Text>
             <Text style={s.quizCardTitle}>Zbulo Profilin Tënd Nutricional</Text>
             <Text style={s.quizCardSub}>12 pyetje · 2 minuta · plan personal</Text>
           </View>
           <View style={s.quizCardArrow}>
-            <Text style={s.quizCardArrowText}>→</Text>
+            <ArrowRight size={16} color={Colors.pine} strokeWidth={2.5} />
           </View>
         </TouchableOpacity>
 
         {/* Free tools */}
         <Text style={s.sectionLabel}>MJETET FALAS</Text>
         <View style={s.freeGrid}>
-          {FREE_TOOLS.map(tool => (
-            <TouchableOpacity
-              key={tool.id}
-              style={s.freeCard}
-              onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
-            >
-              <Text style={s.freeIcon}>{tool.icon}</Text>
-              <Text style={s.freeName}>{tool.name}</Text>
-              <Text style={s.freeSub}>{tool.sub}</Text>
-            </TouchableOpacity>
-          ))}
+          {FREE_TOOLS.map(tool => {
+            const Icon = tool.Icon
+            return (
+              <TouchableOpacity
+                key={tool.id}
+                style={s.freeCard}
+                onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
+              >
+                <Icon size={24} color={Colors.pine} strokeWidth={1.75} style={s.freeIcon} />
+                <Text style={s.freeName}>{tool.name}</Text>
+                <Text style={s.freeSub}>{tool.sub}</Text>
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
-        {/* Premium tools */}
+        {/* Premium section */}
         {isPremium ? (
           <>
             <Text style={s.sectionLabel}>PREMIUM</Text>
+
+            {/* Diet Plan */}
+            <TouchableOpacity style={s.dietCard} onPress={() => router.push('/(app)/diet')}>
+              <View>
+                <Text style={s.dietLabel}>PREMIUM</Text>
+                <Text style={s.dietTitle}>Plani i Dietes</Text>
+                <Text style={s.dietSub}>Plan 14-ditor personal</Text>
+              </View>
+              <View style={s.dietArrow}>
+                <Text style={s.dietArrowText}>Hap →</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* RESET Book */}
+            <TouchableOpacity
+              style={s.bookCard}
+              onPress={() => router.push({ pathname: '/(app)/webview', params: { url: API.resetBook, title: 'Libri RESET — Nga Pavli' } })}
+            >
+              <View style={s.bookCardLeft}>
+                <Text style={s.bookLabel}>PREMIUM</Text>
+                <View style={s.bookTitleRow}>
+                  <BookOpen size={18} color={Colors.pine} strokeWidth={1.75} />
+                  <Text style={s.bookTitle}>Libri RESET</Text>
+                </View>
+                <Text style={s.bookSub}>Udhëzuesi i shpejtë nga Pavli</Text>
+              </View>
+              <View style={s.bookArrow}>
+                <Text style={s.bookArrowText}>Lexo →</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Premium tools */}
             <View style={s.premiumRow}>
-              {PREMIUM_TOOLS.map(tool => (
-                <TouchableOpacity
-                  key={tool.id}
-                  style={s.premiumSmall}
-                  onPress={() => handlePremiumTool(tool)}
-                >
-                  <Text style={s.premiumSmallIcon}>{tool.icon}</Text>
-                  <Text style={s.premiumSmallName}>{tool.name}</Text>
-                  <Text style={s.premiumSmallSub}>{tool.sub}</Text>
-                </TouchableOpacity>
-              ))}
+              {PREMIUM_TOOLS.map(tool => {
+                const Icon = tool.Icon
+                return (
+                  <TouchableOpacity
+                    key={tool.id}
+                    style={s.premiumSmall}
+                    onPress={() => handlePremiumTool(tool)}
+                  >
+                    <Icon size={22} color={Colors.pine} strokeWidth={1.75} style={s.premiumSmallIcon} />
+                    <Text style={s.premiumSmallName}>{tool.name}</Text>
+                    <Text style={s.premiumSmallSub}>{tool.sub}</Text>
+                  </TouchableOpacity>
+                )
+              })}
             </View>
           </>
         ) : !loading ? (
@@ -190,21 +222,24 @@ export default function HomeScreen() {
                 <Text style={s.lockedDietSub}>Plan 14-ditor personal</Text>
               </View>
               <View style={s.lockIcon}>
-                <Text style={{ fontSize: 18 }}>🔒</Text>
+                <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
               </View>
             </TouchableOpacity>
             <View style={s.lockedRow}>
               {[
-                { icon: '📷', name: 'Skaner' },
-                { icon: '📈', name: 'Tracker' },
-                { icon: '🏆', name: 'Progresi' },
-              ].map(t => (
-                <TouchableOpacity key={t.name} style={s.lockedSmall} onPress={() => router.push('/(app)/activate')}>
-                  <Text style={s.lockedSmallIcon}>{t.icon}</Text>
-                  <Text style={s.lockedSmallName}>{t.name}</Text>
-                  <Text style={{ fontSize: 10 }}>🔒</Text>
-                </TouchableOpacity>
-              ))}
+                { Icon: ScanLine, name: 'Skaner' },
+                { Icon: TrendingUp, name: 'Tracker' },
+                { Icon: Trophy, name: 'Progresi' },
+              ].map(t => {
+                const Icon = t.Icon
+                return (
+                  <TouchableOpacity key={t.name} style={s.lockedSmall} onPress={() => router.push('/(app)/activate')}>
+                    <Icon size={22} color={Colors.pine} strokeWidth={1.75} style={s.lockedSmallIcon} />
+                    <Text style={s.lockedSmallName}>{t.name}</Text>
+                    <Lock size={10} color="#6B7F72" strokeWidth={2} />
+                  </TouchableOpacity>
+                )
+              })}
             </View>
             {/* Big activate CTA */}
             <TouchableOpacity style={s.bigActivateCard} onPress={() => router.push('/(app)/activate')}>
@@ -270,6 +305,47 @@ const s = StyleSheet.create({
     borderRadius: 16, padding: 16,
   },
 
+  // Quiz card
+  quizCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.aloe,
+  },
+  quizCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(113,181,162,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  quizCardLeft: { flex: 1, marginRight: 10 },
+  quizCardBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 9,
+    letterSpacing: 2,
+    fontWeight: '700',
+    color: Colors.aloe,
+    marginBottom: 4,
+  },
+  quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 20 },
+  quizCardSub: { fontSize: 12, color: Colors.muted, marginTop: 3 },
+  quizCardArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.aloe,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   dietCard: {
     backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10,
     borderRadius: 16, padding: 16,
@@ -280,46 +356,19 @@ const s = StyleSheet.create({
   dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
-
-  // Quiz card
-  quizCard: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: Colors.aloe,
+  bookCard: {
+    backgroundColor: Colors.aloe, marginHorizontal: 16, marginTop: 10,
+    borderRadius: 14, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 12,
   },
-  quizCardLeft: { flex: 1, marginRight: 12 },
-  quizCardBadge: {
-    alignSelf: 'flex-start',
-    fontSize: 9,
-    letterSpacing: 2,
-    fontWeight: '700',
-    color: Colors.aloe,
-    backgroundColor: 'rgba(113,181,162,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 21 },
-  quizCardSub: { fontSize: 12, color: Colors.muted, marginTop: 3 },
-  quizCardArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.aloe,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quizCardArrowText: { fontSize: 16, fontWeight: '700', color: Colors.pine },
-
+  bookCardLeft: { flex: 1 },
+  bookLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', marginBottom: 4, opacity: 0.7 },
+  bookTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  bookTitle: { fontSize: 17, color: Colors.pine, fontWeight: '700', marginBottom: 2 },
+  bookSub: { fontSize: 12, color: Colors.pine, opacity: 0.7, marginTop: 2 },
+  bookArrow: { backgroundColor: Colors.pine, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 12 },
+  bookArrowText: { fontSize: 13, fontWeight: '600', color: Colors.alabaster },
   sectionLabel: {
     fontSize: 10, letterSpacing: 2, color: '#6B7F72', fontWeight: '600',
     marginHorizontal: 16, marginTop: 20, marginBottom: 10,
@@ -329,7 +378,7 @@ const s = StyleSheet.create({
     width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 14,
     borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
   },
-  freeIcon: { fontSize: 22, marginBottom: 8 },
+  freeIcon: { marginBottom: 8 },
   freeName: { fontSize: 13, fontWeight: '600', color: Colors.pine, lineHeight: 17, marginBottom: 2 },
   freeSub: { fontSize: 11, color: '#6B7F72' },
   premiumRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8 },
@@ -337,7 +386,7 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
     alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
   },
-  premiumSmallIcon: { fontSize: 20, marginBottom: 6 },
+  premiumSmallIcon: { marginBottom: 6 },
   premiumSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine },
   premiumSmallSub: { fontSize: 10, color: '#6B7F72', marginTop: 2, textAlign: 'center' },
   activateCard: {
@@ -346,7 +395,6 @@ const s = StyleSheet.create({
   },
   activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
   activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
-
   // Locked premium styles
   lockedDiet: {
     backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 8,
@@ -367,7 +415,7 @@ const s = StyleSheet.create({
     alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
     opacity: 0.75,
   },
-  lockedSmallIcon: { fontSize: 20, marginBottom: 4 },
+  lockedSmallIcon: { marginBottom: 4 },
   lockedSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
   // Big activate CTA card
   bigActivateCard: {

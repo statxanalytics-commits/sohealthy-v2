@@ -1,6 +1,7 @@
-import { Alert, useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2 } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
@@ -61,12 +62,13 @@ export default function ProfileScreen() {
           <View style={s.avatar}>
             <Text style={s.avatarText}>{profile?.name?.charAt(0)?.toUpperCase() || '?'}</Text>
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={s.name}>{profile?.name || '—'}</Text>
             <Text style={s.username}>@{profile?.username || '—'}</Text>
             {profile?.is_premium && (
               <View style={s.premiumBadge}>
-                <Text style={s.premiumText}>⭐ Premium</Text>
+                <Crown size={11} color={Colors.white} strokeWidth={2} />
+                <Text style={s.premiumText}>Premium</Text>
               </View>
             )}
           </View>
@@ -74,30 +76,39 @@ export default function ProfileScreen() {
 
         <View style={s.infoCard}>
           <View style={s.infoRow}>
-            <Text style={s.infoLabel}>Email</Text>
+            <View style={s.infoLabelRow}><Mail size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Email</Text></View>
             <Text style={s.infoValue}>{profile?.email || '—'}</Text>
           </View>
           <View style={s.infoRow}>
-            <Text style={s.infoLabel}>Statusi</Text>
-            <Text style={[s.infoValue, { color: profile?.is_premium ? Colors.pine : Colors.muted }]}>
-              {profile?.is_premium ? '⭐ Premium' : 'Falas'}
-            </Text>
+            <View style={s.infoLabelRow}><BadgeCheck size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Statusi</Text></View>
+            {profile?.is_premium ? (
+              <View style={s.statusVal}>
+                <Crown size={13} color={Colors.pine} strokeWidth={2} />
+                <Text style={[s.infoValue, { color: Colors.pine }]}>Premium</Text>
+              </View>
+            ) : (
+              <Text style={[s.infoValue, { color: Colors.muted }]}>Falas</Text>
+            )}
           </View>
           {profile?.plan_start && (
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Filloi</Text>
+            <View style={[s.infoRow, { borderBottomWidth: 0 }]}>
+              <View style={s.infoLabelRow}><CalendarDays size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Filloi</Text></View>
               <Text style={s.infoValue}>{new Date(profile.plan_start).toLocaleDateString('sq-AL')}</Text>
             </View>
           )}
         </View>
 
         <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+          <LogOut size={16} color={Colors.white} strokeWidth={2} />
           <Text style={s.logoutText}>Dil nga llogaria</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
+          <Trash2 size={15} color="#cc0000" strokeWidth={2} />
           <Text style={s.deleteText}>Fshi Llogarinë</Text>
         </TouchableOpacity>
+
+        <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -115,14 +126,17 @@ const s = StyleSheet.create({
   avatarText: { fontSize: 26, fontWeight: '700', color: Colors.pine },
   name: { fontSize: 18, fontWeight: '700', color: Colors.pine },
   username: { fontSize: 13, color: Colors.muted, marginTop: 2 },
-  premiumBadge: { backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6, alignSelf: 'flex-start' },
+  premiumBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.pine, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginTop: 6, alignSelf: 'flex-start' },
   premiumText: { fontSize: 11, fontWeight: '600', color: Colors.white },
   infoCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 16, marginBottom: 12 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  infoLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   infoLabel: { fontSize: 13, color: Colors.muted },
   infoValue: { fontSize: 13, fontWeight: '500', color: Colors.pine },
-  logoutBtn: { backgroundColor: Colors.goji, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  statusVal: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.goji, borderRadius: 12, paddingVertical: 15, marginTop: 8 },
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
-  deleteBtn: { marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: '#cc000040' },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, borderWidth: 1, borderColor: '#cc000040' },
   deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
+  footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 24 },
 })

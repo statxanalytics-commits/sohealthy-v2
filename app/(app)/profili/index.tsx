@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Colors } from '../../../src/constants'
@@ -10,11 +10,11 @@ const TOTAL = QUESTIONS.length
 export default function QuizScreen() {
   const router = useRouter()
   const [step, setStep] = useState<'intro' | 'quiz'>('intro')
-  const [current, setCurrent] = useState(0)       // 0-based question index
-  const [answers, setAnswers] = useState<Partial<Record<Axis, number>>[]>([])  // one per question
+  const [current, setCurrent] = useState(0)
+  const [answers, setAnswers] = useState<Partial<Record<Axis, number>>[]>([])
   const [selected, setSelected] = useState<number | null>(null)
 
-  // ── INTRO ──────────────────────────────────────────────────────────────────
+  // ── INTRO ──
   if (step === 'intro') {
     return (
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
@@ -37,7 +37,7 @@ export default function QuizScreen() {
     )
   }
 
-  // ── QUIZ ───────────────────────────────────────────────────────────────────
+  // ── QUIZ ──
   const q = QUESTIONS[current]
   const progress = (current + 1) / TOTAL
 
@@ -55,8 +55,7 @@ export default function QuizScreen() {
       setCurrent(current + 1)
       setSelected(null)
     } else {
-      // Last question — compute result and navigate
-      const axes = computeAxes(newAnswers as Record<Axis, number>[])
+      const axes = computeAxes(newAnswers)
       const profileKey = computeProfileKey(axes)
       router.push({
         pathname: '/(app)/profili/rezultati',
@@ -86,10 +85,7 @@ export default function QuizScreen() {
         {q.options.map((opt, i) => (
           <TouchableOpacity
             key={i}
-            style={[
-              s.option,
-              selected === i && s.optionSelected,
-            ]}
+            style={[s.option, selected === i && s.optionSelected]}
             onPress={() => choose(i)}
             activeOpacity={0.75}
           >
@@ -120,7 +116,6 @@ export default function QuizScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
 
-  // Intro
   introWrap: {
     flex: 1,
     paddingHorizontal: 28,
@@ -166,7 +161,6 @@ const s = StyleSheet.create({
     opacity: 0.7,
   },
 
-  // Progress
   progressWrap: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -188,7 +182,6 @@ const s = StyleSheet.create({
   },
   progressLabel: { fontSize: 12, color: Colors.muted, fontWeight: '600', minWidth: 36, textAlign: 'right' },
 
-  // Question
   qWrap: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 8 },
   qNum: {
     fontSize: 11,
@@ -204,7 +197,6 @@ const s = StyleSheet.create({
     lineHeight: 28,
   },
 
-  // Options
   optionsWrap: { paddingHorizontal: 20, paddingTop: 20, gap: 12 },
   option: {
     flexDirection: 'row',
@@ -234,7 +226,6 @@ const s = StyleSheet.create({
   optionText: { fontSize: 15, color: Colors.pine, flex: 1, lineHeight: 21 },
   optionTextSelected: { fontWeight: '600' },
 
-  // Footer
   footer: {
     position: 'absolute',
     bottom: 0,

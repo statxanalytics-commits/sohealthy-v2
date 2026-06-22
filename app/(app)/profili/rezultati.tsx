@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Check, X, ArrowRight } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { PROFILES, type Profile, type ProductRec } from '../../../constants/quiz-data'
 
@@ -29,14 +30,20 @@ export default function ResultScreen() {
         {/* Foods to prioritize */}
         <Section title="Ushqime për të prioritizuar">
           {profile.foods.map((item, i) => (
-            <BulletRow key={i} text={item} color={Colors.aloe} />
+            <View key={i} style={s.iconRow}>
+              <Check size={16} color={Colors.aloe} strokeWidth={2.5} style={s.rowIcon} />
+              <Text style={s.rowText}>{item}</Text>
+            </View>
           ))}
         </Section>
 
         {/* Foods to avoid */}
         <Section title="Ushqime për t'u shmangur">
           {profile.avoid.map((item, i) => (
-            <BulletRow key={i} text={item} color='#B74949' />
+            <View key={i} style={s.iconRow}>
+              <X size={16} color="#B74949" strokeWidth={2.5} style={s.rowIcon} />
+              <Text style={s.rowText}>{item}</Text>
+            </View>
           ))}
         </Section>
 
@@ -114,22 +121,13 @@ export default function ResultScreen() {
   )
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Sub-components ───
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={s.section}>
       <Text style={s.sectionTitle}>{title}</Text>
       {children}
-    </View>
-  )
-}
-
-function BulletRow({ text, color }: { text: string; color: string }) {
-  return (
-    <View style={s.bulletRow}>
-      <View style={[s.bullet, { backgroundColor: color }]} />
-      <Text style={s.bulletText}>{text}</Text>
     </View>
   )
 }
@@ -142,14 +140,15 @@ function ProductCard({ prod, secondary = false, onPress }: { prod: ProductRec; s
       <View style={s.prodFooter}>
         <Text style={s.prodPrice}>{prod.price}</Text>
         <TouchableOpacity style={s.prodBtn} onPress={onPress}>
-          <Text style={s.prodBtnText}>Shiko produktin →</Text>
+          <Text style={s.prodBtnText}>Shiko produktin</Text>
+          <ArrowRight size={14} color={Colors.alabaster} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
     </View>
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ───
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.alabaster },
@@ -197,9 +196,9 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, gap: 10 },
-  bullet: { width: 7, height: 7, borderRadius: 3.5, marginTop: 7, flexShrink: 0 },
-  bulletText: { fontSize: 14, color: Colors.pine, lineHeight: 22, flex: 1 },
+  iconRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, gap: 10 },
+  rowIcon: { marginTop: 3, flexShrink: 0 },
+  rowText: { fontSize: 14, color: Colors.pine, lineHeight: 22, flex: 1 },
 
   habitRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 12 },
   habitNum: {
@@ -254,6 +253,9 @@ const s = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   prodBtnText: { fontSize: 13, fontWeight: '700', color: Colors.alabaster },
 
