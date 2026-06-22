@@ -30,9 +30,14 @@ const PREMIUM_TOOLS: PremiumTool[] = [
   { id: 'progress', Icon: Trophy, name: 'Progresi', sub: 'Shiko rezultatet', route: '/(app)/progress' },
 ]
 
+// Albanian day label: 1 ditë / N ditë
+function daysLabel(n: number) {
+  return n === 1 ? '1 ditë e mbetur' : `${n} ditë të mbetura`
+}
+
 export default function HomeScreen() {
   const router = useRouter()
-  const { isPremium, loading } = usePremium()
+  const { isPremium, daysRemaining, loading } = usePremium()
   const [userName, setUserName] = useState('')
   const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
 
@@ -69,6 +74,9 @@ export default function HomeScreen() {
     return 'Mirembrema'
   }
 
+  const showCountdown = isPremium && daysRemaining !== null
+  const countdownUrgent = showCountdown && (daysRemaining as number) <= 5
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -90,12 +98,31 @@ export default function HomeScreen() {
             <View style={s.packageBannerLeft}>
               <Text style={s.packageBannerLabel}>PAKETA AKTIVE</Text>
               <Text style={s.packageBannerCode}>{activeProduct.code}</Text>
+              {showCountdown && (
+                <View style={[s.countdownPill, countdownUrgent && s.countdownPillUrgent]}>
+                  <Text style={[s.countdownText, countdownUrgent && s.countdownTextUrgent]}>
+                    {daysLabel(daysRemaining as number)}
+                  </Text>
+                </View>
+              )}
             </View>
             {PRODUCT_IMAGES[activeProduct.slug]
               ? <Image source={{ uri: PRODUCT_IMAGES[activeProduct.slug] }} style={s.packageBannerImg} resizeMode="contain" />
               : <Package size={40} color={Colors.alabaster} strokeWidth={1.75} />
             }
           </TouchableOpacity>
+        )}
+
+        {/* Premium without a selected product yet — still show countdown */}
+        {isPremium && !activeProduct && showCountdown && (
+          <View style={s.countdownBanner}>
+            <Text style={s.packageBannerLabel}>PAKETA AKTIVE</Text>
+            <View style={[s.countdownPill, countdownUrgent && s.countdownPillUrgent, { marginTop: 6 }]}>
+              <Text style={[s.countdownText, countdownUrgent && s.countdownTextUrgent]}>
+                {daysLabel(daysRemaining as number)}
+              </Text>
+            </View>
+          </View>
         )}
 
         {/* Quiz Nutricional — featured free card */}
@@ -256,6 +283,27 @@ const s = StyleSheet.create({
   packageBannerLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   packageBannerCode: { fontSize: 17, color: Colors.alabaster, fontWeight: '600', letterSpacing: 0.5 },
   packageBannerImg: { width: 56, height: 56 },
+
+  // Countdown pill (inside banner)
+  countdownPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(113,181,162,0.25)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 8,
+  },
+  countdownPillUrgent: {
+    backgroundColor: 'rgba(183,73,73,0.9)',
+  },
+  countdownText: { fontSize: 11, fontWeight: '700', color: Colors.alabaster, letterSpacing: 0.3 },
+  countdownTextUrgent: { color: '#fff' },
+
+  // Standalone countdown banner (premium but no product selected)
+  countdownBanner: {
+    backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 12,
+    borderRadius: 16, padding: 16,
+  },
 
   // Quiz card
   quizCard: {
