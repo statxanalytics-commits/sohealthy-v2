@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2 } from 'lucide-react-native'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
+const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
+
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<any>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -20,36 +23,47 @@ export default function ProfileScreen() {
   }
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Fshi Llogarinë',
-      'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
-      [
-        { text: 'Anulo', style: 'cancel' },
-        {
-          text: 'Fshi Llogarinë',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser()
-              if (!user) return
-              await supabase.from('scan_history').delete().eq('user_id', user.id)
-              await supabase.from('tracker_entries').delete().eq('user_id', user.id)
-              await supabase.from('product_selections').delete().eq('user_id', user.id)
-              await supabase.from('diet_plans').delete().eq('user_id', user.id)
-              await supabase.from('purchase_history').delete().eq('user_id', user.id)
-              await supabase.from('profiles').delete().eq('id', user.id)
-              await supabase.auth.signOut()
-            } catch (e) {
-              Alert.alert('Gabim', 'Nuk u fshi llogaria. Kontaktoni info@sohealthy.al')
-            }
-          }
-        }
-      ]
-    )
+    if (Platform.OS === 'web') {
+      setShowDeleteConfirm(true)
+    } else {
+      Alert.alert(
+        'Fshi Llogarinë',
+        'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
+        [
+          { text: 'Anulo', style: 'cancel' },
+          { text: 'Fshi Llogarinë', style: 'destructive', onPress: doDelete }
+        ]
+      )
+    }
+  }
+
+  const doDelete = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('scan_history').delete().eq('user_id', user.id)
+      await supabase.from('tracker_entries').delete().eq('user_id', user.id)
+      await supabase.from('product_selections').delete().eq('user_id', user.id)
+      await supabase.from('diet_plans').delete().eq('user_id', user.id)
+      await supabase.from('purchase_history').delete().eq('user_id', user.id)
+      await supabase.from('profiles').delete().eq('id', user.id)
+      await supabase.auth.signOut()
+    } catch (e) {
+      if (Platform.OS !== 'web') Alert.alert('Gabim', 'Nuk u fshi llogaria. Kontaktoni info@sohealthy.al')
+    }
   }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+  }
+
+  const openPrivacy = () => {
+    if (Platform.OS === 'web') {
+      window.open(PRIVACY_URL, '_blank')
+    } else {
+      const { Linking } = require('react-native')
+      Linking.openURL(PRIVACY_URL)
+    }
   }
 
   return (
@@ -103,9 +117,29 @@ export default function ProfileScreen() {
           <Text style={s.logoutText}>Dil nga llogaria</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
-          <Trash2 size={15} color="#cc0000" strokeWidth={2} />
-          <Text style={s.deleteText}>Fshi Llogarinë</Text>
+        {showDeleteConfirm ? (
+          <View style={s.deleteConfirmBox}>
+            <Text style={s.deleteConfirmText}>Jeni të sigurt? Ky veprim është i pakthyeshëm.</Text>
+            <View style={s.deleteConfirmRow}>
+              <TouchableOpacity style={s.cancelBtn} onPress={() => setShowDeleteConfirm(false)}>
+                <Text style={s.cancelBtnText}>Anulo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.confirmDeleteBtn} onPress={() => { setShowDeleteConfirm(false); doDelete() }}>
+                <Text style={s.confirmDeleteText}>Po, Fshi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
+            <Trash2 size={15} color="#cc0000" strokeWidth={2} />
+            <Text style={s.deleteText}>Fshi Llogarinë</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Privacy Policy link — required for App Store */}
+        <TouchableOpacity style={s.privacyBtn} onPress={openPrivacy}>
+          <FileText size={14} color={Colors.muted} strokeWidth={1.75} />
+          <Text style={s.privacyText}>Politika e Privatësisë</Text>
         </TouchableOpacity>
 
         <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
@@ -138,5 +172,14 @@ const s = StyleSheet.create({
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, borderWidth: 1, borderColor: '#cc000040' },
   deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
-  footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 24 },
+  deleteConfirmBox: { backgroundColor: '#fff5f5', borderRadius: 12, padding: 16, marginTop: 10, borderWidth: 1, borderColor: '#cc000030' },
+  deleteConfirmText: { fontSize: 14, color: '#cc0000', marginBottom: 12, textAlign: 'center' },
+  deleteConfirmRow: { flexDirection: 'row', gap: 10 },
+  cancelBtn: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: Colors.muted },
+  confirmDeleteBtn: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: '#cc0000' },
+  confirmDeleteText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingVertical: 10 },
+  privacyText: { fontSize: 13, color: Colors.muted, textDecorationLine: 'underline' },
+  footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 8 },
 })
