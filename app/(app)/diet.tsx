@@ -158,12 +158,14 @@ export default function DietScreen() {
                 <Text key={i} style={[s.planLine, isMealHeader && s.mealHeader, isDayTotal && s.dayTotal, line.trim() === '' && { height: 8 }]}>{line}</Text>
               )
             })}
+            <Text style={s.disclaimer}>Ky plan është i përgjithshëm dhe shërben vetëm për orientim. Konsultohuni me një mjek ose nutricionist para se të filloni një dietë të re, veçanërisht nëse keni probleme shëndetësore.</Text>
             <View style={{ height: 40 }} />
           </ScrollView>
         </>
       ) : (
         <ScrollView contentContainerStyle={s.scroll}>
           <Text style={s.rawText}>{plan!.plan_content.plan_text}</Text>
+          <Text style={s.disclaimer}>Ky plan është i përgjithshëm dhe shërben vetëm për orientim. Konsultohuni me një mjek ose nutricionist para se të filloni një dietë të re, veçanërisht nëse keni probleme shëndetësore.</Text>
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
@@ -204,6 +206,7 @@ const s = StyleSheet.create({
   mealHeader: { fontSize: 15, fontWeight: '700', color: Colors.pine, marginTop: 16, marginBottom: 4, backgroundColor: Colors.pine + '10', borderRadius: 8, padding: 8, overflow: 'hidden' },
   dayTotal: { fontSize: 13, fontWeight: '700', color: Colors.aloe, backgroundColor: Colors.aloe + '20', borderRadius: 8, padding: 8, marginTop: 12 },
   rawText: { fontSize: 14, color: '#444', lineHeight: 24, fontFamily: 'monospace' },
+  disclaimer: { fontSize: 11, color: '#999', textAlign: 'center', lineHeight: 16, marginTop: 20, paddingHorizontal: 8 },
   generateBtn: { marginTop: 24, backgroundColor: Colors.pine, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 8 },
   generateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 16 },
 })

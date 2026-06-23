@@ -141,6 +141,7 @@ export default function ScannerScreen() {
               <ImageIcon size={18} color={Colors.pine} strokeWidth={2} />
               <Text style={s.secondaryBtnText}>Ngarko nga Galeria</Text>
             </TouchableOpacity>
+            <Text style={s.disclaimer}>Vlerësimet janë të përafërta dhe shërbejnë vetëm për orientim. Nuk zëvendësojnë këshillën e një mjeku ose nutricionisti.</Text>
           </View>
         )}
 
@@ -216,6 +217,7 @@ export default function ScannerScreen() {
             <View style={s.savedBadge}>
               <Text style={s.savedText}>U ruajt në historikun tuaj</Text>
             </View>
+            <Text style={s.disclaimer}>Vlerësimet janë të përafërta dhe shërbejnë vetëm për orientim. Nuk zëvendësojnë këshillën e një mjeku ose nutricionisti.</Text>
             <TouchableOpacity style={s.primaryBtn} onPress={goHome}>
               <Text style={s.primaryBtnText}>+ Skano Pjatë Tjetër</Text>
             </TouchableOpacity>
@@ -244,6 +246,7 @@ const s = StyleSheet.create({
   primaryBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 15 },
   secondaryBtn: { backgroundColor: 'transparent', borderRadius: 12, borderWidth: 1.5, borderColor: Colors.pine, padding: 15, alignItems: 'center', width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 },
   secondaryBtnText: { color: Colors.pine, fontWeight: '700', fontSize: 15 },
+  disclaimer: { fontSize: 11, color: '#999', textAlign: 'center', lineHeight: 16, marginTop: 16 },
   previewImg: { width: '100%', height: 200, borderRadius: 12 },
   loadingTitle: { fontSize: 16, fontWeight: '700', color: Colors.pine, marginTop: 16 },
   loadingDesc: { fontSize: 13, color: '#888', textAlign: 'center', marginTop: 6, lineHeight: 20 },
