@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2 } from 'lucide-react-native'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
+
+const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<any>(null)
@@ -21,12 +23,12 @@ export default function ProfileScreen() {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Fshi Llogarinë',
+      'Fshi Llogarïnë',
       'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
       [
         { text: 'Anulo', style: 'cancel' },
         {
-          text: 'Fshi Llogarinë',
+          text: 'Fshi Llogarïnë',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -105,7 +107,13 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
           <Trash2 size={15} color="#cc0000" strokeWidth={2} />
-          <Text style={s.deleteText}>Fshi Llogarinë</Text>
+          <Text style={s.deleteText}>Fshi Llogarïnë</Text>
+        </TouchableOpacity>
+
+        {/* Privacy Policy link — required for App Store */}
+        <TouchableOpacity style={s.privacyBtn} onPress={() => Linking.openURL(PRIVACY_URL)}>
+          <FileText size={14} color={Colors.muted} strokeWidth={1.75} />
+          <Text style={s.privacyText}>Politika e Privatesïsë</Text>
         </TouchableOpacity>
 
         <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
@@ -138,5 +146,7 @@ const s = StyleSheet.create({
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, borderWidth: 1, borderColor: '#cc000040' },
   deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
-  footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 24 },
+  privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingVertical: 10 },
+  privacyText: { fontSize: 13, color: Colors.muted, textDecorationLine: 'underline' },
+  footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 8 },
 })
