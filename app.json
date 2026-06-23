@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "sohealthy-v2",
+    "name": "SoHealthy",
     "slug": "sohealthy-v2",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,12 +10,17 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "al.sohealthy.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "SoHealthy ka nevoj\u00eb p\u00ebr kamer\u00ebn p\u00ebr t\u00eb analizuar ushqimet tuaja.",
-        "NSPhotoLibraryUsageDescription": "SoHealthy ka nevoj\u00eb p\u00ebr galerin\u00eb p\u00ebr t\u00eb analizuar fotografit\u00eb e ushqimeve."
+        "NSCameraUsageDescription": "SoHealthy ka nevojë për kamerën për të analizuar ushqimet tuaja.",
+        "NSPhotoLibraryUsageDescription": "SoHealthy ka nevojë për galerinë për të analizuar fotografitë e ushqimeve.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
+      "package": "al.sohealthy.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -45,8 +50,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SoHealthy ka nevoj\u00eb p\u00ebr galerin\u00eb p\u00ebr t\u00eb analizuar fotografit\u00eb e ushqimeve.",
-          "cameraPermission": "SoHealthy ka nevoj\u00eb p\u00ebr kamer\u00ebn p\u00ebr t\u00eb analizuar ushqimet tuaja."
+          "photosPermission": "SoHealthy ka nevojë për galerinë për të analizuar fotografitë e ushqimeve.",
+          "cameraPermission": "SoHealthy ka nevojë për kamerën për të analizuar ushqimet tuaja."
         }
       ]
     ],
