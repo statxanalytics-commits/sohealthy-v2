@@ -1,5 +1,7 @@
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Colors } from '../../src/constants'
+
+const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
 
 const TERMS = `KUSHTET E SHERBIMIT - SOHEALTHY
 
@@ -27,7 +29,7 @@ SoHealthy ofron:
 - SoHealthy nuk garanton humbje specifike peshe
 
 5. KUFIZIMI I PERGJEGJESISE
-- App-i nuk zevendesonn keshillen mjekesore profesionale
+- App-i nuk zevendëson këshillen mjekesore profesionale
 - Konsultohuni me mjekun tuaj para cdo ndryshimi dietik
 - SoHealthy nuk mban pergjegjesi per vendime te marra bazuar ne App
 
@@ -41,46 +43,6 @@ SoHealthy mund te ndryshoje keto kushte me njoftim 30 dite paraprak.
 Email: info@sohealthy.al
 Website: sohealthy.al`
 
-const PRIVACY = `POLITIKA E PRIVATESISE - SOHEALTHY
-
-Data e hyrjes ne fuqi: 1 Janar 2025
-
-1. TE DHENAT QE MBLEDHIM
-- Emri, email-i dhe fjalekalimet tuaj
-- Te dhena shendetesore: pesha, gjatesia, mosha, gjinia
-- Historia e skanimit te ushqimeve
-- Te dhenat e aktivitetit ne App
-
-2. SI I PERDORIM TE DHENAT
-- Per te personalizuar planin tuaj te dietes
-- Per te analizuar ushqimet e skanuar
-- Per te gjurmuar progresin tuaj
-- Per te permiresuar sherbimet tona
-
-3. NDARJA E TE DHENAVE
-Ne NUK shesim te dhenat tuaja personale. Mund t'i ndajme me:
-- Ofruesit e sherbimeve teknike (Supabase, Anthropic AI)
-- Autoritetet kur kerkohet me ligj
-
-4. SIGURIA
-- Te dhenat tuaja jane te enkriptuara
-- Fjalekalime ruhen te hashuara
-- Komunikimet jane te sigurta (HTTPS/SSL)
-
-5. TE DREJTAT TUAJA
-Keni te drejte te:
-- Aksesoni te dhenat tuaja
-- Korrigjoni informacion te pasakte
-- Kerkoni fshirjen e llogarise
-- Kunderstoni perpunimin e te dhenave
-
-6. MBAJTJA E TE DHENAVE
-Ruajme te dhenat tuaja sa kohe qe llogaria eshte aktive + 90 dite pas fshirjes.
-
-7. KONTAKTI
-Email: privacy@sohealthy.al
-Website: sohealthy.al/privacy`
-
 type Props = {
   visible: boolean
   type: 'terms' | 'privacy'
@@ -88,18 +50,51 @@ type Props = {
 }
 
 export default function LegalModal({ visible, type, onClose }: Props) {
-  const isTerms = type === 'terms'
+  const isPrivacy = type === 'privacy'
+
+  // Privacy policy opens the live hosted page instead of showing old inline text
+  if (isPrivacy) {
+    return (
+      <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+        <View style={s.container}>
+          <View style={s.header}>
+            <Text style={s.title}>Politika e Privatësisë</Text>
+            <TouchableOpacity onPress={onClose} style={s.closeBtn}>
+              <Text style={s.closeText}>X</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.center}>
+            <Text style={s.privacyDesc}>
+              Politika e plotë e privatësisë është e disponueshme në faqen tonë.
+            </Text>
+            <TouchableOpacity
+              style={s.openBtn}
+              onPress={() => { Linking.openURL(PRIVACY_URL); onClose() }}
+            >
+              <Text style={s.openBtnText}>Hap Politiken e Privatësisë →</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.footer}>
+            <TouchableOpacity style={s.acceptBtn} onPress={onClose}>
+              <Text style={s.acceptText}>Kuptova</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    )
+  }
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={s.container}>
         <View style={s.header}>
-          <Text style={s.title}>{isTerms ? 'Kushtet e Sherbimit' : 'Politika e Privatesise'}</Text>
+          <Text style={s.title}>Kushtet e Sherbimit</Text>
           <TouchableOpacity onPress={onClose} style={s.closeBtn}>
             <Text style={s.closeText}>X</Text>
           </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-          <Text style={s.content}>{isTerms ? TERMS : PRIVACY}</Text>
+          <Text style={s.content}>{TERMS}</Text>
           <View style={{ height: 40 }} />
         </ScrollView>
         <View style={s.footer}>
@@ -123,6 +118,13 @@ const s = StyleSheet.create({
   closeText: { color: Colors.aloe, fontSize: 18, fontWeight: '700' },
   scroll: { padding: 20 },
   content: { fontSize: 14, color: '#333', lineHeight: 24 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  privacyDesc: { fontSize: 15, color: Colors.muted, textAlign: 'center', lineHeight: 23, marginBottom: 24 },
+  openBtn: {
+    backgroundColor: Colors.pine, borderRadius: 12,
+    paddingHorizontal: 28, paddingVertical: 15,
+  },
+  openBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   footer: { padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#eee' },
   acceptBtn: { backgroundColor: Colors.pine, borderRadius: 12, padding: 15, alignItems: 'center' },
   acceptText: { color: Colors.alabaster, fontWeight: '700', fontSize: 15 },
