@@ -12,6 +12,16 @@ import { supabase } from '../../src/lib/supabase'
 
 const DIET_APP_URL = 'https://sohealthy-diet.vercel.app'
 
+// Strip ALL emoji / pictographic / symbol characters from a line.
+// The diet API sometimes emits emojis that don't render on-device (show as ◇/boxes),
+// so we remove them entirely and rely on Lucide icons + styling instead.
+function stripEmoji(input: string): string {
+  return input
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}\u{200D}\u{20E3}\u{2049}\u{203C}]/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 type DietPlan = {
   id: string
   order_code: string | null
@@ -132,30 +142,39 @@ export default function DietScreen() {
 
       {days.length > 0 ? (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabsScroll} contentContainerStyle={s.tabs}>
-            {days.map((d, i) => (
-              <TouchableOpacity key={i} style={[s.tab, activeTab === i && s.tabActive]} onPress={() => setActiveTab(i)}>
-                <Text style={[s.tabText, activeTab === i && s.tabTextActive]}>{d.title.replace(/DIT[ËëEeAa]\s*/i, 'D').replace(/DAY\s*/i, 'D')}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={s.tabsWrap}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabs}>
+              {days.map((d, i) => (
+                <TouchableOpacity key={i} style={[s.tab, activeTab === i && s.tabActive]} onPress={() => setActiveTab(i)}>
+                  <Text style={[s.tabText, activeTab === i && s.tabTextActive]} numberOfLines={1}>
+                    {stripEmoji(d.title).replace(/DIT[ËëEeAa]\s*/i, 'D').replace(/DAY\s*/i, 'D')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
           <ScrollView contentContainerStyle={s.scroll}>
             {activeTab === 0 && header.filter(l => l.trim()).map((line, i) => {
-              const isHydration = line.startsWith('💧') || line.toLowerCase().includes('hidrat')
-              const isSection = line.startsWith('✅') || line.startsWith('📦') || line.startsWith('📝')
+              const lower = line.toLowerCase()
+              const isHydration = lower.includes('hidrat')
+              const isSection = /^[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(line) && !isHydration
+              const clean = stripEmoji(line)
+              if (!clean) return null
               return (
                 <View key={i} style={[s.planLineWrap, isHydration && s.hydrationWrap, isSection && s.sectionWrap]}>
                   {isHydration && <Droplets size={14} color={Colors.pine} strokeWidth={2} style={{ marginRight: 6, marginTop: 2 }} />}
                   {isSection && !isHydration && <CheckSquare size={14} color={Colors.pine} strokeWidth={2} style={{ marginRight: 6, marginTop: 2 }} />}
-                  <Text style={[s.planLine, isHydration && s.planHighlight, isSection && s.planSection]}>{line.replace(/^[💧✅📦📝]\s*/, '')}</Text>
+                  <Text style={[s.planLine, isHydration && s.planHighlight, isSection && s.planSection]}>{clean}</Text>
                 </View>
               )
             })}
             {days[activeTab].lines.map((line, i) => {
-              const isMealHeader = line.match(/^[🌅☀️🌙🍎]/u)
-              const isDayTotal = line.startsWith('📊')
+              const isMealHeader = /^[\u{1F305}\u{2600}\u{1F319}\u{1F34E}\u{1F37D}]/u.test(line)
+              const isDayTotal = /^[\u{1F4CA}]/u.test(line) || line.toLowerCase().startsWith('total')
+              const clean = stripEmoji(line)
+              if (line.trim() === '') return <View key={i} style={{ height: 8 }} />
               return (
-                <Text key={i} style={[s.planLine, isMealHeader && s.mealHeader, isDayTotal && s.dayTotal, line.trim() === '' && { height: 8 }]}>{line}</Text>
+                <Text key={i} style={[s.planLine, isMealHeader && s.mealHeader, isDayTotal && s.dayTotal]}>{clean}</Text>
               )
             })}
             <Text style={s.disclaimer}>Ky plan është i përgjithshëm dhe shërben vetëm për orientim. Konsultohuni me një mjek ose nutricionist para se të filloni një dietë të re, veçanërisht nëse keni probleme shëndetësore.</Text>
@@ -164,7 +183,7 @@ export default function DietScreen() {
         </>
       ) : (
         <ScrollView contentContainerStyle={s.scroll}>
-          <Text style={s.rawText}>{plan!.plan_content.plan_text}</Text>
+          <Text style={s.rawText}>{stripEmoji(plan!.plan_content.plan_text)}</Text>
           <Text style={s.disclaimer}>Ky plan është i përgjithshëm dhe shërben vetëm për orientim. Konsultohuni me një mjek ose nutricionist para se të filloni një dietë të re, veçanërisht nëse keni probleme shëndetësore.</Text>
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -190,11 +209,11 @@ const s = StyleSheet.create({
   targetBar: { backgroundColor: Colors.pine + '12', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: Colors.pine + '20' },
   targetText: { fontSize: 13, color: Colors.pine },
   targetNum: { fontWeight: '700' },
-  tabsScroll: { maxHeight: 48, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
-  tabs: { paddingHorizontal: 10, paddingVertical: 8, gap: 6, flexDirection: 'row', alignItems: 'center' },
-  tab: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 16, backgroundColor: '#f0f0f0' },
+  tabsWrap: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+  tabs: { paddingHorizontal: 10, paddingVertical: 10, gap: 6, flexDirection: 'row', alignItems: 'center' },
+  tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, backgroundColor: '#f0f0f0', minWidth: 48, alignItems: 'center', justifyContent: 'center' },
   tabActive: { backgroundColor: Colors.pine },
-  tabText: { fontSize: 12, fontWeight: '600', color: '#666' },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#666', includeFontPadding: false },
   tabTextActive: { color: '#fff' },
   scroll: { padding: 16 },
   planLineWrap: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 },
