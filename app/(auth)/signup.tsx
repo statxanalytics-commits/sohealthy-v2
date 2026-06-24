@@ -12,6 +12,7 @@ export default function SignupScreen() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [accepted, setAccepted] = useState(false)
@@ -22,21 +23,14 @@ export default function SignupScreen() {
     if (!name || !username || !email || !password) { setError('Plotëso të gjitha fushat.'); return }
     if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
     if (password.length < 6) { setError('Fjalëkalimi duhet të ketë 6+ karaktere.'); return }
-
     setLoading(true); setError('')
     const cleanEmail = email.trim().toLowerCase()
-
     try {
-      // name + username ruhen në user_metadata. Një database trigger (handle_new_user)
-      // krijon automatikisht rreshtin në 'profiles' kur regjistrohet user-i.
       const { data, error: err } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
+        email: cleanEmail, password,
         options: { data: { name, username } }
       })
-
       if (err) {
-        // Show clean Albanian error messages instead of raw JSON
         if (err.message.includes('already registered') || err.message.includes('already been registered')) {
           setError('Ky email është tashmë i regjistruar. Provo të hysh.')
         } else if (err.message.includes('invalid') || err.message.includes('valid email')) {
@@ -50,24 +44,16 @@ export default function SignupScreen() {
         } else {
           setError('Gabim gjatë regjistrimit. Provo përsëri.')
         }
-        setLoading(false)
-        return
+        setLoading(false); return
       }
-
       setLoading(false)
-
-      // Nëse sesioni krijohet menjëherë (pa email confirmation) -> sigurohu që profili të ketë name/username, pastaj hyr në app.
-      // Nëse kërkohet konfirmim -> shko te OTP. Profili krijohet nga trigger-i; name/username përditësohen pas verifikimit.
       if (data.session && data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id, name, username, email: cleanEmail, is_premium: false
-        })
+        await supabase.from('profiles').upsert({ id: data.user.id, name, username, email: cleanEmail, is_premium: false })
         router.replace('/(app)/(tabs)/')
       } else {
         router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail } })
       }
-
-    } catch (e: any) {
+    } catch {
       setError('Gabim gjatë regjistrimit. Provo përsëri.')
       setLoading(false)
     }
@@ -88,8 +74,16 @@ export default function SignupScreen() {
           <TextInput style={s.input} value={username} onChangeText={setUsername} placeholder="username" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" />
           <Text style={s.label}>EMAIL</Text>
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
+
           <Text style={s.label}>FJALËKALIMI</Text>
-          <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight} secureTextEntry />
+          <View style={s.passWrap}>
+            <TextInput style={s.passInput} value={password} onChangeText={setPassword}
+              placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight}
+              secureTextEntry={!showPass} />
+            <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
+              <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={s.tcRow} onPress={() => setAccepted(!accepted)} activeOpacity={0.7}>
             <View style={[s.checkbox, accepted && s.checkboxChecked]}>
@@ -97,22 +91,16 @@ export default function SignupScreen() {
             </View>
             <Text style={s.tcText}>
               Pranoj{' '}
-              <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>
-                Kushtet e Shërbimit
-              </Text>
+              <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>Kushtet e Shërbimit</Text>
               {' '}dhe{' '}
-              <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>
-                Politikën e Privatësisë
-              </Text>
+              <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>Politikën e Privatësisë</Text>
             </Text>
           </TouchableOpacity>
 
           {error ? <Text style={s.error}>{error}</Text> : null}
-
           <TouchableOpacity style={[s.btn, (loading || !accepted) && { opacity: 0.6 }]} onPress={handleSignup} disabled={loading || !accepted}>
             {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Krijo llogarinë →</Text>}
           </TouchableOpacity>
-
           <Text style={s.terms}>Duke u regjistruar pranon Kushtet e Përdorimit të SoHealthy</Text>
           <TouchableOpacity style={s.switchRow} onPress={() => router.push('/(auth)/login')}>
             <Text style={s.switchText}>Ke llogari? <Text style={{ fontWeight: '700', color: Colors.pine }}>Hyr këtu</Text></Text>
@@ -133,6 +121,10 @@ const s = StyleSheet.create({
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
   input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
+  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 16, backgroundColor: Colors.white },
+  passInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine },
+  eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
+  eyeIcon: { fontSize: 18 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12, lineHeight: 18 },
   btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
