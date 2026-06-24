@@ -27,6 +27,8 @@ export default function SignupScreen() {
     const cleanEmail = email.trim().toLowerCase()
 
     try {
+      // name + username ruhen në user_metadata. Një database trigger (handle_new_user)
+      // krijon automatikisht rreshtin në 'profiles' kur regjistrohet user-i.
       const { data, error: err } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -52,18 +54,14 @@ export default function SignupScreen() {
         return
       }
 
-      if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id, name, username,
-          email: cleanEmail, is_premium: false
-        })
-      }
-
       setLoading(false)
 
-      // If email confirmation is required, go to OTP screen
-      // If not (session exists immediately), go straight to app
-      if (data.session) {
+      // Nëse sesioni krijohet menjëherë (pa email confirmation) -> sigurohu që profili të ketë name/username, pastaj hyr në app.
+      // Nëse kërkohet konfirmim -> shko te OTP. Profili krijohet nga trigger-i; name/username përditësohen pas verifikimit.
+      if (data.session && data.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id, name, username, email: cleanEmail, is_premium: false
+        })
         router.replace('/(app)/(tabs)/')
       } else {
         router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail } })
@@ -100,11 +98,11 @@ export default function SignupScreen() {
             <Text style={s.tcText}>
               Pranoj{' '}
               <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>
-                Kushtet e Sherbimit
+                Kushtet e Shërbimit
               </Text>
               {' '}dhe{' '}
               <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>
-                Politiken e Privatesise
+                Politikën e Privatësisë
               </Text>
             </Text>
           </TouchableOpacity>
