@@ -48,7 +48,6 @@ export default function SignupScreen() {
       }
 
       if (data.user) {
-        // Insert profile — ignore username conflict (try with original, fallback with suffix)
         const { error: profileErr } = await supabase.from('profiles').upsert({
           id: data.user.id,
           name: name.trim(),
@@ -58,7 +57,6 @@ export default function SignupScreen() {
         }, { onConflict: 'id' })
 
         if (profileErr && profileErr.code === '23505') {
-          // Username conflict — append random suffix
           await supabase.from('profiles').upsert({
             id: data.user.id,
             name: name.trim(),
@@ -70,15 +68,8 @@ export default function SignupScreen() {
       }
 
       setLoading(false)
-
-      // Redirect — if session exists go to app, else go to login (email confirmation flow)
-      if (data.session) {
-        router.replace('/(app)/(tabs)/')
-      } else {
-        // Show success and redirect to login
-        setError('')
-        router.replace('/(auth)/login')
-      }
+      // Always go to app — Supabase email confirmation is disabled
+      router.replace('/(app)/(tabs)/')
     } catch {
       setError('Gabim gjatë regjistrimit. Provo përsëri.')
       setLoading(false)
