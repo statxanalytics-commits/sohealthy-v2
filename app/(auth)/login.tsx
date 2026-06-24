@@ -10,8 +10,7 @@ import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 const SUPA_URL = 'https://rquoydwzulecmttrjdzo.supabase.co'
-const SUPA_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdW95ZHd6dWxlY210dHJqZHpvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTAxMDE3MiwiZXhwIjoyMDk2NTg2MTcyfQ.7IOOo5yX7F0aL8cwcBXxM56iBbVrr1GUdhrHjDscrkU'
-const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdW95ZHd6dWxlY210dHJqZHpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAxNzIsImV4cCI6MjA5NjU4NjE3Mn0.GQlCml9nQAXv3A7_pmZSo6Uy82-J1k62M4rPHPjRdSQ'
+const SUPA_SERVICE = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_KEY ?? ''
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -65,17 +64,11 @@ export default function LoginScreen() {
       })
       if (!r.ok) throw new Error('Save failed')
 
-      // Send email via Supabase built-in reset (delivers professionally)
+      // Send email via Supabase built-in reset
       await supabase.auth.resetPasswordForEmail(fEmail.trim().toLowerCase())
 
-      // Also show code directly for testing
       setStep('code')
-      // Store code temporarily for dev (in prod remove this and rely only on email)
       setFCode('')
-      // In dev: show the code
-      if (__DEV__) {
-        setFError(`[DEV] Kodi: ${code}`)
-      }
     } catch {
       setFError('Email nuk u gjet ose gabim serveri.')
     } finally {
@@ -209,7 +202,7 @@ export default function LoginScreen() {
         <SafeAreaView style={s.modalSafe}>
           <View style={s.modalHeader}>
             <Text style={s.modalTitle}>
-              {step === 'email' ? '🔑 Rivendos Fjalëkalimin' : step === 'code' ? '📱 Kodi i Verifikimit' : '🔒 Fjalëkalim i Ri'}
+              {step === 'email' ? 'Rivendos Fjalëkalimin' : step === 'code' ? 'Kodi i Verifikimit' : 'Fjalëkalim i Ri'}
             </Text>
             <TouchableOpacity onPress={resetForgot} style={s.closeBtn}>
               <Text style={s.closeTxt}>✕</Text>
