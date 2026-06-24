@@ -11,6 +11,7 @@ import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
 import { usePremium } from '../../../src/hooks/usePremium'
 import { supabase } from '../../../src/lib/supabase'
 import { useFocusEffect } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 
 const FREE_TOOLS = [
   { id: 'challenge', Icon: CalendarCheck, name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
@@ -69,9 +70,9 @@ export default function HomeScreen() {
 
   const greeting = () => {
     const h = new Date().getHours()
-    if (h < 12) return 'Miremengjes'
-    if (h < 18) return 'Miredita'
-    return 'Mirembrema'
+    if (h < 12) return 'Mirëmëngjes'
+    if (h < 18) return 'Mirëdita'
+    return 'Mirëmbrëma'
   }
 
   const showCountdown = isPremium && daysRemaining !== null
@@ -176,10 +177,10 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* RESET Book — open in native PDF viewer inside the app */}
+            {/* RESET Book — open in in-app browser (react-native-pdf incompatible with New Architecture) */}
             <TouchableOpacity
               style={s.bookCard}
-              onPress={() => router.push({ pathname: '/(app)/pdf-viewer', params: { url: API.resetBook, title: 'Libri RESET' } })}
+              onPress={() => WebBrowser.openBrowserAsync(API.resetBook, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET, controlsColor: Colors.pine, toolbarColor: Colors.alabaster })}
             >
               <View style={s.bookCardLeft}>
                 <Text style={s.bookLabel}>PREMIUM</Text>
