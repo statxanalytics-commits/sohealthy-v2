@@ -187,20 +187,24 @@ export default function MyPackagesScreen() {
 
         {activePackage && (
           <View style={s.activeDetails}>
-            {activePackage.product_slug ? (
+            {activePackage.product_slugs.length > 0 ? (
               <>
-                <Text style={s.activeProductName}>{PRODUCT_NAMES[activePackage.product_slug] || activePackage.product_slug}</Text>
-                {PRODUCTS[activePackage.product_slug] && (
-                  <>
-                    <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kur:</Text><Text style={s.detailLineVal}>{PRODUCTS[activePackage.product_slug].when}</Text></View>
-                    <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kujtues:</Text><Text style={s.detailLineVal}>{PRODUCTS[activePackage.product_slug].notif_time} — {PRODUCTS[activePackage.product_slug].notif_msg}</Text></View>
-                  </>
-                )}
+                {activePackage.product_slugs.map((slug, idx) => (
+                  <View key={slug} style={idx > 0 ? { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#eee' } : undefined}>
+                    <Text style={s.activeProductName}>{PRODUCT_NAMES[slug] || slug}</Text>
+                    {PRODUCTS[slug] && (
+                      <>
+                        <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kur:</Text><Text style={s.detailLineVal}>{PRODUCTS[slug].when}</Text></View>
+                        <View style={s.detailLineRow}><Text style={s.detailLineLabel}>Kujtues:</Text><Text style={s.detailLineVal}>{PRODUCTS[slug].notif_time} — {PRODUCTS[slug].notif_msg}</Text></View>
+                      </>
+                    )}
+                  </View>
+                ))}
                 <View style={s.activeActions}>
                   <TouchableOpacity style={s.changeBtn} onPress={() => { setSelectedPackageCode(activePackage.order_code); setSelectedProducts(activePackage.product_slugs); setShowProductModal(true) }}>
                     <Text style={s.changeBtnText}>Ndrysho Produktin</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={s.detailBtn} onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slug! } })}>
+                  <TouchableOpacity style={s.detailBtn} onPress={() => router.push({ pathname: '/(app)/product-detail', params: { slug: activePackage.product_slugs[0] } })}>
                     <Text style={s.detailBtnText}>Shiko Detajet →</Text>
                   </TouchableOpacity>
                 </View>
