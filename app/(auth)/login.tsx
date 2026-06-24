@@ -50,7 +50,7 @@ export default function LoginScreen() {
     }
   }
 
-  // Step 2: Verify Supabase OTP and get session
+  // Step 2: Verify Supabase OTP — sets session with PASSWORD_RECOVERY event
   const verifyCode = async () => {
     if (fCode.length !== 6) { setFError('Kodi duhet të jetë 6 shifra.'); return }
     setFLoading(true); setFError('')
@@ -65,6 +65,7 @@ export default function LoginScreen() {
         setFLoading(false)
         return
       }
+      // PASSWORD_RECOVERY event blocks redirect in _layout — go to newpass step
       setStep('newpass')
     } catch {
       setFError('Gabim gjatë verifikimit.')
@@ -73,7 +74,7 @@ export default function LoginScreen() {
     }
   }
 
-  // Step 3: Update password (session already active from verifyOtp)
+  // Step 3: Update password then sign out (force fresh login)
   const updatePassword = async () => {
     if (!newPass) { setFError('Shkruaj fjalëkalimin e ri.'); return }
     if (newPass.length < 6) { setFError('Minimum 6 karaktere.'); return }
@@ -82,6 +83,8 @@ export default function LoginScreen() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPass })
       if (error) throw error
+      // Sign out so _layout clears recovery state and user logs in fresh
+      await supabase.auth.signOut()
       resetForgot()
     } catch {
       setFError('Gabim gjatë ndryshimit. Provo përsëri.')
