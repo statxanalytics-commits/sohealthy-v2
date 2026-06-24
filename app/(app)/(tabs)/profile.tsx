@@ -9,6 +9,7 @@ const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<any>(null)
+  const [authEmail, setAuthEmail] = useState<string>('')
 
   useEffect(() => {
     loadProfile()
@@ -17,18 +18,20 @@ export default function ProfileScreen() {
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    // Email-i gjithmonë ekziston te auth user -> fallback i sigurt
+    setAuthEmail(user.email || '')
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     setProfile(data)
   }
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Fshi Llogarïnë',
+      'Fshi Llogarinë',
       'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
       [
         { text: 'Anulo', style: 'cancel' },
         {
-          text: 'Fshi Llogarïnë',
+          text: 'Fshi Llogarinë',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -54,6 +57,12 @@ export default function ProfileScreen() {
     await supabase.auth.signOut()
   }
 
+  // Vlerat e shfaqura me fallback nga auth nese profiles eshte bosh
+  const displayEmail = profile?.email || authEmail || '—'
+  const displayName = profile?.name || (authEmail ? authEmail.split('@')[0] : '—')
+  const displayUsername = profile?.username || (authEmail ? authEmail.split('@')[0] : '—')
+  const avatarLetter = (profile?.name || authEmail || '?').charAt(0).toUpperCase()
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -62,11 +71,11 @@ export default function ProfileScreen() {
       <ScrollView style={s.body}>
         <View style={s.avatarRow}>
           <View style={s.avatar}>
-            <Text style={s.avatarText}>{profile?.name?.charAt(0)?.toUpperCase() || '?'}</Text>
+            <Text style={s.avatarText}>{avatarLetter}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.name}>{profile?.name || '—'}</Text>
-            <Text style={s.username}>@{profile?.username || '—'}</Text>
+            <Text style={s.name}>{displayName}</Text>
+            <Text style={s.username}>@{displayUsername}</Text>
             {profile?.is_premium && (
               <View style={s.premiumBadge}>
                 <Crown size={11} color={Colors.white} strokeWidth={2} />
@@ -79,7 +88,7 @@ export default function ProfileScreen() {
         <View style={s.infoCard}>
           <View style={s.infoRow}>
             <View style={s.infoLabelRow}><Mail size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Email</Text></View>
-            <Text style={s.infoValue}>{profile?.email || '—'}</Text>
+            <Text style={s.infoValue}>{displayEmail}</Text>
           </View>
           <View style={s.infoRow}>
             <View style={s.infoLabelRow}><BadgeCheck size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Statusi</Text></View>
@@ -107,13 +116,13 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
           <Trash2 size={15} color="#cc0000" strokeWidth={2} />
-          <Text style={s.deleteText}>Fshi Llogarïnë</Text>
+          <Text style={s.deleteText}>Fshi Llogarinë</Text>
         </TouchableOpacity>
 
         {/* Privacy Policy link — required for App Store */}
         <TouchableOpacity style={s.privacyBtn} onPress={() => Linking.openURL(PRIVACY_URL)}>
           <FileText size={14} color={Colors.muted} strokeWidth={1.75} />
-          <Text style={s.privacyText}>Politika e Privatesïsë</Text>
+          <Text style={s.privacyText}>Politika e Privatësisë</Text>
         </TouchableOpacity>
 
         <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
