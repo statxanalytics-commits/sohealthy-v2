@@ -37,12 +37,9 @@ export default function ProfileScreen() {
             try {
               const { data: { user } } = await supabase.auth.getUser()
               if (!user) return
-              await supabase.from('scan_history').delete().eq('user_id', user.id)
-              await supabase.from('tracker_entries').delete().eq('user_id', user.id)
-              await supabase.from('product_selections').delete().eq('user_id', user.id)
-              await supabase.from('diet_plans').delete().eq('user_id', user.id)
-              await supabase.from('purchase_history').delete().eq('user_id', user.id)
-              await supabase.from('profiles').delete().eq('id', user.id)
+              // delete_user() RPC (SECURITY DEFINER) fshin të gjitha të dhënat + vetë llogarinë auth.users
+              const { error } = await supabase.rpc('delete_user')
+              if (error) throw error
               await supabase.auth.signOut()
             } catch (e) {
               Alert.alert('Gabim', 'Nuk u fshi llogaria. Kontaktoni info@sohealthy.al')
