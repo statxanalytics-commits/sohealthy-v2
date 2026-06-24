@@ -7,6 +7,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
+import { recoveryState } from '../../src/lib/recoveryState'
 import { supabase } from '../../src/lib/supabase'
 
 export default function LoginScreen() {
@@ -46,17 +47,23 @@ export default function LoginScreen() {
     setStep('code')
   }
 
-  // Step 2: Verifiko kodin recovery -> krijon sesion
+  // Step 2: Verifiko kodin recovery -> krijon sesion.
+  // Vendos flag-un recovery PARA verifikimit që _layout.tsx të mos ridrejtojë në app.
   const verifyCode = async () => {
     if (fCode.length !== 6) { setFError('Kodi duhet të jetë 6 shifra.'); return }
     setFLoading(true); setFError('')
+    recoveryState.active = true
     const { error: err } = await supabase.auth.verifyOtp({
       email: fEmail.trim().toLowerCase(),
       token: fCode,
       type: 'recovery'
     })
     setFLoading(false)
-    if (err) { setFError('Kodi i gabuar ose ka skaduar.'); return }
+    if (err) {
+      recoveryState.active = false
+      setFError('Kodi i gabuar ose ka skaduar.')
+      return
+    }
     setStep('newpass')
   }
 
@@ -69,7 +76,8 @@ export default function LoginScreen() {
     const { error: err } = await supabase.auth.updateUser({ password: newPass })
     setFLoading(false)
     if (err) { setFError('Gabim gjatë ndryshimit. Provo përsëri.'); return }
-    // Sesioni tashmë është aktiv pas verifyOtp -> përdoruesi është i loguar
+    // Fjalëkalimi u ndryshua. Hiq flag-un dhe fut përdoruesin në app (sesioni është aktiv).
+    recoveryState.active = false
     resetForgot()
     router.replace('/(app)/(tabs)/')
   }
@@ -82,6 +90,15 @@ export default function LoginScreen() {
     setNewPass('')
     setNewPassConf('')
     setFError('')
+  }
+
+  // Nëse përdoruesi mbyll modalin gjatë recovery pa përfunduar -> deslogo dhe pastro flag-un
+  const cancelForgot = async () => {
+    if (recoveryState.active) {
+      recoveryState.active = false
+      await supabase.auth.signOut()
+    }
+    resetForgot()
   }
 
   return (
@@ -117,13 +134,13 @@ export default function LoginScreen() {
       </KeyboardAvoidingView>
 
       {/* Forgot Password Modal */}
-      <Modal visible={showForgot} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={showForgot} animationType="slide" presentationStyle="pageSheet" onRequestClose={cancelForgot}>
         <SafeAreaView style={s.modalSafe}>
           <View style={s.modalHeader}>
             <Text style={s.modalTitle}>
               {step === 'email' ? 'Rivendos Fjalëkalimin' : step === 'code' ? 'Kodi i Verifikimit' : 'Fjalëkalim i Ri'}
             </Text>
-            <TouchableOpacity onPress={resetForgot} style={s.closeBtn}>
+            <TouchableOpacity onPress={cancelForgot} style={s.closeBtn}>
               <Text style={s.closeTxt}>✕</Text>
             </TouchableOpacity>
           </View>
