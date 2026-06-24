@@ -1,11 +1,12 @@
 import { Slot, useRouter, useSegments } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
 import { supabase } from '../src/lib/supabase'
 
 export default function RootLayout() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const recoveryRef = useRef(false)
   const segments = useSegments()
   const router = useRouter()
 
@@ -14,7 +15,13 @@ export default function RootLayout() {
       setSession(session)
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoveryRef.current = true
+      }
+      if (event === 'USER_UPDATED' || event === 'SIGNED_OUT') {
+        recoveryRef.current = false
+      }
       setSession(session)
     })
     return () => subscription.unsubscribe()
@@ -22,9 +29,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loading) return
+    if (recoveryRef.current) return
     const inAuth = segments[0] === '(auth)'
-    // Block redirect if password recovery is in progress
-    if (typeof window !== 'undefined' && window.localStorage?.getItem('sh_recovery') === '1') return
     if (!session && !inAuth) router.replace('/(auth)/splash')
     else if (session && inAuth) router.replace('/(app)/(tabs)')
   }, [session, loading, segments])

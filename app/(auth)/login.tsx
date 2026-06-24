@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator, KeyboardAvoidingView, Modal,
   Platform, ScrollView, StyleSheet, Text, TextInput,
@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const [newPassConf, setNewPassConf] = useState('')
   const [fLoading, setFLoading] = useState(false)
   const [fError, setFError] = useState('')
+  const [fSuccess, setFSuccess] = useState(false)
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
@@ -53,22 +54,17 @@ export default function LoginScreen() {
     if (fCode.length !== 6) { setFError('Kodi duhet të jetë 6 shifra.'); return }
     setFLoading(true); setFError('')
     try {
-      // Set recovery flag BEFORE verifyOtp so _layout redirect is blocked
-      if (typeof window !== 'undefined') window.localStorage?.setItem('sh_recovery', '1')
       const { data, error } = await supabase.auth.verifyOtp({
         email: fEmail.trim().toLowerCase(),
         token: fCode.trim(),
         type: 'recovery'
       })
       if (error || !data.session) {
-        if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
         setFError('Kodi i gabuar ose ka skaduar.')
-        setFLoading(false)
         return
       }
       setStep('newpass')
     } catch {
-      if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
       setFError('Gabim gjatë verifikimit.')
     } finally {
       setFLoading(false)
@@ -83,10 +79,15 @@ export default function LoginScreen() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPass })
       if (error) throw error
-      // Clear recovery flag then sign out so user logs in fresh
-      if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
-      await supabase.auth.signOut()
-      resetForgot()
+      setFSuccess(true)
+      setStep('email')
+      // Sign out after short delay so user sees success then logs in fresh
+      setTimeout(async () => {
+        await supabase.auth.signOut()
+        setShowForgot(false)
+        setFSuccess(false)
+        resetFields()
+      }, 2000)
     } catch {
       setFError('Gabim gjatë ndryshimit. Provo përsëri.')
     } finally {
@@ -94,14 +95,18 @@ export default function LoginScreen() {
     }
   }
 
-  const resetForgot = () => {
-    setShowForgot(false)
-    setStep('email')
+  const resetFields = () => {
     setFEmail('')
     setFCode('')
     setNewPass('')
     setNewPassConf('')
     setFError('')
+  }
+
+  const resetForgot = () => {
+    setShowForgot(false)
+    setStep('email')
+    resetFields()
   }
 
   return (
@@ -140,78 +145,90 @@ export default function LoginScreen() {
         <SafeAreaView style={s.modalSafe}>
           <View style={s.modalHeader}>
             <Text style={s.modalTitle}>
-              {step === 'email' ? '🔑 Rivendos Fjalëkalimin' : step === 'code' ? '📱 Kodi i Verifikimit' : '🔒 Fjalëkalim i Ri'}
+              {fSuccess ? '✅ Fjalëkalimi u ndryshua!' : step === 'email' ? '🔑 Rivendos Fjalëkalimin' : step === 'code' ? '📱 Kodi i Verifikimit' : '🔒 Fjalëkalim i Ri'}
             </Text>
-            <TouchableOpacity onPress={resetForgot} style={s.closeBtn}>
-              <Text style={s.closeTxt}>✕</Text>
-            </TouchableOpacity>
+            {!fSuccess && (
+              <TouchableOpacity onPress={resetForgot} style={s.closeBtn}>
+                <Text style={s.closeTxt}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
-            <View style={s.stepRow}>
-              {[0, 1, 2].map(i => (
-                <View key={i} style={s.stepWrap}>
-                  <View style={[s.dot,
-                    step === 'email' && i === 0 ? s.dotActive :
-                    step === 'code' && i === 1 ? s.dotActive :
-                    step === 'newpass' && i === 2 ? s.dotActive :
-                    (step === 'code' && i === 0) || (step === 'newpass' && i < 2) ? s.dotDone : {}
-                  ]}>
-                    <Text style={s.dotTxt}>{i + 1}</Text>
-                  </View>
-                  {i < 2 && <View style={s.dotLine} />}
+
+            {fSuccess ? (
+              <View style={s.successWrap}>
+                <Text style={s.successText}>Fjalëkalimi juaj u ndryshua me sukses!
+Po ju çkyqim automatikisht…</Text>
+              </View>
+            ) : (
+              <>
+                <View style={s.stepRow}>
+                  {[0, 1, 2].map(i => (
+                    <View key={i} style={s.stepWrap}>
+                      <View style={[s.dot,
+                        step === 'email' && i === 0 ? s.dotActive :
+                        step === 'code' && i === 1 ? s.dotActive :
+                        step === 'newpass' && i === 2 ? s.dotActive :
+                        (step === 'code' && i === 0) || (step === 'newpass' && i < 2) ? s.dotDone : {}
+                      ]}>
+                        <Text style={s.dotTxt}>{i + 1}</Text>
+                      </View>
+                      {i < 2 && <View style={s.dotLine} />}
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
 
-            {step === 'email' && (
-              <>
-                <Text style={s.mDesc}>Shkruaj email-in tënd dhe do të dërgojmë një kod 6-shifror për verifikim.</Text>
-                <Text style={s.mLabel}>EMAIL</Text>
-                <TextInput style={s.mInput} value={fEmail} onChangeText={setFEmail}
-                  placeholder="adresa@email.com" placeholderTextColor="#aaa"
-                  autoCapitalize="none" keyboardType="email-address" autoFocus />
-              </>
-            )}
+                {step === 'email' && (
+                  <>
+                    <Text style={s.mDesc}>Shkruaj email-in tënd dhe do të dërgojmë një kod 6-shifror për verifikim.</Text>
+                    <Text style={s.mLabel}>EMAIL</Text>
+                    <TextInput style={s.mInput} value={fEmail} onChangeText={setFEmail}
+                      placeholder="adresa@email.com" placeholderTextColor="#aaa"
+                      autoCapitalize="none" keyboardType="email-address" autoFocus />
+                  </>
+                )}
 
-            {step === 'code' && (
-              <>
-                <Text style={s.mDesc}>Kodi u dërgua te <Text style={{ fontWeight: '700', color: Colors.pine }}>{fEmail}</Text>. Kontrollo email-in tënd (dhe spam).</Text>
-                <Text style={s.mLabel}>KOD 6-SHIFROR</Text>
-                <TextInput style={[s.mInput, s.codeInput]} value={fCode} onChangeText={setFCode}
-                  placeholder="• • • • • •" placeholderTextColor="#ccc"
-                  keyboardType="number-pad" maxLength={6} autoFocus />
-                <TouchableOpacity onPress={() => { setStep('email'); setFError('') }} style={s.backLink}>
-                  <Text style={s.backLinkTxt}>← Ndrysho email-in</Text>
+                {step === 'code' && (
+                  <>
+                    <Text style={s.mDesc}>Kodi u dërgua te <Text style={{ fontWeight: '700', color: Colors.pine }}>{fEmail}</Text>. Kontrollo email-in tënd (dhe spam).</Text>
+                    <Text style={s.mLabel}>KOD 6-SHIFROR</Text>
+                    <TextInput style={[s.mInput, s.codeInput]} value={fCode} onChangeText={setFCode}
+                      placeholder="• • • • • •" placeholderTextColor="#ccc"
+                      keyboardType="number-pad" maxLength={6} autoFocus />
+                    <TouchableOpacity onPress={() => { setStep('email'); setFError('') }} style={s.backLink}>
+                      <Text style={s.backLinkTxt}>← Ndrysho email-in</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {step === 'newpass' && (
+                  <>
+                    <Text style={s.mDesc}>Kodi u verifikua ✅ Cakto fjalëkalimin tënd të ri.</Text>
+                    <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
+                    <TextInput style={s.mInput} value={newPass} onChangeText={setNewPass}
+                      placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa" secureTextEntry autoFocus />
+                    <Text style={s.mLabel}>KONFIRMO FJALËKALIMIN</Text>
+                    <TextInput style={s.mInput} value={newPassConf} onChangeText={setNewPassConf}
+                      placeholder="Ripërsërit fjalëkalimin" placeholderTextColor="#aaa" secureTextEntry />
+                  </>
+                )}
+
+                {fError ? <Text style={s.fError}>{fError}</Text> : null}
+
+                <TouchableOpacity
+                  style={[s.mBtn, fLoading && { opacity: 0.6 }]}
+                  onPress={step === 'email' ? sendCode : step === 'code' ? verifyCode : updatePassword}
+                  disabled={fLoading}
+                >
+                  {fLoading ? <ActivityIndicator color="#fff" /> :
+                    <Text style={s.mBtnTxt}>
+                      {step === 'email' ? 'Dërgo Kodin →' : step === 'code' ? 'Verifiko →' : 'Ndrysho Fjalëkalimin →'}
+                    </Text>
+                  }
                 </TouchableOpacity>
               </>
             )}
-
-            {step === 'newpass' && (
-              <>
-                <Text style={s.mDesc}>Kodi u verifikua ✅ Cakto fjalëkalimin tënd të ri.</Text>
-                <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
-                <TextInput style={s.mInput} value={newPass} onChangeText={setNewPass}
-                  placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa" secureTextEntry autoFocus />
-                <Text style={s.mLabel}>KONFIRMO FJALËKALIMIN</Text>
-                <TextInput style={s.mInput} value={newPassConf} onChangeText={setNewPassConf}
-                  placeholder="Ripërsërit fjalëkalimin" placeholderTextColor="#aaa" secureTextEntry />
-              </>
-            )}
-
-            {fError ? <Text style={s.fError}>{fError}</Text> : null}
-
-            <TouchableOpacity
-              style={[s.mBtn, fLoading && { opacity: 0.6 }]}
-              onPress={step === 'email' ? sendCode : step === 'code' ? verifyCode : updatePassword}
-              disabled={fLoading}
-            >
-              {fLoading ? <ActivityIndicator color="#fff" /> :
-                <Text style={s.mBtnTxt}>
-                  {step === 'email' ? 'Dërgo Kodin →' : step === 'code' ? 'Verifiko →' : 'Ndrysho Fjalëkalimin →'}
-                </Text>
-              }
-            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -257,4 +274,6 @@ const s = StyleSheet.create({
   fError: { color: Colors.goji, fontSize: 13, marginBottom: 12, textAlign: 'center' },
   mBtn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   mBtnTxt: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  successWrap: { alignItems: 'center', paddingVertical: 40 },
+  successText: { fontSize: 16, color: Colors.pine, textAlign: 'center', lineHeight: 26, fontWeight: '500' },
 })
