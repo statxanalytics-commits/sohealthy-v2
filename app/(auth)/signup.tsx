@@ -24,12 +24,65 @@ export default function SignupScreen() {
     if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
     if (password.length < 6) { setError('Fjalëkalimi duhet të ketë 6+ karaktere.'); return }
     setLoading(true); setError('')
-    const { data, error: err } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { name, username } } })
-    if (err) { setError(err.message); setLoading(false); return }
-    if (data.user) {
-      await supabase.from('profiles').insert({ id: data.user.id, name, username, email: email.trim().toLowerCase(), is_premium: false })
+    try {
+      const cleanEmail = email.trim().toLowerCase()
+      const cleanUsername = username.trim().toLowerCase()
+
+      const { data, error: signUpErr } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: { data: { name: name.trim(), username: cleanUsername } }
+      })
+
+      if (signUpErr) {
+        if (signUpErr.message.includes('already registered') || signUpErr.message.includes('already been registered')) {
+          setError('Ky email është tashmë i regjistruar. Provo të hysh.')
+        } else if (signUpErr.message.includes('password')) {
+          setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere.')
+        } else if (signUpErr.status === 429) {
+          setError('Shumë kërkesa. Prit pak minuta dhe provo përsëri.')
+        } else {
+          setError('Gabim gjatë regjistrimit. Provo përsëri.')
+        }
+        setLoading(false); return
+      }
+
+      if (data.user) {
+        // Insert profile — ignore username conflict (try with original, fallback with suffix)
+        const { error: profileErr } = await supabase.from('profiles').upsert({
+          id: data.user.id,
+          name: name.trim(),
+          username: cleanUsername,
+          email: cleanEmail,
+          is_premium: false
+        }, { onConflict: 'id' })
+
+        if (profileErr && profileErr.code === '23505') {
+          // Username conflict — append random suffix
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            name: name.trim(),
+            username: cleanUsername + Math.floor(Math.random() * 999),
+            email: cleanEmail,
+            is_premium: false
+          }, { onConflict: 'id' })
+        }
+      }
+
+      setLoading(false)
+
+      // Redirect — if session exists go to app, else go to login (email confirmation flow)
+      if (data.session) {
+        router.replace('/(app)/(tabs)/')
+      } else {
+        // Show success and redirect to login
+        setError('')
+        router.replace('/(auth)/login')
+      }
+    } catch {
+      setError('Gabim gjatë regjistrimit. Provo përsëri.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -64,13 +117,9 @@ export default function SignupScreen() {
             </View>
             <Text style={s.tcText}>
               Pranoj{' '}
-              <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>
-                Kushtet e Sherbimit
-              </Text>
+              <Text style={s.tcLink} onPress={() => { setLegalType('terms'); setShowTerms(true) }}>Kushtet e Sherbimit</Text>
               {' '}dhe{' '}
-              <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>
-                Politiken e Privatesise
-              </Text>
+              <Text style={s.tcLink} onPress={() => { setLegalType('privacy'); setShowTerms(true) }}>Politiken e Privatesise</Text>
             </Text>
           </TouchableOpacity>
 
