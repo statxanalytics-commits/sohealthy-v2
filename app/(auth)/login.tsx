@@ -35,7 +35,6 @@ export default function LoginScreen() {
     setLoading(false)
   }
 
-  // Step 1: Send Supabase OTP recovery email
   const sendCode = async () => {
     if (!fEmail.trim()) { setFError('Shkruaj email-in.'); return }
     setFLoading(true); setFError('')
@@ -50,31 +49,32 @@ export default function LoginScreen() {
     }
   }
 
-  // Step 2: Verify Supabase OTP — sets session with PASSWORD_RECOVERY event
   const verifyCode = async () => {
     if (fCode.length !== 6) { setFError('Kodi duhet të jetë 6 shifra.'); return }
     setFLoading(true); setFError('')
     try {
+      // Set recovery flag BEFORE verifyOtp so _layout redirect is blocked
+      if (typeof window !== 'undefined') window.localStorage?.setItem('sh_recovery', '1')
       const { data, error } = await supabase.auth.verifyOtp({
         email: fEmail.trim().toLowerCase(),
         token: fCode.trim(),
         type: 'recovery'
       })
       if (error || !data.session) {
+        if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
         setFError('Kodi i gabuar ose ka skaduar.')
         setFLoading(false)
         return
       }
-      // PASSWORD_RECOVERY event blocks redirect in _layout — go to newpass step
       setStep('newpass')
     } catch {
+      if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
       setFError('Gabim gjatë verifikimit.')
     } finally {
       setFLoading(false)
     }
   }
 
-  // Step 3: Update password then sign out (force fresh login)
   const updatePassword = async () => {
     if (!newPass) { setFError('Shkruaj fjalëkalimin e ri.'); return }
     if (newPass.length < 6) { setFError('Minimum 6 karaktere.'); return }
@@ -83,7 +83,8 @@ export default function LoginScreen() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPass })
       if (error) throw error
-      // Sign out so _layout clears recovery state and user logs in fresh
+      // Clear recovery flag then sign out so user logs in fresh
+      if (typeof window !== 'undefined') window.localStorage?.removeItem('sh_recovery')
       await supabase.auth.signOut()
       resetForgot()
     } catch {
@@ -135,7 +136,6 @@ export default function LoginScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Forgot Password Modal */}
       <Modal visible={showForgot} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={s.modalSafe}>
           <View style={s.modalHeader}>
@@ -148,7 +148,6 @@ export default function LoginScreen() {
           </View>
 
           <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
-            {/* Step dots */}
             <View style={s.stepRow}>
               {[0, 1, 2].map(i => (
                 <View key={i} style={s.stepWrap}>
