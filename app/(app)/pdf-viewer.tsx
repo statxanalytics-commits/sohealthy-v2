@@ -14,11 +14,11 @@ export default function PdfViewerScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={s.back}>‹ Kthehu</Text>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={s.back} numberOfLines={1}>‹ Kthehu</Text>
         </TouchableOpacity>
         <Text style={s.title} numberOfLines={1}>{title || 'Libri'}</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.spacer} />
       </View>
 
       {loading && !error && (
@@ -47,8 +47,10 @@ export default function PdfViewerScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
-  header: { backgroundColor: Colors.pine, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 },
-  back: { color: Colors.aloe, fontSize: 16, fontWeight: '600', width: 60 },
+  header: { backgroundColor: Colors.pine, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+  backBtn: { minWidth: 90 },
+  back: { color: Colors.aloe, fontSize: 16, fontWeight: '600' },
+  spacer: { width: 90 },
   title: { fontSize: 15, fontWeight: '700', color: Colors.white, flex: 1, textAlign: 'center' },
   pdf: { flex: 1, width: Dimensions.get('window').width, backgroundColor: Colors.alabaster },
   loadingOverlay: { position: 'absolute', top: 60, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 10, backgroundColor: Colors.alabaster },
