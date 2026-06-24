@@ -13,6 +13,7 @@ export default function LoginScreen() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,7 +22,9 @@ export default function LoginScreen() {
   const [fEmail, setFEmail] = useState('')
   const [fCode, setFCode] = useState('')
   const [newPass, setNewPass] = useState('')
+  const [showNewPass, setShowNewPass] = useState(false)
   const [newPassConf, setNewPassConf] = useState('')
+  const [showNewPassConf, setShowNewPassConf] = useState(false)
   const [fLoading, setFLoading] = useState(false)
   const [fError, setFError] = useState('')
   const [fSuccess, setFSuccess] = useState(false)
@@ -81,7 +84,6 @@ export default function LoginScreen() {
       if (error) throw error
       setFSuccess(true)
       setStep('email')
-      // Sign out after short delay so user sees success then logs in fresh
       setTimeout(async () => {
         await supabase.auth.signOut()
         setShowForgot(false)
@@ -96,17 +98,12 @@ export default function LoginScreen() {
   }
 
   const resetFields = () => {
-    setFEmail('')
-    setFCode('')
-    setNewPass('')
-    setNewPassConf('')
-    setFError('')
+    setFEmail(''); setFCode(''); setNewPass(''); setNewPassConf(''); setFError('')
+    setShowNewPass(false); setShowNewPassConf(false)
   }
 
   const resetForgot = () => {
-    setShowForgot(false)
-    setStep('email')
-    resetFields()
+    setShowForgot(false); setStep('email'); resetFields()
   }
 
   return (
@@ -125,9 +122,17 @@ export default function LoginScreen() {
           <TextInput style={s.input} value={email} onChangeText={setEmail}
             placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight}
             autoCapitalize="none" keyboardType="email-address" />
+
           <Text style={s.label}>FJALËKALIMI</Text>
-          <TextInput style={s.input} value={password} onChangeText={setPassword}
-            placeholder="••••••••" placeholderTextColor={Colors.mutedLight} secureTextEntry />
+          <View style={s.passWrap}>
+            <TextInput style={s.passInput} value={password} onChangeText={setPassword}
+              placeholder="••••••••" placeholderTextColor={Colors.mutedLight}
+              secureTextEntry={!showPass} />
+            <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
+              <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
+
           {error ? <Text style={s.error}>{error}</Text> : null}
           <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Hyr →</Text>}
@@ -155,11 +160,9 @@ export default function LoginScreen() {
           </View>
 
           <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
-
             {fSuccess ? (
               <View style={s.successWrap}>
-                <Text style={s.successText}>Fjalëkalimi juaj u ndryshua me sukses!
-Po ju çkyqim automatikisht…</Text>
+                <Text style={s.successText}>Fjalëkalimi juaj u ndryshua me sukses!\nPo ju çkyqim automatikisht…</Text>
               </View>
             ) : (
               <>
@@ -206,11 +209,23 @@ Po ju çkyqim automatikisht…</Text>
                   <>
                     <Text style={s.mDesc}>Kodi u verifikua ✅ Cakto fjalëkalimin tënd të ri.</Text>
                     <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
-                    <TextInput style={s.mInput} value={newPass} onChangeText={setNewPass}
-                      placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa" secureTextEntry autoFocus />
+                    <View style={s.passWrap}>
+                      <TextInput style={s.passInput} value={newPass} onChangeText={setNewPass}
+                        placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa"
+                        secureTextEntry={!showNewPass} autoFocus />
+                      <TouchableOpacity style={s.eyeBtn} onPress={() => setShowNewPass(v => !v)}>
+                        <Text style={s.eyeIcon}>{showNewPass ? '🙈' : '👁️'}</Text>
+                      </TouchableOpacity>
+                    </View>
                     <Text style={s.mLabel}>KONFIRMO FJALËKALIMIN</Text>
-                    <TextInput style={s.mInput} value={newPassConf} onChangeText={setNewPassConf}
-                      placeholder="Ripërsërit fjalëkalimin" placeholderTextColor="#aaa" secureTextEntry />
+                    <View style={s.passWrap}>
+                      <TextInput style={s.passInput} value={newPassConf} onChangeText={setNewPassConf}
+                        placeholder="Ripërsërit fjalëkalimin" placeholderTextColor="#aaa"
+                        secureTextEntry={!showNewPassConf} />
+                      <TouchableOpacity style={s.eyeBtn} onPress={() => setShowNewPassConf(v => !v)}>
+                        <Text style={s.eyeIcon}>{showNewPassConf ? '🙈' : '👁️'}</Text>
+                      </TouchableOpacity>
+                    </View>
                   </>
                 )}
 
@@ -245,6 +260,10 @@ const s = StyleSheet.create({
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
   input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
+  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 16, backgroundColor: Colors.white },
+  passInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine },
+  eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
+  eyeIcon: { fontSize: 18 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
   btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 4 },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },

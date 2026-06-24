@@ -12,11 +12,11 @@ export default function SignupScreen() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [accepted, setAccepted] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
-  const [showPrivacy, setShowPrivacy] = useState(false)
   const [legalType, setLegalType] = useState<'terms' | 'privacy'>('terms')
 
   const handleSignup = async () => {
@@ -47,9 +47,17 @@ export default function SignupScreen() {
           <TextInput style={s.input} value={username} onChangeText={setUsername} placeholder="username" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" />
           <Text style={s.label}>EMAIL</Text>
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
+
           <Text style={s.label}>FJALËKALIMI</Text>
-          <TextInput style={s.input} value={password} onChangeText={setPassword} placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight} secureTextEntry />
-          {/* T&C Checkbox */}
+          <View style={s.passWrap}>
+            <TextInput style={s.passInput} value={password} onChangeText={setPassword}
+              placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight}
+              secureTextEntry={!showPass} />
+            <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
+              <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity style={s.tcRow} onPress={() => setAccepted(!accepted)} activeOpacity={0.7}>
             <View style={[s.checkbox, accepted && s.checkboxChecked]}>
               {accepted && <Text style={s.checkboxTick}>✓</Text>}
@@ -76,11 +84,7 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-      <LegalModal
-        visible={showTerms}
-        type={legalType}
-        onClose={() => setShowTerms(false)}
-      />
+      <LegalModal visible={showTerms} type={legalType} onClose={() => setShowTerms(false)} />
     </SafeAreaView>
   )
 }
@@ -94,6 +98,10 @@ const s = StyleSheet.create({
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
   input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
+  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 16, backgroundColor: Colors.white },
+  passInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine },
+  eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
+  eyeIcon: { fontSize: 18 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
   btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
@@ -101,11 +109,7 @@ const s = StyleSheet.create({
   switchRow: { marginTop: 16, alignItems: 'center' },
   switchText: { fontSize: 13, color: Colors.muted },
   tcRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, gap: 10 },
-  checkbox: {
-    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
-    borderColor: Colors.pine, alignItems: 'center', justifyContent: 'center',
-    marginTop: 1, flexShrink: 0,
-  },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.pine, alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0 },
   checkboxChecked: { backgroundColor: Colors.pine, borderColor: Colors.pine },
   checkboxTick: { color: '#fff', fontSize: 13, fontWeight: '700' },
   tcText: { flex: 1, fontSize: 12, color: Colors.muted, lineHeight: 18 },
