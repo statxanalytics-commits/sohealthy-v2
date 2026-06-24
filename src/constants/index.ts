@@ -73,6 +73,9 @@ export const PRODUCT_IMAGES: Record<string, string> = {
   'green-organics': 'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg',
 }
 
+// RESET book PDF hosted in Supabase Storage (public 'books' bucket)
+const RESET_BOOK_PDF = 'https://rquoydwzulecmttrjdzo.supabase.co/storage/v1/object/public/books/reset-book.pdf'
+
 export const API = {
   scanner: 'https://project-iaeqw.vercel.app/api/analyze',
   diet: 'https://sohealthy-diet.vercel.app/api/generate-diet',
@@ -80,6 +83,8 @@ export const API = {
   challenge: 'https://index-blush-phi.vercel.app',
   calculator: 'https://kalkulatori-zeta.vercel.app',
   bodyCalc: 'https://llogaritje-trupi.vercel.app',
+  // Open via Google Docs Viewer so the PDF renders inside the in-app WebView on both iOS and Android
+  resetBook: 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(RESET_BOOK_PDF),
 }
 
 export const PRODUCTS: Record<string, any> = {
