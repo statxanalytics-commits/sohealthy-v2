@@ -9,14 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
-const SUPA_URL = 'https://rquoydwzulecmttrjdzo.supabase.co'
-const SUPA_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdW95ZHd6dWxlY210dHJqZHpvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTAxMDE3MiwiZXhwIjoyMDk2NTg2MTcyfQ.7IOOo5yX7F0aL8cwcBXxM56iBbVrr1GUdhrHjDscrkU'
-const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdW95ZHd6dWxlY210dHJqZHpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAxNzIsImV4cCI6MjA5NjU4NjE3Mn0.GQlCml9nQAXv3A7_pmZSo6Uy82-J1k62M4rPHPjRdSQ'
-
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
-
 export default function LoginScreen() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -28,7 +20,6 @@ export default function LoginScreen() {
   const [step, setStep] = useState<'email' | 'code' | 'newpass'>('email')
   const [fEmail, setFEmail] = useState('')
   const [fCode, setFCode] = useState('')
-  const [fUserId, setFUserId] = useState('')
   const [newPass, setNewPass] = useState('')
   const [newPassConf, setNewPassConf] = useState('')
   const [fLoading, setFLoading] = useState(false)
@@ -44,38 +35,14 @@ export default function LoginScreen() {
     setLoading(false)
   }
 
-  // Step 1: Send 6-digit code
+  // Step 1: Send Supabase OTP recovery email
   const sendCode = async () => {
     if (!fEmail.trim()) { setFError('Shkruaj email-in.'); return }
     setFLoading(true); setFError('')
     try {
-      const code = generateCode()
-      const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString()
-
-      // Save code in Supabase
-      const r = await fetch(`${SUPA_URL}/rest/v1/password_reset_codes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPA_SERVICE,
-          Authorization: `Bearer ${SUPA_SERVICE}`,
-          Prefer: 'return=minimal'
-        },
-        body: JSON.stringify({ email: fEmail.trim().toLowerCase(), code, expires_at: expires })
-      })
-      if (!r.ok) throw new Error('Save failed')
-
-      // Send email via Supabase built-in reset (delivers professionally)
-      await supabase.auth.resetPasswordForEmail(fEmail.trim().toLowerCase())
-
-      // Also show code directly for testing
+      const { error } = await supabase.auth.resetPasswordForEmail(fEmail.trim().toLowerCase())
+      if (error) throw error
       setStep('code')
-      // Store code temporarily for dev (in prod remove this and rely only on email)
-      setFCode('')
-      // In dev: show the code
-      if (__DEV__) {
-        setFError(`[DEV] Kodi: ${code}`)
-      }
     } catch {
       setFError('Email nuk u gjet ose gabim serveri.')
     } finally {
@@ -83,29 +50,21 @@ export default function LoginScreen() {
     }
   }
 
-  // Step 2: Verify code
+  // Step 2: Verify Supabase OTP and get session
   const verifyCode = async () => {
     if (fCode.length !== 6) { setFError('Kodi duhet të jetë 6 shifra.'); return }
     setFLoading(true); setFError('')
     try {
-      const r = await fetch(
-        `${SUPA_URL}/rest/v1/password_reset_codes?email=eq.${encodeURIComponent(fEmail.trim().toLowerCase())}&code=eq.${fCode}&used=eq.false&select=id,expires_at`,
-        { headers: { apikey: SUPA_SERVICE, Authorization: `Bearer ${SUPA_SERVICE}` } }
-      )
-      const data = await r.json()
-      if (!data?.length) { setFError('Kodi i gabuar ose ka skaduar.'); setFLoading(false); return }
-      if (new Date() > new Date(data[0].expires_at)) { setFError('Kodi ka skaduar. Kërko një të ri.'); setFLoading(false); return }
-
-      // Get user ID from email
-      const uRes = await fetch(
-        `${SUPA_URL}/auth/v1/admin/users?email=${encodeURIComponent(fEmail.trim().toLowerCase())}`,
-        { headers: { apikey: SUPA_SERVICE, Authorization: `Bearer ${SUPA_SERVICE}` } }
-      )
-      const uData = await uRes.json()
-      const userId = uData?.users?.[0]?.id
-      if (!userId) { setFError('Llogaria nuk u gjet.'); setFLoading(false); return }
-
-      setFUserId(userId)
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: fEmail.trim().toLowerCase(),
+        token: fCode.trim(),
+        type: 'recovery'
+      })
+      if (error || !data.session) {
+        setFError('Kodi i gabuar ose ka skaduar.')
+        setFLoading(false)
+        return
+      }
       setStep('newpass')
     } catch {
       setFError('Gabim gjatë verifikimit.')
@@ -114,45 +73,15 @@ export default function LoginScreen() {
     }
   }
 
-  // Step 3: Update password via service key
+  // Step 3: Update password (session already active from verifyOtp)
   const updatePassword = async () => {
     if (!newPass) { setFError('Shkruaj fjalëkalimin e ri.'); return }
     if (newPass.length < 6) { setFError('Minimum 6 karaktere.'); return }
     if (newPass !== newPassConf) { setFError('Fjalëkalimet nuk përputhen.'); return }
     setFLoading(true); setFError('')
     try {
-      // Update password via admin API
-      const r = await fetch(`${SUPA_URL}/auth/v1/admin/users/${fUserId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPA_SERVICE,
-          Authorization: `Bearer ${SUPA_SERVICE}`
-        },
-        body: JSON.stringify({ password: newPass })
-      })
-      if (!r.ok) throw new Error('Update failed')
-
-      // Mark code as used
-      await fetch(
-        `${SUPA_URL}/rest/v1/password_reset_codes?email=eq.${encodeURIComponent(fEmail.trim().toLowerCase())}&code=eq.${fCode}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: SUPA_SERVICE,
-            Authorization: `Bearer ${SUPA_SERVICE}`
-          },
-          body: JSON.stringify({ used: true })
-        }
-      )
-
-      // Auto login
-      await supabase.auth.signInWithPassword({
-        email: fEmail.trim().toLowerCase(),
-        password: newPass
-      })
-
+      const { error } = await supabase.auth.updateUser({ password: newPass })
+      if (error) throw error
       resetForgot()
     } catch {
       setFError('Gabim gjatë ndryshimit. Provo përsëri.')
@@ -169,7 +98,6 @@ export default function LoginScreen() {
     setNewPass('')
     setNewPassConf('')
     setFError('')
-    setFUserId('')
   }
 
   return (
