@@ -83,8 +83,8 @@ export const API = {
   challenge: 'https://index-blush-phi.vercel.app',
   calculator: 'https://kalkulatori-zeta.vercel.app',
   bodyCalc: 'https://llogaritje-trupi.vercel.app',
-  // Open via Google Docs Viewer so the PDF renders inside the in-app WebView on both iOS and Android
-  resetBook: 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(RESET_BOOK_PDF),
+  // Direct PDF URL — opened with Linking.openURL (native PDF viewer) since Google Docs Viewer does not render reliably inside WebView
+  resetBook: RESET_BOOK_PDF,
 }
 
 export const PRODUCTS: Record<string, any> = {

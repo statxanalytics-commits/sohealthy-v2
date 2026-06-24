@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
@@ -176,10 +176,10 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* RESET Book */}
+            {/* RESET Book — open PDF directly with native viewer */}
             <TouchableOpacity
               style={s.bookCard}
-              onPress={() => router.push({ pathname: '/(app)/webview', params: { url: API.resetBook, title: 'Libri RESET — Nga Pavli' } })}
+              onPress={() => Linking.openURL(API.resetBook)}
             >
               <View style={s.bookCardLeft}>
                 <Text style={s.bookLabel}>PREMIUM</Text>
