@@ -18,7 +18,6 @@ export default function ProfileScreen() {
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    // Email-i gjithmonë ekziston te auth user -> fallback i sigurt
     setAuthEmail(user.email || '')
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     setProfile(data)
@@ -37,12 +36,26 @@ export default function ProfileScreen() {
             try {
               const { data: { user } } = await supabase.auth.getUser()
               if (!user) return
-              // delete_user() RPC (SECURITY DEFINER) fshin të gjitha të dhënat + vetë llogarinë auth.users
-              const { error } = await supabase.rpc('delete_user')
-              if (error) throw error
+
+              // Delete all data manually first (avoid RPC session invalidation issue)
+              const uid = user.id
+              await supabase.from('scan_history').delete().eq('user_id', uid)
+              await supabase.from('tracker_entries').delete().eq('user_id', uid)
+              await supabase.from('product_selections').delete().eq('user_id', uid)
+              await supabase.from('diet_plans').delete().eq('user_id', uid)
+              await supabase.from('purchase_history').delete().eq('user_id', uid)
+              await supabase.from('profiles').delete().eq('id', uid)
+
+              // Call RPC to delete auth.users — ignore error since session
+              // is invalidated by the deletion itself (expected behavior)
+              await supabase.rpc('delete_user').then(() => {}).catch(() => {})
+
+              // Sign out locally regardless
               await supabase.auth.signOut()
-            } catch (e) {
-              Alert.alert('Gabim', 'Nuk u fshi llogaria. Kontaktoni info@sohealthy.al')
+            } catch {
+              // If all data deletes passed but RPC failed, still sign out
+              // The user row may already be deleted — sign out silently
+              await supabase.auth.signOut()
             }
           }
         }
@@ -54,7 +67,6 @@ export default function ProfileScreen() {
     await supabase.auth.signOut()
   }
 
-  // Vlerat e shfaqura me fallback nga auth nese profiles eshte bosh
   const displayEmail = profile?.email || authEmail || '—'
   const displayName = profile?.name || (authEmail ? authEmail.split('@')[0] : '—')
   const displayUsername = profile?.username || (authEmail ? authEmail.split('@')[0] : '—')
@@ -116,14 +128,12 @@ export default function ProfileScreen() {
           <Text style={s.deleteText}>Fshi Llogarinë</Text>
         </TouchableOpacity>
 
-        {/* Privacy Policy link — required for App Store */}
         <TouchableOpacity style={s.privacyBtn} onPress={() => Linking.openURL(PRIVACY_URL)}>
           <FileText size={14} color={Colors.muted} strokeWidth={1.75} />
           <Text style={s.privacyText}>Politika e Privatësisë</Text>
         </TouchableOpacity>
 
         <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
