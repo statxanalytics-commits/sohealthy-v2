@@ -33,6 +33,13 @@ export default function ProfileScreen() {
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState(false)
 
+  // Delete confirm
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletePass, setDeletePass] = useState('')
+  const [showDeletePass, setShowDeletePass] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   useEffect(() => { loadProfile() }, [])
 
   const loadProfile = async () => {
@@ -65,9 +72,7 @@ export default function ProfileScreen() {
       if (error) {
         if (error.code === '23505') {
           setProfileError('Ky username është tashmë i zënë. Provo një tjetër.')
-        } else {
-          throw error
-        }
+        } else { throw error }
         return
       }
       setProfile((p: any) => ({ ...p, name: editName.trim(), username: editUsername.trim().toLowerCase() }))
@@ -75,9 +80,7 @@ export default function ProfileScreen() {
       setTimeout(() => { setProfileSuccess(false) }, 2000)
     } catch {
       setProfileError('Gabim gjatë ruajtjes. Provo përsëri.')
-    } finally {
-      setProfileLoading(false)
-    }
+    } finally { setProfileLoading(false) }
   }
 
   const handleChangePassword = async () => {
@@ -97,9 +100,7 @@ export default function ProfileScreen() {
       setTimeout(() => { setPwSuccess(false) }, 2500)
     } catch {
       setPwError('Gabim gjatë ndryshimit. Provo përsëri.')
-    } finally {
-      setPwLoading(false)
-    }
+    } finally { setPwLoading(false) }
   }
 
   const resetModal = () => {
@@ -111,33 +112,30 @@ export default function ProfileScreen() {
   }
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Fshi Llogarinë',
-      'Jeni të sigurt? Ky veprim është i pakthyeshëm dhe të gjitha të dhënat tuaja do të fshihen.',
-      [
-        { text: 'Anulo', style: 'cancel' },
-        {
-          text: 'Fshi Llogarinë', style: 'destructive',
-          onPress: async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser()
-              if (!user) return
-              const uid = user.id
-              await supabase.from('scan_history').delete().eq('user_id', uid)
-              await supabase.from('tracker_entries').delete().eq('user_id', uid)
-              await supabase.from('product_selections').delete().eq('user_id', uid)
-              await supabase.from('diet_plans').delete().eq('user_id', uid)
-              await supabase.from('purchase_history').delete().eq('user_id', uid)
-              await supabase.from('profiles').delete().eq('id', uid)
-              await supabase.rpc('delete_user').then(() => {}).catch(() => {})
-              await supabase.auth.signOut()
-            } catch {
-              await supabase.auth.signOut()
-            }
-          }
-        }
-      ]
-    )
+    setDeletePass(''); setDeleteError(''); setShowDeletePass(false)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletePass) { setDeleteError('Shkruaj fjalëkalimin për të konfirmuar.'); return }
+    setDeleteLoading(true); setDeleteError('')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email: authEmail, password: deletePass })
+      if (signInErr) { setDeleteError('Fjalëkalimi është i gabuar.'); setDeleteLoading(false); return }
+      const uid = user.id
+      await supabase.from('scan_history').delete().eq('user_id', uid)
+      await supabase.from('tracker_entries').delete().eq('user_id', uid)
+      await supabase.from('product_selections').delete().eq('user_id', uid)
+      await supabase.from('diet_plans').delete().eq('user_id', uid)
+      await supabase.from('purchase_history').delete().eq('user_id', uid)
+      await supabase.from('profiles').delete().eq('id', uid)
+      await supabase.rpc('delete_user').then(() => {}).catch(() => {})
+      await supabase.auth.signOut()
+    } catch {
+      await supabase.auth.signOut()
+    } finally { setDeleteLoading(false) }
   }
 
   const handleLogout = async () => { await supabase.auth.signOut() }
@@ -193,7 +191,6 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Account actions */}
         <View style={s.actionsCard}>
           <TouchableOpacity style={s.actionRow} onPress={() => openEdit('profile')}>
             <View style={s.actionLeft}><User size={15} color={Colors.pine} strokeWidth={2} /><Text style={s.actionText}>Ndrysho Emrin & Username</Text></View>
@@ -225,6 +222,38 @@ export default function ProfileScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
+      {/* Delete Confirm Modal */}
+      <Modal visible={showDeleteConfirm} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowDeleteConfirm(false)}>
+        <SafeAreaView style={s.modalSafe}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>🗑 Fshi Llogarinë</Text>
+            <TouchableOpacity onPress={() => setShowDeleteConfirm(false)} style={s.closeBtn}>
+              <Text style={s.closeTxt}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
+            <Text style={{ fontSize: 13, color: Colors.muted, lineHeight: 20, marginBottom: 20 }}>
+              Ky veprim është i pakthyeshëm. Të gjitha të dhënat tuaja do të fshihen përfundimisht.
+            </Text>
+            <Text style={s.mLabel}>KONFIRMO ME FJALËKALIMIN TËND</Text>
+            <View style={s.passWrap}>
+              <TextInput style={s.passInput} value={deletePass} onChangeText={setDeletePass}
+                placeholder="Fjalëkalimi yt" placeholderTextColor="#aaa"
+                secureTextEntry={!showDeletePass} autoFocus />
+              <TouchableOpacity style={s.eyeBtn} onPress={() => setShowDeletePass(v => !v)}>
+                {showDeletePass ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
+              </TouchableOpacity>
+            </View>
+            {deleteError ? <Text style={s.errTxt}>{deleteError}</Text> : null}
+            <TouchableOpacity
+              style={[s.deleteConfirmBtn, deleteLoading && { opacity: 0.6 }]}
+              onPress={confirmDelete} disabled={deleteLoading}>
+              {deleteLoading ? <ActivityIndicator color="#fff" /> : <Text style={s.mBtnTxt}>Fshi Llogarinë Përgjithmonë</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
       {/* Edit Modal */}
       <Modal visible={showEdit} animationType="slide" presentationStyle="pageSheet" onRequestClose={resetModal}>
         <SafeAreaView style={s.modalSafe}>
@@ -234,8 +263,6 @@ export default function ProfileScreen() {
               <Text style={s.closeTxt}>✕</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Tabs */}
           <View style={s.tabRow}>
             <TouchableOpacity style={[s.tab, editTab === 'profile' && s.tabActive]} onPress={() => setEditTab('profile')}>
               <Text style={[s.tabText, editTab === 'profile' && s.tabTextActive]}>Profili</Text>
@@ -244,28 +271,22 @@ export default function ProfileScreen() {
               <Text style={[s.tabText, editTab === 'password' && s.tabTextActive]}>Fjalëkalimi</Text>
             </TouchableOpacity>
           </View>
-
           <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
-
             {editTab === 'profile' && (
               <>
                 <Text style={s.mLabel}>EMRI</Text>
                 <TextInput style={s.mInput} value={editName} onChangeText={setEditName}
                   placeholder="Emri yt" placeholderTextColor="#aaa" autoFocus />
-
                 <Text style={s.mLabel}>USERNAME</Text>
                 <TextInput style={s.mInput} value={editUsername} onChangeText={setEditUsername}
                   placeholder="username" placeholderTextColor="#aaa" autoCapitalize="none" />
-
                 {profileError ? <Text style={s.errTxt}>{profileError}</Text> : null}
                 {profileSuccess ? <Text style={s.successTxt}>✅ Profili u ruajt me sukses!</Text> : null}
-
                 <TouchableOpacity style={[s.mBtn, profileLoading && { opacity: 0.6 }]} onPress={handleSaveProfile} disabled={profileLoading}>
                   {profileLoading ? <ActivityIndicator color="#fff" /> : <Text style={s.mBtnTxt}>Ruaj Ndryshimet →</Text>}
                 </TouchableOpacity>
               </>
             )}
-
             {editTab === 'password' && (
               <>
                 {pwSuccess ? (
@@ -283,7 +304,6 @@ export default function ProfileScreen() {
                         {showOld ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
                       </TouchableOpacity>
                     </View>
-
                     <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
                     <View style={s.passWrap}>
                       <TextInput style={s.passInput} value={newPass} onChangeText={setNewPass}
@@ -293,7 +313,6 @@ export default function ProfileScreen() {
                         {showNew ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
                       </TouchableOpacity>
                     </View>
-
                     <Text style={s.mLabel}>KONFIRMO FJALËKALIMIN E RI</Text>
                     <View style={s.passWrap}>
                       <TextInput style={s.passInput} value={newPassConf} onChangeText={setNewPassConf}
@@ -303,9 +322,7 @@ export default function ProfileScreen() {
                         {showConf ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
                       </TouchableOpacity>
                     </View>
-
                     {pwError ? <Text style={s.errTxt}>{pwError}</Text> : null}
-
                     <TouchableOpacity style={[s.mBtn, pwLoading && { opacity: 0.6 }]} onPress={handleChangePassword} disabled={pwLoading}>
                       {pwLoading ? <ActivityIndicator color="#fff" /> : <Text style={s.mBtnTxt}>Ndrysho Fjalëkalimin →</Text>}
                     </TouchableOpacity>
@@ -347,6 +364,7 @@ const s = StyleSheet.create({
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, borderWidth: 1, borderColor: '#cc000040' },
   deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
+  deleteConfirmBtn: { backgroundColor: '#cc0000', borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingVertical: 10 },
   privacyText: { fontSize: 13, color: Colors.muted, textDecorationLine: 'underline' },
   footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 8 },
