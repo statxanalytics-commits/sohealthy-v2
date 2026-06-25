@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText } from 'lucide-react-native'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
@@ -11,9 +11,19 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<any>(null)
   const [authEmail, setAuthEmail] = useState<string>('')
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
+  // Change password modal
+  const [showChangePw, setShowChangePw] = useState(false)
+  const [oldPass, setOldPass] = useState('')
+  const [newPass, setNewPass] = useState('')
+  const [newPassConf, setNewPassConf] = useState('')
+  const [showOld, setShowOld] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConf, setShowConf] = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState(false)
+
+  useEffect(() => { loadProfile() }, [])
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,6 +31,43 @@ export default function ProfileScreen() {
     setAuthEmail(user.email || '')
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     setProfile(data)
+  }
+
+  const handleChangePassword = async () => {
+    if (!oldPass) { setPwError('Shkruaj fjalëkalimin e vjetër.'); return }
+    if (!newPass) { setPwError('Shkruaj fjalëkalimin e ri.'); return }
+    if (newPass.length < 6) { setPwError('Minimum 6 karaktere.'); return }
+    if (newPass !== newPassConf) { setPwError('Fjalëkalimet e reja nuk përputhen.'); return }
+    if (oldPass === newPass) { setPwError('Fjalëkalimi i ri duhet të jetë i ndryshëm.'); return }
+    setPwLoading(true); setPwError('')
+    try {
+      // Verify old password by re-signing in
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: authEmail, password: oldPass
+      })
+      if (signInErr) { setPwError('Fjalëkalimi i vjetër është i gabuar.'); setPwLoading(false); return }
+      // Update to new password
+      const { error: updateErr } = await supabase.auth.updateUser({ password: newPass })
+      if (updateErr) throw updateErr
+      setPwSuccess(true)
+      setTimeout(() => {
+        setShowChangePw(false)
+        setPwSuccess(false)
+        setOldPass(''); setNewPass(''); setNewPassConf('')
+        setPwError('')
+      }, 2000)
+    } catch {
+      setPwError('Gabim gjatë ndryshimit. Provo përsëri.')
+    } finally {
+      setPwLoading(false)
+    }
+  }
+
+  const resetChangePw = () => {
+    setShowChangePw(false)
+    setOldPass(''); setNewPass(''); setNewPassConf('')
+    setPwError(''); setPwSuccess(false)
+    setShowOld(false); setShowNew(false); setShowConf(false)
   }
 
   const handleDeleteAccount = () => {
@@ -36,8 +83,6 @@ export default function ProfileScreen() {
             try {
               const { data: { user } } = await supabase.auth.getUser()
               if (!user) return
-
-              // Delete all data manually first (avoid RPC session invalidation issue)
               const uid = user.id
               await supabase.from('scan_history').delete().eq('user_id', uid)
               await supabase.from('tracker_entries').delete().eq('user_id', uid)
@@ -45,16 +90,9 @@ export default function ProfileScreen() {
               await supabase.from('diet_plans').delete().eq('user_id', uid)
               await supabase.from('purchase_history').delete().eq('user_id', uid)
               await supabase.from('profiles').delete().eq('id', uid)
-
-              // Call RPC to delete auth.users — ignore error since session
-              // is invalidated by the deletion itself (expected behavior)
               await supabase.rpc('delete_user').then(() => {}).catch(() => {})
-
-              // Sign out locally regardless
               await supabase.auth.signOut()
             } catch {
-              // If all data deletes passed but RPC failed, still sign out
-              // The user row may already be deleted — sign out silently
               await supabase.auth.signOut()
             }
           }
@@ -63,9 +101,7 @@ export default function ProfileScreen() {
     )
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-  }
+  const handleLogout = async () => { await supabase.auth.signOut() }
 
   const displayEmail = profile?.email || authEmail || '—'
   const displayName = profile?.name || (authEmail ? authEmail.split('@')[0] : '—')
@@ -118,6 +154,12 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {/* Change Password */}
+        <TouchableOpacity style={s.changePwBtn} onPress={() => setShowChangePw(true)}>
+          <Lock size={15} color={Colors.pine} strokeWidth={2} />
+          <Text style={s.changePwText}>Ndrysho Fjalëkalimin</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
           <LogOut size={16} color={Colors.white} strokeWidth={2} />
           <Text style={s.logoutText}>Dil nga llogaria</Text>
@@ -136,6 +178,70 @@ export default function ProfileScreen() {
         <Text style={s.footer}>SoHealthy v1.0  ·  info@sohealthy.al</Text>
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <Modal visible={showChangePw} animationType="slide" presentationStyle="pageSheet" onRequestClose={resetChangePw}>
+        <SafeAreaView style={s.modalSafe}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>🔒 Ndrysho Fjalëkalimin</Text>
+            <TouchableOpacity onPress={resetChangePw} style={s.closeBtn}>
+              <Text style={s.closeTxt}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={s.modalScroll} keyboardShouldPersistTaps="handled">
+            {pwSuccess ? (
+              <View style={s.successWrap}>
+                <Text style={s.successText}>✅ Fjalëkalimi u ndryshua me sukses!</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={s.mLabel}>FJALËKALIMI I VJETËR</Text>
+                <View style={s.passWrap}>
+                  <TextInput style={s.passInput} value={oldPass} onChangeText={setOldPass}
+                    placeholder="Fjalëkalimi aktual" placeholderTextColor="#aaa"
+                    secureTextEntry={!showOld} autoFocus />
+                  <TouchableOpacity style={s.eyeBtn} onPress={() => setShowOld(v => !v)}>
+                    {showOld ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
+                <View style={s.passWrap}>
+                  <TextInput style={s.passInput} value={newPass} onChangeText={setNewPass}
+                    placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa"
+                    secureTextEntry={!showNew} />
+                  <TouchableOpacity style={s.eyeBtn} onPress={() => setShowNew(v => !v)}>
+                    {showNew ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={s.mLabel}>KONFIRMO FJALËKALIMIN E RI</Text>
+                <View style={s.passWrap}>
+                  <TextInput style={s.passInput} value={newPassConf} onChangeText={setNewPassConf}
+                    placeholder="Ripërsërit fjalëkalimin" placeholderTextColor="#aaa"
+                    secureTextEntry={!showConf} />
+                  <TouchableOpacity style={s.eyeBtn} onPress={() => setShowConf(v => !v)}>
+                    {showConf ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}
+                  </TouchableOpacity>
+                </View>
+
+                {pwError ? <Text style={s.pwError}>{pwError}</Text> : null}
+
+                <TouchableOpacity
+                  style={[s.mBtn, pwLoading && { opacity: 0.6 }]}
+                  onPress={handleChangePassword}
+                  disabled={pwLoading}
+                >
+                  {pwLoading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={s.mBtnTxt}>Ndrysho Fjalëkalimin →</Text>
+                  }
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -158,11 +264,29 @@ const s = StyleSheet.create({
   infoLabel: { fontSize: 13, color: Colors.muted },
   infoValue: { fontSize: 13, fontWeight: '500', color: Colors.pine },
   statusVal: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.goji, borderRadius: 12, paddingVertical: 15, marginTop: 8 },
+  changePwBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.white, borderRadius: 12, paddingVertical: 15, marginBottom: 10, borderWidth: 1.5, borderColor: Colors.border },
+  changePwText: { fontSize: 14, fontWeight: '600', color: Colors.pine },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.goji, borderRadius: 12, paddingVertical: 15, marginTop: 2 },
   logoutText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 24, marginTop: 10, borderRadius: 12, paddingVertical: 15, borderWidth: 1, borderColor: '#cc000040' },
   deleteText: { fontSize: 14, fontWeight: '600', color: '#cc0000' },
   privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingVertical: 10 },
   privacyText: { fontSize: 13, color: Colors.muted, textDecorationLine: 'underline' },
   footer: { textAlign: 'center', fontSize: 11, color: Colors.muted, opacity: 0.7, marginTop: 8 },
+  // Modal
+  modalSafe: { flex: 1, backgroundColor: Colors.alabaster },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.pine, padding: 20 },
+  modalTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: Colors.alabaster },
+  closeBtn: { padding: 8 },
+  closeTxt: { color: Colors.aloe, fontSize: 20, fontWeight: '700' },
+  modalScroll: { padding: 24 },
+  mLabel: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 8 },
+  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 16, backgroundColor: Colors.white },
+  passInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: Colors.pine },
+  eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
+  pwError: { color: Colors.goji, fontSize: 13, marginBottom: 12, textAlign: 'center' },
+  mBtn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  mBtnTxt: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  successWrap: { alignItems: 'center', paddingVertical: 60 },
+  successText: { fontSize: 16, color: Colors.pine, fontWeight: '600', textAlign: 'center' },
 })
