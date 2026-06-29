@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator, Modal, ScrollView, StyleSheet, Text,
   TouchableOpacity, View, Image, Alert
@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import { ScanLine, Utensils, Camera, Image as ImageIcon, AlertTriangle, CheckCircle, Zap, Sparkles } from 'lucide-react-native'
+import { ScanLine, Utensils, Camera, Image as ImageIcon, AlertTriangle, CheckCircle, Zap, Sparkles, Footprints, Clock } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
@@ -33,6 +33,33 @@ type PlateRating = {
   Icon: LucideIcon
   color: string
   description: string
+}
+
+const DEFAULT_WEIGHT = 70 // kg — fallback if user has no saved weight
+
+// Steps needed to burn given calories for a person of `weightKg`.
+// Walking burns ~0.0005 kcal per step per kg of body weight.
+// e.g. 70kg person burns ~0.035 kcal/step → 500 kcal ≈ 14,300 steps.
+function stepsToBurn(calories: number, weightKg: number): number {
+  const kcalPerStep = 0.0005 * weightKg
+  if (kcalPerStep <= 0) return 0
+  return Math.round(calories / kcalPerStep)
+}
+
+// Approx walking minutes: average cadence ~100 steps/min at a moderate pace.
+function walkMinutes(steps: number): number {
+  return Math.round(steps / 100)
+}
+
+function formatSteps(n: number): string {
+  return n.toLocaleString('de-DE') // dot thousands separator: 14.300
+}
+
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins} min`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m === 0 ? `${h} orë` : `${h} orë ${m} min`
 }
 
 function ratePlate(t: ScanResult['total']): PlateRating {
@@ -86,6 +113,33 @@ export default function ScannerScreen() {
   const [result, setResult] = useState<ScanResult | null>(null)
   const [plate, setPlate] = useState<PlateRating | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
+  const [userWeight, setUserWeight] = useState<number>(DEFAULT_WEIGHT)
+  const [hasRealWeight, setHasRealWeight] = useState(false)
+
+  useEffect(() => { loadUserWeight() }, [])
+
+  // Pull the user's latest weight: first from tracker_entries (weight:X),
+  // falling back to the default if none is saved.
+  async function loadUserWeight() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: weightData } = await supabase
+        .from('tracker_entries')
+        .select('date, product_slug')
+        .eq('user_id', user.id)
+        .ilike('product_slug', 'weight:%')
+        .order('date', { ascending: false })
+        .limit(1)
+      const raw = weightData?.[0]?.product_slug
+      if (raw) {
+        const w = parseFloat(raw.replace('weight:', ''))
+        if (!isNaN(w) && w > 0) { setUserWeight(w); setHasRealWeight(true) }
+      }
+    } catch (e) {
+      console.log('Weight load error:', e)
+    }
+  }
 
   async function pickImage(useCamera: boolean) {
     try {
@@ -196,6 +250,32 @@ export default function ScannerScreen() {
                 ))}
               </View>
             </View>
+
+            {/* Walk-to-burn card */}
+            {(() => {
+              const steps = stepsToBurn(result.total.calories, userWeight)
+              const mins = walkMinutes(steps)
+              return (
+                <View style={s.walkCard}>
+                  <View style={s.walkIconWrap}>
+                    <Footprints size={24} color={Colors.alabaster} strokeWidth={1.75} />
+                  </View>
+                  <View style={s.walkBody}>
+                    <Text style={s.walkLabel}>SA DUHET TË ECËSH</Text>
+                    <Text style={s.walkSteps}>{formatSteps(steps)} <Text style={s.walkStepsUnit}>hapa</Text></Text>
+                    <View style={s.walkTimeRow}>
+                      <Clock size={13} color={Colors.aloe} strokeWidth={2} />
+                      <Text style={s.walkTime}>~{formatDuration(mins)} ecje</Text>
+                    </View>
+                    <Text style={s.walkNote}>
+                      për të djegur këtë vakt
+                      {hasRealWeight ? ` (bazuar në ${userWeight}kg)` : ` (mesatare ${DEFAULT_WEIGHT}kg)`}
+                    </Text>
+                  </View>
+                </View>
+              )
+            })()}
+
             <View style={[s.ratingCard, { borderColor: plate.color + '40' }]}>
               <Text style={s.sectionLabel}>VLERËSIMI I PJATËS</Text>
               <View style={s.ratingRow}>
@@ -294,6 +374,25 @@ const s = StyleSheet.create({
   macroLabel: { fontSize: 10, color: Colors.aloe, marginBottom: 2 },
   macroVal: { fontSize: 18, fontWeight: '600', color: '#fff' },
   macroUnit: { fontSize: 11, fontWeight: '400' },
+
+  // Walk-to-burn card
+  walkCard: {
+    backgroundColor: Colors.aloe, borderRadius: 16, padding: 16, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+  },
+  walkIconWrap: {
+    width: 52, height: 52, borderRadius: 14,
+    backgroundColor: 'rgba(27,63,47,0.25)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  walkBody: { flex: 1 },
+  walkLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', opacity: 0.7, marginBottom: 3 },
+  walkSteps: { fontSize: 26, fontWeight: '700', color: Colors.pine, lineHeight: 30 },
+  walkStepsUnit: { fontSize: 14, fontWeight: '600' },
+  walkTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  walkTime: { fontSize: 13, fontWeight: '700', color: Colors.pine },
+  walkNote: { fontSize: 11, color: Colors.pine, opacity: 0.7, marginTop: 3 },
+
   ratingCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1.5 },
   sectionLabel: { fontSize: 10, letterSpacing: 2, color: '#888', fontWeight: '700', marginBottom: 10 },
   ratingRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
