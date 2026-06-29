@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator, Modal, ScrollView, StyleSheet, Text,
-  TouchableOpacity, View, Image, Alert
+  TouchableOpacity, View, Image, Alert, Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -60,6 +60,42 @@ function formatDuration(mins: number): string {
   const h = Math.floor(mins / 60)
   const m = mins % 60
   return m === 0 ? `${h} orë` : `${h} orë ${m} min`
+}
+
+// Downscale + re-encode an image on web using a canvas.
+// Web file pickers can return huge originals (even RAW/DNG, 20MB+),
+// which exceed Anthropic's 10MB image limit. Native already compresses
+// via quality:0.7, so this only runs on web. Returns raw base64 (no prefix).
+function downscaleImageWeb(uri: string, maxSize = 1024, quality = 0.8): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    try {
+      const img = new (window as any).Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        let { width, height } = img
+        if (width > height && width > maxSize) {
+          height = Math.round((height * maxSize) / width)
+          width = maxSize
+        } else if (height > maxSize) {
+          width = Math.round((width * maxSize) / height)
+          height = maxSize
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { reject(new Error('no canvas context')); return }
+        ctx.drawImage(img, 0, 0, width, height)
+        const dataUrl = canvas.toDataURL('image/jpeg', quality)
+        const base64 = dataUrl.split(',')[1]
+        resolve({ base64, mimeType: 'image/jpeg' })
+      }
+      img.onerror = () => reject(new Error('image load failed'))
+      img.src = uri
+    } catch (e) {
+      reject(e as Error)
+    }
+  })
 }
 
 function ratePlate(t: ScanResult['total']): PlateRating {
@@ -156,6 +192,20 @@ export default function ScannerScreen() {
       if (!picked.canceled && picked.assets[0]) {
         const asset = picked.assets[0]
         setImageUri(asset.uri)
+
+        // On web, the picker can return a massive original (even RAW/DNG, 20MB+)
+        // which exceeds Anthropic's 10MB limit. Downscale via canvas first.
+        if (Platform.OS === 'web') {
+          try {
+            const { base64, mimeType } = await downscaleImageWeb(asset.uri)
+            await analyzeImage(base64, mimeType)
+            return
+          } catch (e) {
+            // Fall back to the raw asset if canvas downscale fails.
+            console.log('Web downscale failed, using original:', e)
+          }
+        }
+
         await analyzeImage(asset.base64!, asset.mimeType || 'image/jpeg')
       }
     } catch (e) {
