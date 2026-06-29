@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
-  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
@@ -17,6 +17,7 @@ const FREE_TOOLS = [
   { id: 'calculator', Icon: Scale, name: 'Gjej Sa Kg Humb Me Paketat SoHealthy', sub: 'Kalkulator peshe', url: API.calculator },
   { id: 'quiz', Icon: Sparkles, name: 'Gjej Paketën Perfekte Për Ty Nga SoHealthy', sub: 'Quiz produktesh', url: API.quiz },
   { id: 'bodyCalc', Icon: Calculator, name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
+  { id: 'metabolicAge', Icon: Flame, name: 'Mosha Metabolike', sub: 'Sa vjeç është metabolizmi yt?', url: API.metabolicAge },
 ]
 
 type PremiumTool = {
@@ -145,15 +146,18 @@ export default function HomeScreen() {
         <View style={s.freeGrid}>
           {FREE_TOOLS.map(tool => {
             const Icon = tool.Icon
+            const isMetabolic = tool.id === 'metabolicAge'
             return (
               <TouchableOpacity
                 key={tool.id}
-                style={s.freeCard}
+                style={[s.freeCard, isMetabolic && s.freeCardFeatured]}
                 onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
               >
-                <Icon size={24} color={Colors.pine} strokeWidth={1.75} style={s.freeIcon} />
-                <Text style={s.freeName}>{tool.name}</Text>
-                <Text style={s.freeSub}>{tool.sub}</Text>
+                <View style={[s.freeIconWrap, isMetabolic && s.freeIconWrapFeatured]}>
+                  <Icon size={22} color={isMetabolic ? Colors.alabaster : Colors.pine} strokeWidth={1.75} />
+                </View>
+                <Text style={[s.freeName, isMetabolic && s.freeNameFeatured]}>{tool.name}</Text>
+                <Text style={[s.freeSub, isMetabolic && s.freeSubFeatured]}>{tool.sub}</Text>
               </TouchableOpacity>
             )
           })}
@@ -378,9 +382,29 @@ const s = StyleSheet.create({
     width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 14,
     borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
   },
-  freeIcon: { marginBottom: 8 },
+  freeCardFeatured: {
+    width: '100%',
+    backgroundColor: Colors.pine,
+    borderColor: Colors.pine,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  freeIconWrap: {
+    width: 40, height: 40, borderRadius: 10,
+    backgroundColor: 'rgba(113,181,162,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8,
+  },
+  freeIconWrapFeatured: {
+    backgroundColor: Colors.goji,
+    marginBottom: 0,
+    flexShrink: 0,
+  },
   freeName: { fontSize: 13, fontWeight: '600', color: Colors.pine, lineHeight: 17, marginBottom: 2 },
+  freeNameFeatured: { color: Colors.alabaster, fontSize: 15, fontWeight: '700', flex: 1 },
   freeSub: { fontSize: 11, color: '#6B7F72' },
+  freeSubFeatured: { color: 'rgba(236,239,232,0.65)', fontSize: 12 },
   premiumRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8 },
   premiumSmall: {
     flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
