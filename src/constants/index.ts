@@ -80,7 +80,7 @@ export const API = {
   challenge: 'https://index-blush-phi.vercel.app',
   calculator: 'https://kalkulatori-zeta.vercel.app',
   bodyCalc: 'https://llogaritje-trupi.vercel.app',
-  metabolicAge: 'https://mosha-metabolike.vercel.app',
+  metabolicAge: 'https://mosha-metabolike-veex.vercel.app',
   resetBook: 'https://docs.google.com/viewer?url=https%3A%2F%2Frquoydwzulecmttrjdzo.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fbooks%2Freset-book.pdf&embedded=true',
 }
 
