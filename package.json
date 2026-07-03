@@ -19,6 +19,7 @@
     "@react-navigation/native": "^7.1.8",
     "@supabase/supabase-js": "^2.108.2",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/functions": "^3.7.4",
     "expo": "~54.0.34",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
