@@ -48,7 +48,7 @@ export default function DietScreen() {
       setOrderCode(code)
       if (!code) { setState('empty'); return }
       const { data: plansByCode } = await supabase.from('diet_plans').select('*').eq('order_code', code).order('generated_at', { ascending: false }).limit(1)
-      const { data: plansByUser } = plansByCode?.length ? { data: null } : await supabase.from('diet_plans').select('*').eq('user_id', user.id).order('generated_at', { ascending: false }).limit(1)
+      const { data: plansByUser } = plansByCode?.length ? { data: null } : await supabase.from('diet_plans').select('*').eq('user_id', user.id).is('order_code', null).order('generated_at', { ascending: false }).limit(1)
       const found = plansByCode?.[0] || plansByUser?.[0]
       if (found?.plan_content?.plan_text) { setPlan(found); setState('saved') } else { setState('empty') }
     } catch (e) { setState('empty') }
