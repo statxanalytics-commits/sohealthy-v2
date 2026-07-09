@@ -14,6 +14,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "CFBundleDisplayName": "SoHealthy",
+        "CFBundleDevelopmentRegion": "sq",
+        "CFBundleLocalizations": ["sq"],
         "NSCameraUsageDescription": "SoHealthy ka nevojë për kamerën për të analizuar ushqimet tuaja.",
         "NSPhotoLibraryUsageDescription": "SoHealthy ka nevojë për galerinë për të analizuar fotografitë e ushqimeve.",
         "ITSAppUsesNonExemptEncryption": false
