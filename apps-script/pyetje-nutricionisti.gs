@@ -5,6 +5,9 @@
  * Extensions → Apps Script). Uses the first sheet tab, columns A–H:
  * Timestamp | UserID | Emri | Email | Pyetja | Përgjigja | Statusi | DataPërgjigjes
  *
+ * Each account gets exactly 1 question — doPost rejects a second submission
+ * from a userId that already has a row.
+ *
  * SETUP
  * 1. Paste this file into Extensions → Apps Script on the "Pyetje Nutricionisti" sheet.
  * 2. Deploy → New deployment → Web app → Execute as "Me" → Who has access "Anyone".
@@ -37,7 +40,15 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: 'Mungon userId ose pyetja.' });
     }
 
-    getSheet().appendRow([new Date(), userId, emri, email, pyetja, '', 'Në pritje', '']);
+    var sheet = getSheet();
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][COL.USER_ID - 1]).trim() === userId) {
+        return jsonResponse({ ok: false, error: 'alreadyAsked' });
+      }
+    }
+
+    sheet.appendRow([new Date(), userId, emri, email, pyetja, '', 'Në pritje', '']);
     return jsonResponse({ ok: true });
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err.message || err) });
