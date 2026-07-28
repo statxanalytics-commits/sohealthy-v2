@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { MessageCircle, Send, Clock, CheckCircle2, Lock } from 'lucide-react-native'
+import { MessageCircle, Send, Clock, CheckCircle2, Lock, CheckCheck } from 'lucide-react-native'
 import { API, Colors } from '../../src/constants'
 import { usePremium } from '../../src/hooks/usePremium'
 import { supabase } from '../../src/lib/supabase'
@@ -59,21 +59,26 @@ export default function PyetjeScreen() {
 
   async function submit() {
     const text = pyetja.trim()
-    if (!text || !userId) return
+    if (!text || !userId || questions.length > 0) return
     setSubmitting(true)
     setError('')
     try {
       // Body sent as text/plain on purpose — avoids the CORS preflight (OPTIONS)
       // request, which Apps Script Web Apps don't handle.
-      await fetch(API.pyetjeNutricionisti, {
+      const res = await fetch(API.pyetjeNutricionisti, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ userId, emri, email, pyetja: text }),
       })
-      setPyetja('')
-      setSent(true)
+      const json = await res.json()
+      if (json.ok) {
+        setPyetja('')
+        setSent(true)
+        setTimeout(() => setSent(false), 5000)
+      } else {
+        setError(json.error === 'alreadyAsked' ? 'Ke bërë tashmë një pyetje.' : 'Pyetja nuk u dërgua. Provo përsëri.')
+      }
       await loadQuestions(userId)
-      setTimeout(() => setSent(false), 5000)
     } catch (e) {
       setError('Pyetja nuk u dërgua. Provo përsëri.')
     } finally {
@@ -82,6 +87,7 @@ export default function PyetjeScreen() {
   }
 
   const stillLoading = loading || premiumLoading
+  const alreadyAsked = questions.length > 0
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -104,32 +110,39 @@ export default function PyetjeScreen() {
       ) : (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-            <View style={s.composeCard}>
-              <Text style={s.composeLabel}>Pyetja jote</Text>
-              <TextInput
-                style={s.textarea}
-                value={pyetja}
-                onChangeText={setPyetja}
-                placeholder="Shkruaj pyetjen tënde për Pavlin..."
-                placeholderTextColor="#aaa"
-                multiline
-                numberOfLines={4}
-              />
-              <TouchableOpacity
-                style={[s.submitBtn, (!pyetja.trim() || submitting) && s.submitBtnDisabled]}
-                onPress={submit}
-                disabled={!pyetja.trim() || submitting}
-              >
-                {submitting ? <ActivityIndicator color="#fff" /> : (
-                  <>
-                    <Send size={15} color="#fff" strokeWidth={2} />
-                    <Text style={s.submitBtnText}>Dërgo Pyetjen</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              {sent && <Text style={s.sentText}>Pyetja u dërgua. Do të marrësh një njoftim kur Pavli të përgjigjet.</Text>}
-              {!!error && <Text style={s.errorText}>{error}</Text>}
-            </View>
+            {alreadyAsked ? (
+              <View style={s.askedCard}>
+                <CheckCheck size={18} color={Colors.aloe} strokeWidth={2} />
+                <Text style={s.askedText}>Ke bërë tashmë pyetjen tënde. Çdo llogari ka të drejtë për 1 pyetje.</Text>
+              </View>
+            ) : (
+              <View style={s.composeCard}>
+                <Text style={s.composeLabel}>Pyetja jote</Text>
+                <TextInput
+                  style={s.textarea}
+                  value={pyetja}
+                  onChangeText={setPyetja}
+                  placeholder="Shkruaj pyetjen tënde për Pavlin..."
+                  placeholderTextColor="#aaa"
+                  multiline
+                  numberOfLines={4}
+                />
+                <TouchableOpacity
+                  style={[s.submitBtn, (!pyetja.trim() || submitting) && s.submitBtnDisabled]}
+                  onPress={submit}
+                  disabled={!pyetja.trim() || submitting}
+                >
+                  {submitting ? <ActivityIndicator color="#fff" /> : (
+                    <>
+                      <Send size={15} color="#fff" strokeWidth={2} />
+                      <Text style={s.submitBtnText}>Dërgo Pyetjen</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                {sent && <Text style={s.sentText}>Pyetja u dërgua. Do të marrësh një njoftim kur Pavli të përgjigjet.</Text>}
+                {!!error && <Text style={s.errorText}>{error}</Text>}
+              </View>
+            )}
 
             <Text style={s.sectionLabel}>PYETJET E MIA</Text>
             {questions.length === 0 ? (
@@ -186,6 +199,8 @@ const s = StyleSheet.create({
   submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   sentText: { fontSize: 12, color: Colors.aloe, marginTop: 10, textAlign: 'center', fontWeight: '600' },
   errorText: { fontSize: 12, color: Colors.goji, marginTop: 10, textAlign: 'center', fontWeight: '600' },
+  askedCard: { backgroundColor: 'rgba(113,181,162,0.12)', borderRadius: 14, padding: 16, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(113,181,162,0.3)' },
+  askedText: { flex: 1, fontSize: 13, color: Colors.pine, fontWeight: '600', lineHeight: 18 },
   sectionLabel: { fontSize: 10, letterSpacing: 2, color: Colors.muted, fontWeight: '600', marginBottom: 10 },
   emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, alignItems: 'center' },
   emptyText: { fontSize: 13, color: '#aaa', textAlign: 'center' },
