@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
-  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
@@ -134,6 +134,20 @@ export default function HomeScreen() {
           </View>
           <View style={s.quizCardArrow}>
             <ArrowRight size={16} color={Colors.pine} strokeWidth={2.5} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.askCard} onPress={() => router.push('/(app)/pyetje' as any)}>
+          <View style={s.quizCardIcon}>
+            <MessageCircle size={22} color={Colors.pine} strokeWidth={1.75} />
+          </View>
+          <View style={s.quizCardLeft}>
+            <Text style={[s.quizCardBadge, { color: Colors.goji }]}>PYETJE</Text>
+            <Text style={s.quizCardTitle}>Pyet Nutricionistin</Text>
+            <Text style={s.quizCardSub}>Bëj pyetjen tënde direkt Pavlit</Text>
+          </View>
+          <View style={s.askCardArrow}>
+            <ArrowRight size={16} color={Colors.white} strokeWidth={2.5} />
           </View>
         </TouchableOpacity>
 
@@ -293,6 +307,8 @@ const s = StyleSheet.create({
   quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 20 },
   quizCardSub: { fontSize: 12, color: Colors.muted, marginTop: 3 },
   quizCardArrow: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.aloe, alignItems: 'center', justifyContent: 'center' },
+  askCard: { marginHorizontal: 16, marginTop: 10, backgroundColor: '#fff', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.goji },
+  askCardArrow: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.goji, alignItems: 'center', justifyContent: 'center' },
   dietCard: { backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10, borderRadius: 16, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dietLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   dietTitle: { fontSize: 17, color: Colors.alabaster, fontWeight: '600' },
@@ -338,6 +354,6 @@ const s = StyleSheet.create({
   bigActivateBtn: { backgroundColor: Colors.aloe, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start' },
   bigActivateBtnText: { fontSize: 14, fontWeight: '600', color: Colors.pine },
   activateCard: { backgroundColor: Colors.pine, marginHorizontal: 16, borderRadius: 14, padding: 16 },
-  activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
+  activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 6 },
   activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
 })
