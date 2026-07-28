@@ -73,6 +73,9 @@ export const API = {
   metabolicAge: 'https://mosha-metabolike-veex.vercel.app',
   dietPlan: 'https://plan-diete-falas.vercel.app',
   resetBook: 'https://docs.google.com/viewer?url=https%3A%2F%2Frquoydwzulecmttrjdzo.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fbooks%2Freset-book.pdf&embedded=true',
+  // TODO: replace with the Apps Script Web App /exec URL after deploying
+  // apps-script/pyetje-nutricionisti.gs (Deploy → Execute as Me → Access Anyone)
+  pyetjeNutricionisti: 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec',
 }
 
 export const PRODUCTS: Record<string, any> = {
