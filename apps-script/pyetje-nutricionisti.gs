@@ -2,11 +2,12 @@
  * Pyet Nutricionistin — Apps Script Web App backend
  *
  * Sheet: "Pyetje Nutricionisti" (bind this script to that spreadsheet:
- * Extensions → Apps Script). Uses the first sheet tab, columns A–H:
- * Timestamp | UserID | Emri | Email | Pyetja | Përgjigja | Statusi | DataPërgjigjes
+ * Extensions → Apps Script). Uses the first sheet tab, columns A–I:
+ * Timestamp | UserID | OrderCode | Emri | Email | Pyetja | Përgjigja | Statusi | DataPërgjigjes
  *
- * Each account gets exactly 1 question — doPost rejects a second submission
- * from a userId that already has a row.
+ * Limit is 1 question per activation (OrderCode), not per account — a new
+ * order code unlocks a new question. Accounts without an order code
+ * (legacy grandfathered premium) fall back to 1 question per UserID.
  *
  * SETUP
  * 1. Paste this file into Extensions → Apps Script on the "Pyetje Nutricionisti" sheet.
@@ -24,14 +25,15 @@
  * Përgjigja cell. The trigger below handles the rest.
  */
 
-var HEADERS = ['Timestamp', 'UserID', 'Emri', 'Email', 'Pyetja', 'Përgjigja', 'Statusi', 'DataPërgjigjes'];
-var COL = { TIMESTAMP: 1, USER_ID: 2, EMRI: 3, EMAIL: 4, PYETJA: 5, PERGJIGJA: 6, STATUSI: 7, DATA_PERGJIGJES: 8 };
+var HEADERS = ['Timestamp', 'UserID', 'OrderCode', 'Emri', 'Email', 'Pyetja', 'Përgjigja', 'Statusi', 'DataPërgjigjes'];
+var COL = { TIMESTAMP: 1, USER_ID: 2, ORDER_CODE: 3, EMRI: 4, EMAIL: 5, PYETJA: 6, PERGJIGJA: 7, STATUSI: 8, DATA_PERGJIGJES: 9 };
 var APP_URL = 'https://app.sohealthy.al/pyetje';
 
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var userId = String(data.userId || '').trim();
+    var orderCode = String(data.orderCode || '').trim();
     var emri = String(data.emri || '').trim();
     var email = String(data.email || '').trim();
     var pyetja = String(data.pyetja || '').trim();
@@ -43,12 +45,16 @@ function doPost(e) {
     var sheet = getSheet();
     var values = sheet.getDataRange().getValues();
     for (var i = 1; i < values.length; i++) {
-      if (String(values[i][COL.USER_ID - 1]).trim() === userId) {
+      var rowUserId = String(values[i][COL.USER_ID - 1]).trim();
+      var rowOrderCode = String(values[i][COL.ORDER_CODE - 1]).trim();
+      // With an order code: block only a repeat of the SAME activation.
+      // Without one (legacy accounts): fall back to 1 question per user.
+      if (orderCode ? (rowOrderCode === orderCode) : (rowUserId === userId && !rowOrderCode)) {
         return jsonResponse({ ok: false, error: 'alreadyAsked' });
       }
     }
 
-    sheet.appendRow([new Date(), userId, emri, email, pyetja, '', 'Në pritje', '']);
+    sheet.appendRow([new Date(), userId, orderCode, emri, email, pyetja, '', 'Në pritje', '']);
     return jsonResponse({ ok: true });
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err.message || err) });
