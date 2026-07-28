@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { MessageCircle, Send, Clock, CheckCircle2 } from 'lucide-react-native'
+import { MessageCircle, Send, Clock, CheckCircle2, Lock } from 'lucide-react-native'
 import { API, Colors } from '../../src/constants'
+import { usePremium } from '../../src/hooks/usePremium'
 import { supabase } from '../../src/lib/supabase'
 
 type Question = {
@@ -16,6 +17,7 @@ type Question = {
 
 export default function PyetjeScreen() {
   const router = useRouter()
+  const { isPremium, loading: premiumLoading } = usePremium()
   const [loading, setLoading] = useState(true)
   const [questions, setQuestions] = useState<Question[]>([])
   const [userId, setUserId] = useState<string | null>(null)
@@ -79,6 +81,8 @@ export default function PyetjeScreen() {
     }
   }
 
+  const stillLoading = loading || premiumLoading
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
@@ -86,8 +90,17 @@ export default function PyetjeScreen() {
         <View style={s.titleRow}><MessageCircle size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Pyet Nutricionistin</Text></View>
       </View>
 
-      {loading ? (
+      {stillLoading ? (
         <View style={s.center}><ActivityIndicator size="large" color={Colors.pine} /></View>
+      ) : !isPremium ? (
+        <View style={s.center}>
+          <View style={s.lockedIconWrap}><Lock size={36} color={Colors.pine} strokeWidth={1.5} /></View>
+          <Text style={s.lockedTitle}>Veçori Premium</Text>
+          <Text style={s.lockedText}>Aktivizo llogarinë tënde premium për të bërë pyetje direkt Pavlit.</Text>
+          <TouchableOpacity style={s.activateBtn} onPress={() => router.push('/(app)/activate')}>
+            <Text style={s.activateBtnText}>Aktivizo Tani →</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
@@ -158,7 +171,12 @@ const s = StyleSheet.create({
   backBtn: { padding: 4 },
   backText: { color: Colors.alabaster, fontSize: 17, fontWeight: '600' },
   title: { color: Colors.alabaster, fontSize: 18, fontWeight: '700' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  lockedIconWrap: { width: 76, height: 76, borderRadius: 38, backgroundColor: Colors.pine + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  lockedTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
+  lockedText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  activateBtn: { backgroundColor: Colors.pine, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 16 },
+  activateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 16 },
   scroll: { padding: 16 },
   composeCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   composeLabel: { fontSize: 13, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
