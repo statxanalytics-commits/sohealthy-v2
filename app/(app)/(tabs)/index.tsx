@@ -137,20 +137,6 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.askCard} onPress={() => router.push('/(app)/pyetje' as any)}>
-          <View style={s.quizCardIcon}>
-            <MessageCircle size={22} color={Colors.pine} strokeWidth={1.75} />
-          </View>
-          <View style={s.quizCardLeft}>
-            <Text style={[s.quizCardBadge, { color: Colors.goji }]}>PYETJE</Text>
-            <Text style={s.quizCardTitle}>Pyet Nutricionistin</Text>
-            <Text style={s.quizCardSub}>Bëj pyetjen tënde direkt Pavlit</Text>
-          </View>
-          <View style={s.askCardArrow}>
-            <ArrowRight size={16} color={Colors.white} strokeWidth={2.5} />
-          </View>
-        </TouchableOpacity>
-
         <Text style={s.sectionLabel}>MJETET FALAS</Text>
         <View style={s.freeGrid}>
           {FREE_TOOLS.map(tool => {
@@ -217,6 +203,19 @@ export default function HomeScreen() {
                 <Text style={s.bookArrowText}>Lexo →</Text>
               </View>
             </TouchableOpacity>
+            <TouchableOpacity style={s.askCard} onPress={() => router.push('/(app)/pyetje' as any)}>
+              <View style={s.quizCardIcon}>
+                <MessageCircle size={22} color={Colors.pine} strokeWidth={1.75} />
+              </View>
+              <View style={s.quizCardLeft}>
+                <Text style={[s.quizCardBadge, { color: Colors.goji }]}>PREMIUM</Text>
+                <Text style={s.quizCardTitle}>Pyet Nutricionistin</Text>
+                <Text style={s.quizCardSub}>Bëj pyetjen tënde direkt Pavlit</Text>
+              </View>
+              <View style={s.askCardArrow}>
+                <ArrowRight size={16} color={Colors.white} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
             <View style={s.premiumRow}>
               {PREMIUM_TOOLS.map(tool => {
                 const Icon = tool.Icon
@@ -237,6 +236,15 @@ export default function HomeScreen() {
               <View>
                 <Text style={s.lockedDietTitle}>Plani i Dietes</Text>
                 <Text style={s.lockedDietSub}>Plan 14-ditor personal</Text>
+              </View>
+              <View style={s.lockIcon}>
+                <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
+              <View>
+                <Text style={s.lockedDietTitle}>Pyet Nutricionistin</Text>
+                <Text style={s.lockedDietSub}>Bëj pyetjen tënde direkt Pavlit</Text>
               </View>
               <View style={s.lockIcon}>
                 <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
