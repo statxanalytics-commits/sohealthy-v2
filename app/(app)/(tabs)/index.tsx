@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
-  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
@@ -18,6 +18,8 @@ const FREE_TOOLS = [
   { id: 'calculator', Icon: Scale, name: 'Gjej Sa Kg Humb Me Paketat SoHealthy', sub: 'Kalkulator peshe', url: API.calculator },
   { id: 'quiz', Icon: Sparkles, name: 'Gjej Paketën Perfekte Për Ty Nga SoHealthy', sub: 'Quiz produktesh', url: API.quiz },
   { id: 'bodyCalc', Icon: Calculator, name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
+  { id: 'metabolicAge', Icon: Flame, name: 'Mosha Metabolike', sub: 'Sa vjeç është metabolizmi yt?', url: API.metabolicAge },
+  { id: 'dietPlan', Icon: UtensilsCrossed, name: 'Plan Diete Falas 7 Ditë', sub: '21 receta · listë blerjesh', url: API.dietPlan },
 ]
 
 type PremiumTool = {
@@ -146,15 +148,34 @@ export default function HomeScreen() {
         <View style={s.freeGrid}>
           {FREE_TOOLS.map(tool => {
             const Icon = tool.Icon
+            const isFeatured = tool.id === 'metabolicAge' || tool.id === 'dietPlan'
+            const isMetabolic = tool.id === 'metabolicAge'
+            const isDiet = tool.id === 'dietPlan'
             return (
               <TouchableOpacity
                 key={tool.id}
-                style={s.freeCard}
+                style={[
+                  s.freeCard,
+                  isFeatured && s.freeCardFeatured,
+                  isDiet && s.freeCardDiet,
+                ]}
                 onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
               >
-                <Icon size={24} color={Colors.pine} strokeWidth={1.75} style={s.freeIcon} />
-                <Text style={s.freeName}>{tool.name}</Text>
-                <Text style={s.freeSub}>{tool.sub}</Text>
+                <View style={[
+                  s.freeIconWrap,
+                  isMetabolic && s.freeIconWrapFeatured,
+                  isDiet && s.freeIconWrapDiet,
+                ]}>
+                  <Icon
+                    size={22}
+                    color={isFeatured ? Colors.alabaster : Colors.pine}
+                    strokeWidth={1.75}
+                  />
+                </View>
+                <View style={isFeatured ? { flex: 1 } : undefined}>
+                  <Text style={[s.freeName, isFeatured && s.freeNameFeatured]}>{tool.name}</Text>
+                  <Text style={[s.freeSub, isFeatured && s.freeSubFeatured]}>{tool.sub}</Text>
+                </View>
               </TouchableOpacity>
             )
           })}
@@ -195,6 +216,21 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
+            {/* Pyet Nutricionistin */}
+            <TouchableOpacity style={s.askCard} onPress={() => router.push('/(app)/pyetje' as any)}>
+              <View style={s.quizCardIcon}>
+                <MessageCircle size={22} color={Colors.pine} strokeWidth={1.75} />
+              </View>
+              <View style={s.quizCardLeft}>
+                <Text style={[s.quizCardBadge, { color: Colors.goji }]}>PREMIUM</Text>
+                <Text style={s.quizCardTitle}>Pyet Nutricionistin</Text>
+                <Text style={s.quizCardSub}>Bëj pyetjen tënde direkt Pavlit</Text>
+              </View>
+              <View style={s.askCardArrow}>
+                <ArrowRight size={16} color={Colors.white} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
+
             {/* Premium tools */}
             <View style={s.premiumRow}>
               {PREMIUM_TOOLS.map(tool => {
@@ -221,6 +257,15 @@ export default function HomeScreen() {
               <View>
                 <Text style={s.lockedDietTitle}>Plani i Dietes</Text>
                 <Text style={s.lockedDietSub}>Plan 14-ditor personal</Text>
+              </View>
+              <View style={s.lockIcon}>
+                <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
+              <View>
+                <Text style={s.lockedDietTitle}>Pyet Nutricionistin</Text>
+                <Text style={s.lockedDietSub}>Bëj pyetjen tënde direkt Pavlit</Text>
               </View>
               <View style={s.lockIcon}>
                 <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
@@ -347,6 +392,16 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Ask card (Pyet Nutricionistin)
+  askCard: {
+    marginHorizontal: 16, marginTop: 10, backgroundColor: '#fff', borderRadius: 16, padding: 16,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.goji,
+  },
+  askCardArrow: {
+    width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.goji,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
   dietCard: {
     backgroundColor: Colors.pine, marginHorizontal: 16, marginTop: 10,
     borderRadius: 16, padding: 16,
@@ -379,9 +434,15 @@ const s = StyleSheet.create({
     width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 14,
     borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
   },
-  freeIcon: { marginBottom: 8 },
+  freeCardFeatured: { width: '100%', backgroundColor: Colors.pine, borderColor: Colors.pine, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  freeCardDiet: { backgroundColor: Colors.aloe, borderColor: Colors.aloe },
+  freeIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(113,181,162,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  freeIconWrapFeatured: { backgroundColor: Colors.goji, marginBottom: 0, flexShrink: 0 },
+  freeIconWrapDiet: { backgroundColor: 'rgba(27,63,47,0.2)', marginBottom: 0, flexShrink: 0 },
   freeName: { fontSize: 13, fontWeight: '600', color: Colors.pine, lineHeight: 17, marginBottom: 2 },
+  freeNameFeatured: { color: Colors.alabaster, fontSize: 15, fontWeight: '700' },
   freeSub: { fontSize: 11, color: '#6B7F72' },
+  freeSubFeatured: { color: 'rgba(236,239,232,0.65)', fontSize: 12 },
   premiumRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8 },
   premiumSmall: {
     flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
