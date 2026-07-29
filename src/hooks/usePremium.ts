@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 // Premium access lasts this many days from the activation date (plan_start).
 // A new code activation overwrites plan_start, which resets the window.
-export const PREMIUM_WINDOW_DAYS = 20
+export const PREMIUM_WINDOW_DAYS = 14
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function usePremium() {
@@ -54,7 +54,7 @@ export function usePremium() {
         return
       }
 
-      // Expire 20 full days after activation.
+      // Expire PREMIUM_WINDOW_DAYS full days after activation.
       const start = new Date(data.plan_start).getTime()
       const elapsedDays = Math.floor((Date.now() - start) / MS_PER_DAY)
       const remaining = Math.max(0, PREMIUM_WINDOW_DAYS - elapsedDays)
