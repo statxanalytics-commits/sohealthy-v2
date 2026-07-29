@@ -83,8 +83,12 @@ export const API = {
   challenge: 'https://index-blush-phi.vercel.app',
   calculator: 'https://kalkulatori-zeta.vercel.app',
   bodyCalc: 'https://llogaritje-trupi.vercel.app',
-  // Direct PDF URL — opened with Linking.openURL (native PDF viewer) since Google Docs Viewer does not render reliably inside WebView
+  metabolicAge: 'https://mosha-metabolike-veex.vercel.app',
+  dietPlan: 'https://plan-diete-falas.vercel.app',
+  // Direct PDF URL — opened with expo-web-browser (native in-app browser) since Google Docs Viewer does not render reliably inside WebView
   resetBook: RESET_BOOK_PDF,
+  // Apps Script Web App backend for Pyet Nutricionistin (see apps-script/pyetje-nutricionisti.gs)
+  pyetjeNutricionisti: 'https://script.google.com/macros/s/AKfycbx2TaMakB7_XKcHKtEuTZ1IVMUIAyBj7Grj3kVMxpyQElkvZpqLtM5mqJ3LvEfFtYv-/exec',
 }
 
 export const PRODUCTS: Record<string, any> = {
