@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator, Modal, ScrollView, StyleSheet, Text,
   TouchableOpacity, View, Image, Alert
@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import { Camera, ImageIcon, Utensils, AlertTriangle } from 'lucide-react-native'
+import { Camera, ImageIcon, Utensils, AlertTriangle, CheckCircle, Zap, Sparkles, Footprints, Clock } from 'lucide-react-native'
+import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -29,8 +30,36 @@ type ScanResult = {
 type PlateRating = {
   score: number
   label: string
+  Icon: LucideIcon
   color: string
   description: string
+}
+
+const DEFAULT_WEIGHT = 70 // kg — fallback if user has no saved weight
+
+// Steps needed to burn given calories for a person of `weightKg`.
+// Walking burns ~0.0005 kcal per step per kg of body weight.
+// e.g. 70kg person burns ~0.035 kcal/step → 500 kcal ≈ 14,300 steps.
+function stepsToBurn(calories: number, weightKg: number): number {
+  const kcalPerStep = 0.0005 * weightKg
+  if (kcalPerStep <= 0) return 0
+  return Math.round(calories / kcalPerStep)
+}
+
+// Approx walking minutes: average cadence ~100 steps/min at a moderate pace.
+function walkMinutes(steps: number): number {
+  return Math.round(steps / 100)
+}
+
+function formatSteps(n: number): string {
+  return n.toLocaleString('de-DE') // dot thousands separator: 14.300
+}
+
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins} min`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m === 0 ? `${h} orë` : `${h} orë ${m} min`
 }
 
 function ratePlate(t: ScanResult['total']): PlateRating {
@@ -46,9 +75,9 @@ function ratePlate(t: ScanResult['total']): PlateRating {
   if (t.fiber >= 6) { score += 5; positives.push(`fibra e mirë (${t.fiber}g)`) }
   if (t.calories >= 300 && t.calories <= 550) { score += 5 }
   score = Math.max(0, Math.min(100, score))
-  if (score >= 75) return { score, label: 'E Shëndetshme', color: Colors.aloe, description: positives.length > 0 ? `Vakt i ekuilibruar. ${positives.join(', ')}.` : 'Vakt me makro të mira.' }
-  if (score >= 45) return { score, label: 'Mesatare', color: '#D58D3C', description: issues.length > 0 ? `Ka hapësirë: ${issues.slice(0, 2).join(', ')}.` : 'Vakt me disa çekuilibra.' }
-  return { score, label: 'Duhet Përmirësuar', color: Colors.goji, description: issues.length > 0 ? `Probleme: ${issues.slice(0, 3).join(', ')}.` : 'Ky vakt ka çekuilibra.' }
+  if (score >= 75) return { score, label: 'E Shëndetshme', Icon: CheckCircle, color: Colors.aloe, description: positives.length > 0 ? `Vakt i ekuilibruar. ${positives.join(', ')}.` : 'Vakt me makro të mira.' }
+  if (score >= 45) return { score, label: 'Mesatare', Icon: Zap, color: '#D58D3C', description: issues.length > 0 ? `Ka hapësirë: ${issues.slice(0, 2).join(', ')}.` : 'Vakt me disa çekuilibra.' }
+  return { score, label: 'Duhet Përmirësuar', Icon: AlertTriangle, color: Colors.goji, description: issues.length > 0 ? `Probleme: ${issues.slice(0, 3).join(', ')}.` : 'Ky vakt ka çekuilibra.' }
 }
 
 async function saveScan(result: ScanResult, rating: PlateRating) {
@@ -72,10 +101,38 @@ async function saveScan(result: ScanResult, rating: PlateRating) {
 export default function ScannerScreen() {
   const router = useRouter()
   const [state, setState] = useState<'home' | 'loading' | 'result' | 'error'>('home')
+  const [showAIDisclosure, setShowAIDisclosure] = useState(false)
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [result, setResult] = useState<ScanResult | null>(null)
   const [plate, setPlate] = useState<PlateRating | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
+  const [userWeight, setUserWeight] = useState<number>(DEFAULT_WEIGHT)
+  const [hasRealWeight, setHasRealWeight] = useState(false)
+
+  useEffect(() => { loadUserWeight() }, [])
+
+  // Pull the user's latest weight: first from tracker_entries (weight:X),
+  // falling back to the default if none is saved.
+  async function loadUserWeight() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: weightData } = await supabase
+        .from('tracker_entries')
+        .select('date, product_slug')
+        .eq('user_id', user.id)
+        .ilike('product_slug', 'weight:%')
+        .order('date', { ascending: false })
+        .limit(1)
+      const raw = weightData?.[0]?.product_slug
+      if (raw) {
+        const w = parseFloat(raw.replace('weight:', ''))
+        if (!isNaN(w) && w > 0) { setUserWeight(w); setHasRealWeight(true) }
+      }
+    } catch (e) {
+      console.log('Weight load error:', e)
+    }
+  }
 
   async function pickImage(useCamera: boolean) {
     try {
@@ -182,11 +239,37 @@ export default function ScannerScreen() {
                 ))}
               </View>
             </View>
+
+            {/* Walk-to-burn card */}
+            {(() => {
+              const steps = stepsToBurn(result.total.calories, userWeight)
+              const mins = walkMinutes(steps)
+              return (
+                <View style={s.walkCard}>
+                  <View style={s.walkIconWrap}>
+                    <Footprints size={24} color={Colors.alabaster} strokeWidth={1.75} />
+                  </View>
+                  <View style={s.walkBody}>
+                    <Text style={s.walkLabel}>SA DUHET TË ECËSH</Text>
+                    <Text style={s.walkSteps}>{formatSteps(steps)} <Text style={s.walkStepsUnit}>hapa</Text></Text>
+                    <View style={s.walkTimeRow}>
+                      <Clock size={13} color={Colors.aloe} strokeWidth={2} />
+                      <Text style={s.walkTime}>~{formatDuration(mins)} ecje</Text>
+                    </View>
+                    <Text style={s.walkNote}>
+                      për të djegur këtë vakt
+                      {hasRealWeight ? ` (bazuar në ${userWeight}kg)` : ` (mesatare ${DEFAULT_WEIGHT}kg)`}
+                    </Text>
+                  </View>
+                </View>
+              )
+            })()}
+
             <View style={[s.ratingCard, { borderColor: plate.color + '40' }]}>
               <Text style={s.sectionLabel}>VLERËSIMI I PJATËS</Text>
               <View style={s.ratingRow}>
                 <View style={[s.ratingCircle, { borderColor: plate.color, backgroundColor: plate.color + '20' }]}>
-                  <Text style={[s.ratingScore, { color: plate.color }]}>{plate.score}</Text>
+                  <plate.Icon size={26} color={plate.color} strokeWidth={2} />
                 </View>
                 <View style={s.ratingInfo}>
                   <Text style={[s.ratingLabel, { color: plate.color }]}>{plate.label}</Text>
@@ -215,6 +298,7 @@ export default function ScannerScreen() {
               </View>
             ))}
             <View style={s.savedBadge}>
+              <CheckCircle size={15} color={Colors.aloe} strokeWidth={2} />
               <Text style={s.savedText}>U ruajt në historikun tuaj</Text>
             </View>
             <Text style={s.disclaimer}>Vlerësimet janë të përafërta dhe shërbejnë vetëm për orientim. Nuk zëvendësojnë këshillën e një mjeku ose nutricionisti.</Text>
@@ -225,6 +309,24 @@ export default function ScannerScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* AI Disclosure Modal — required by Apple 2025 */}
+      <Modal visible={showAIDisclosure} transparent animationType="fade">
+        <View style={s.disclosureOverlay}>
+          <View style={s.disclosureCard}>
+            <View style={s.disclosureTitleRow}><Sparkles size={20} color={Colors.pine} strokeWidth={1.75} /><Text style={s.disclosureTitle}>Analiza me AI</Text></View>
+            <Text style={s.disclosureText}>
+              {'Fotografite e ushqimeve dergohen te sherbimiAnthropic Claude AI per analize. Imazhet nuk ruhen.\n\nTe dhenat tuaja trajtohen sipas Politikes tone te Privatesise.'}
+            </Text>
+            <TouchableOpacity
+              style={s.disclosureBtn}
+              onPress={() => setShowAIDisclosure(false)}
+            >
+              <Text style={s.disclosureBtnText}>Kuptova, Vazhdo →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -260,6 +362,25 @@ const s = StyleSheet.create({
   macroLabel: { fontSize: 10, color: Colors.aloe, marginBottom: 2 },
   macroVal: { fontSize: 18, fontWeight: '600', color: '#fff' },
   macroUnit: { fontSize: 11, fontWeight: '400' },
+
+  // Walk-to-burn card
+  walkCard: {
+    backgroundColor: Colors.aloe, borderRadius: 16, padding: 16, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+  },
+  walkIconWrap: {
+    width: 52, height: 52, borderRadius: 14,
+    backgroundColor: 'rgba(27,63,47,0.25)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  walkBody: { flex: 1 },
+  walkLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', opacity: 0.7, marginBottom: 3 },
+  walkSteps: { fontSize: 26, fontWeight: '700', color: Colors.pine, lineHeight: 30 },
+  walkStepsUnit: { fontSize: 14, fontWeight: '600' },
+  walkTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  walkTime: { fontSize: 13, fontWeight: '700', color: Colors.pine },
+  walkNote: { fontSize: 11, color: Colors.pine, opacity: 0.7, marginTop: 3 },
+
   ratingCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1.5 },
   sectionLabel: { fontSize: 10, letterSpacing: 2, color: '#888', fontWeight: '700', marginBottom: 10 },
   ratingRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
@@ -279,6 +400,13 @@ const s = StyleSheet.create({
   macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   microBadge: { backgroundColor: Colors.alabaster, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   microText: { fontSize: 11, color: Colors.pine },
-  savedBadge: { backgroundColor: Colors.aloe + '20', borderRadius: 10, padding: 12, alignItems: 'center', marginBottom: 12 },
+  disclosureOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  disclosureCard: { backgroundColor: '#fff', borderRadius: 20, padding: 24, width: '100%' },
+  disclosureTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  disclosureTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine },
+  disclosureText: { fontSize: 14, color: '#444', lineHeight: 22, marginBottom: 20 },
+  disclosureBtn: { backgroundColor: Colors.pine, borderRadius: 12, padding: 14, alignItems: 'center' },
+  disclosureBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  savedBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.aloe + '20', borderRadius: 10, padding: 12, marginBottom: 12 },
   savedText: { color: Colors.aloe, fontWeight: '700', fontSize: 13 },
 })
