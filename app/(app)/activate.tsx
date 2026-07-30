@@ -40,7 +40,7 @@ export default function ActivateScreen() {
 
       const { data: order, error: fetchError } = await supabase
         .from('orders')
-        .select('id, used, activated_by')
+        .select('id, used, activated_by, is_reusable, sheet_source')
         .eq('order_code', trimmedCode)
         .single();
 
@@ -49,15 +49,19 @@ export default function ActivateScreen() {
         setLoading(false); return;
       }
 
-      if (order.used && order.activated_by !== user.id) {
+      // Normal customer codes are locked to the first person who activates them.
+      // Codes explicitly marked is_reusable (e.g. beta-tester codes) skip this lock.
+      if (!order.is_reusable && order.used && order.activated_by !== user.id) {
         Alert.alert('Kod i Përdorur', 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.');
         setLoading(false); return;
       }
 
-      await supabase
-        .from('orders')
-        .update({ used: true, activated_by: user.id, verified_at: new Date().toISOString() })
-        .eq('id', order.id);
+      if (!order.is_reusable) {
+        await supabase
+          .from('orders')
+          .update({ used: true, activated_by: user.id, verified_at: new Date().toISOString() })
+          .eq('id', order.id);
+      }
 
       await supabase
         .from('profiles')
@@ -83,19 +87,17 @@ export default function ActivateScreen() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('sheet_source')
-        .eq('order_code', trimmedCode)
-        .single();
-
-      await supabase.from('purchase_history').upsert({
-        user_id: user.id,
-        order_code: trimmedCode,
-        package_type: orderData?.sheet_source || 'unknown',
-        activated_at: new Date().toISOString(),
-        source: orderData?.sheet_source || 'unknown',
-      }, { onConflict: 'order_code' });
+      // purchase_history.order_code is unique, so reusable codes (many users, one code)
+      // deliberately skip this — it's a real-purchase log, not used for beta-test codes.
+      if (!order.is_reusable) {
+        await supabase.from('purchase_history').upsert({
+          user_id: user.id,
+          order_code: trimmedCode,
+          package_type: order.sheet_source || 'unknown',
+          activated_at: new Date().toISOString(),
+          source: order.sheet_source || 'unknown',
+        }, { onConflict: 'order_code' });
+      }
 
       Alert.alert(
         'Urime!',
