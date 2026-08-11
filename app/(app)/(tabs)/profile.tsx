@@ -86,7 +86,7 @@ export default function ProfileScreen() {
   const handleChangePassword = async () => {
     if (!oldPass) { setPwError('Shkruaj fjalëkalimin e vjetër.'); return }
     if (!newPass) { setPwError('Shkruaj fjalëkalimin e ri.'); return }
-    if (newPass.length < 6) { setPwError('Minimum 6 karaktere.'); return }
+    if (newPass.length < 8) { setPwError('Minimum 8 karaktere.'); return }
     if (newPass !== newPassConf) { setPwError('Fjalëkalimet e reja nuk përputhen.'); return }
     if (oldPass === newPass) { setPwError('Fjalëkalimi i ri duhet të jetë i ndryshëm.'); return }
     setPwLoading(true); setPwError('')
@@ -307,7 +307,7 @@ export default function ProfileScreen() {
                     <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
                     <View style={s.passWrap}>
                       <TextInput style={s.passInput} value={newPass} onChangeText={setNewPass}
-                        placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa"
+                        placeholder="Minimum 8 karaktere" placeholderTextColor="#aaa"
                         secureTextEntry={!showNew} />
                       <TouchableOpacity style={s.eyeBtn} onPress={() => setShowNew(v => !v)}>
                         {showNew ? <EyeOff size={18} color={Colors.muted} /> : <Eye size={18} color={Colors.muted} />}

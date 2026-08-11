@@ -22,7 +22,7 @@ export default function SignupScreen() {
   const handleSignup = async () => {
     if (!name || !username || !email || !password) { setError('Plotëso të gjitha fushat.'); return }
     if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
-    if (password.length < 6) { setError('Fjalëkalimi duhet të ketë 6+ karaktere.'); return }
+    if (password.length < 8) { setError('Fjalëkalimi duhet të ketë 8+ karaktere.'); return }
     setLoading(true); setError('')
     const cleanEmail = email.trim().toLowerCase()
     try {
@@ -36,7 +36,7 @@ export default function SignupScreen() {
         } else if (err.message.includes('invalid') || err.message.includes('valid email')) {
           setError('Email-i nuk është valid. Kontrollo dhe provo përsëri.')
         } else if (err.message.includes('password')) {
-          setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere.')
+          setError('Fjalëkalimi duhet të ketë të paktën 8 karaktere.')
         } else if (err.message.includes('rate limit') || err.status === 429) {
           setError('Shumë kërkesa. Prit pak minuta dhe provo përsëri.')
         } else if (err.status === 500 || err.message.includes('unexpected_failure') || err.message.includes('smtp')) {
@@ -78,7 +78,7 @@ export default function SignupScreen() {
           <Text style={s.label}>FJALËKALIMI</Text>
           <View style={s.passWrap}>
             <TextInput style={s.passInput} value={password} onChangeText={setPassword}
-              placeholder="Minimum 6 karaktere" placeholderTextColor={Colors.mutedLight}
+              placeholder="Minimum 8 karaktere" placeholderTextColor={Colors.mutedLight}
               secureTextEntry={!showPass} />
             <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
               <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>

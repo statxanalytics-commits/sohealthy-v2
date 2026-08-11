@@ -27,6 +27,7 @@ export default function ActivateScreen() {
         setLoading(false); return;
       }
 
+      // Same code already active — nothing to do.
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_premium, order_code')
@@ -38,65 +39,26 @@ export default function ActivateScreen() {
         setLoading(false); return;
       }
 
-      const { data: order, error: fetchError } = await supabase
-        .from('orders')
-        .select('id, used, activated_by, is_reusable, sheet_source')
-        .eq('order_code', trimmedCode)
-        .single();
+      // Activation is validated, claimed and granted atomically on the server
+      // (SECURITY DEFINER RPC). The client can no longer set is_premium directly.
+      const { data: result, error: rpcError } = await supabase.rpc('redeem_order_code', {
+        p_code: trimmedCode,
+      });
 
-      if (fetchError || !order) {
-        Alert.alert('Kod i Pavlefshëm', 'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.');
+      if (rpcError) {
+        Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.');
         setLoading(false); return;
       }
 
-      // Normal customer codes are locked to the first person who activates them.
-      // Codes explicitly marked is_reusable (e.g. beta-tester codes) skip this lock.
-      if (!order.is_reusable && order.used && order.activated_by !== user.id) {
-        Alert.alert('Kod i Përdorur', 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.');
+      if (!result?.ok) {
+        const messages: Record<string, string> = {
+          invalid_code: 'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.',
+          already_used: 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.',
+          not_authenticated: 'Ju duhet të jeni të kyçur.',
+          empty_code: 'Ju lutem shkruani kodin tuaj.',
+        };
+        Alert.alert('Kod i Pavlefshëm', messages[result?.error as string] || 'Kodi nuk u pranua. Provoni përsëri.');
         setLoading(false); return;
-      }
-
-      if (!order.is_reusable) {
-        await supabase
-          .from('orders')
-          .update({ used: true, activated_by: user.id, verified_at: new Date().toISOString() })
-          .eq('id', order.id);
-      }
-
-      await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          username: user.email?.split('@')[0] || 'user',
-          is_premium: true,
-          order_code: trimmedCode,
-          plan_start: new Date().toISOString(),
-        });
-
-      await supabase
-        .from('diet_plans')
-        .update({ is_active: false })
-        .eq('user_id', user.id)
-        .eq('is_active', true);
-
-      await supabase
-        .from('product_selections')
-        .update({ is_active: false })
-        .eq('user_id', user.id)
-        .eq('is_active', true);
-
-      // purchase_history.order_code is unique, so reusable codes (many users, one code)
-      // deliberately skip this — it's a real-purchase log, not used for beta-test codes.
-      if (!order.is_reusable) {
-        await supabase.from('purchase_history').upsert({
-          user_id: user.id,
-          order_code: trimmedCode,
-          package_type: order.sheet_source || 'unknown',
-          activated_at: new Date().toISOString(),
-          source: order.sheet_source || 'unknown',
-        }, { onConflict: 'order_code' });
       }
 
       Alert.alert(

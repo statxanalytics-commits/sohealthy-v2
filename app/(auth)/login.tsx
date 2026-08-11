@@ -69,7 +69,7 @@ export default function LoginScreen() {
 
   const updatePassword = async () => {
     if (!newPass) { setFError('Shkruaj fjalëkalimin e ri.'); return }
-    if (newPass.length < 6) { setFError('Minimum 6 karaktere.'); return }
+    if (newPass.length < 8) { setFError('Minimum 8 karaktere.'); return }
     if (newPass !== newPassConf) { setFError('Fjalëkalimet nuk përputhen.'); return }
     setFLoading(true); setFError('')
     const { error: err } = await supabase.auth.updateUser({ password: newPass })
@@ -192,7 +192,7 @@ export default function LoginScreen() {
                 <Text style={s.mLabel}>FJALËKALIMI I RI</Text>
                 <View style={s.passWrap}>
                   <TextInput style={s.passInput} value={newPass} onChangeText={setNewPass}
-                    placeholder="Minimum 6 karaktere" placeholderTextColor="#aaa"
+                    placeholder="Minimum 8 karaktere" placeholderTextColor="#aaa"
                     secureTextEntry={!showNewPass} autoFocus />
                   <TouchableOpacity style={s.eyeBtn} onPress={() => setShowNewPass(v => !v)}>
                     <Text style={s.eyeIcon}>{showNewPass ? '🙈' : '👁️'}</Text>
