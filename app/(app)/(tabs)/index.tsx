@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
-  BookOpen, CalendarCheck, Scale, Sparkles, Calculator,
+  BookOpen, CalendarCheck, Sparkles, Calculator,
   ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
@@ -13,10 +13,11 @@ import { supabase } from '../../../src/lib/supabase'
 import { useFocusEffect } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 
+// NOTE: the standalone "Gjej Sa Kg Humb" calculator card was merged INTO the quiz —
+// the quiz now ends with the recommended package + expected kg result & benefits.
 const FREE_TOOLS = [
+  { id: 'quiz', Icon: Sparkles, name: 'Gjej Paketën Perfekte Për Ty', sub: 'Quiz · paketa jote + sa kg humb me të', url: API.quiz },
   { id: 'challenge', Icon: CalendarCheck, name: 'Challenge 30d', sub: 'Program falas', url: API.challenge },
-  { id: 'calculator', Icon: Scale, name: 'Gjej Sa Kg Humb Me Paketat SoHealthy', sub: 'Kalkulator peshe', url: API.calculator },
-  { id: 'quiz', Icon: Sparkles, name: 'Gjej Paketën Perfekte Për Ty Nga SoHealthy', sub: 'Quiz produktesh', url: API.quiz },
   { id: 'bodyCalc', Icon: Calculator, name: 'Llogaritje Trupi', sub: 'BMI, TDEE, makro', url: API.bodyCalc },
   { id: 'metabolicAge', Icon: Flame, name: 'Mosha Metabolike', sub: 'Sa vjeç është metabolizmi yt?', url: API.metabolicAge },
   { id: 'dietPlan', Icon: UtensilsCrossed, name: 'Plan Diete Falas 7 Ditë', sub: '21 receta · listë blerjesh', url: API.dietPlan },
@@ -151,6 +152,8 @@ export default function HomeScreen() {
             const isFeatured = tool.id === 'metabolicAge' || tool.id === 'dietPlan'
             const isMetabolic = tool.id === 'metabolicAge'
             const isDiet = tool.id === 'dietPlan'
+            const isQuiz = tool.id === 'quiz' // full-width white row card (merged quiz + kg calculator)
+            const isRow = isFeatured || isQuiz
             return (
               <TouchableOpacity
                 key={tool.id}
@@ -158,6 +161,7 @@ export default function HomeScreen() {
                   s.freeCard,
                   isFeatured && s.freeCardFeatured,
                   isDiet && s.freeCardDiet,
+                  isQuiz && s.freeCardQuiz,
                 ]}
                 onPress={() => router.push({ pathname: '/(app)/webview', params: { url: tool.url, title: tool.name } })}
               >
@@ -165,6 +169,7 @@ export default function HomeScreen() {
                   s.freeIconWrap,
                   isMetabolic && s.freeIconWrapFeatured,
                   isDiet && s.freeIconWrapDiet,
+                  isQuiz && s.freeIconWrapQuiz,
                 ]}>
                   <Icon
                     size={22}
@@ -172,10 +177,15 @@ export default function HomeScreen() {
                     strokeWidth={1.75}
                   />
                 </View>
-                <View style={isFeatured ? { flex: 1 } : undefined}>
-                  <Text style={[s.freeName, isFeatured && s.freeNameFeatured]}>{tool.name}</Text>
+                <View style={isRow ? { flex: 1 } : undefined}>
+                  <Text style={[s.freeName, isFeatured && s.freeNameFeatured, isQuiz && s.freeNameQuiz]}>{tool.name}</Text>
                   <Text style={[s.freeSub, isFeatured && s.freeSubFeatured]}>{tool.sub}</Text>
                 </View>
+                {isQuiz && (
+                  <View style={s.freeQuizArrow}>
+                    <ArrowRight size={16} color={Colors.pine} strokeWidth={2.5} />
+                  </View>
+                )}
               </TouchableOpacity>
             )
           })}
@@ -436,6 +446,15 @@ const s = StyleSheet.create({
   },
   freeCardFeatured: { width: '100%', backgroundColor: Colors.pine, borderColor: Colors.pine, flexDirection: 'row', alignItems: 'center', gap: 14 },
   freeCardDiet: { backgroundColor: Colors.aloe, borderColor: Colors.aloe },
+  // Merged quiz + kg-calculator card: full width, white, row layout
+  freeCardQuiz: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 14 },
+  freeIconWrapQuiz: { marginBottom: 0, flexShrink: 0 },
+  freeNameQuiz: { fontSize: 15, fontWeight: '700' },
+  freeQuizArrow: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: 'rgba(113,181,162,0.2)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
   freeIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(113,181,162,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   freeIconWrapFeatured: { backgroundColor: Colors.goji, marginBottom: 0, flexShrink: 0 },
   freeIconWrapDiet: { backgroundColor: 'rgba(27,63,47,0.2)', marginBottom: 0, flexShrink: 0 },

@@ -109,13 +109,16 @@ export const PRODUCTS: Record<string, any> = {
     how: '1 shishe 50ml — tunde mirë para se ta pish',
     when: 'Çdo mëngjes stomak bosh, 15–20 min para ngrënies',
   },
+  // Green Shot ALONE is taken in the morning (same as Detox Shot).
+  // Only when combined with a Detox it moves to 20 min before lunch — see PRODUCT_COMBOS.
   'green-shot': {
     name: 'Green Shot',
-    notif_time: '12:30',
-    notif_msg: 'Green Shot — 20 min para drekës!',
+    notif_time: '07:00',
+    notif_msg: 'Koha për Green Shot — stomak bosh!',
     storage: 'Ruaje në frigorifer, 2–6°C',
     how: '1 shishe 50ml — tunde mirë para se ta pish',
-    when: '20 min para drekës',
+    when: 'Çdo mëngjes stomak bosh, 15–20 min para ngrënies',
+    combo: 'Me Detox: Detox mëngjes + Green Shot 20 min para drekës',
   },
   'berry-bliss': {
     name: 'Berry Bliss',

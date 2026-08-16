@@ -10,7 +10,8 @@ import { supabase } from '../../src/lib/supabase'
 
 export default function VerifyOtpScreen() {
   const router = useRouter()
-  const { email } = useLocalSearchParams<{ email: string }>()
+  // name/username are passed from signup so we can create the profile row once the user is logged in
+  const { email, name, username } = useLocalSearchParams<{ email: string; name?: string; username?: string }>()
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
@@ -56,17 +57,40 @@ export default function VerifyOtpScreen() {
     const token = otp || code.join('')
     if (token.length < 6) { setError('Fut të 6 shifrat e kodit.'); return }
     setLoading(true); setError('')
-    const { error: err } = await supabase.auth.verifyOtp({
+    const { data, error: err } = await supabase.auth.verifyOtp({
       email: email,
       token,
       type: 'signup'
     })
     if (err) {
-      setError('Kodi është i gabuar ose ka skaduar. Provo përsëri.')
+      const code = (err as any).code || ''
+      const msg = (err.message || '').toLowerCase()
+      if (code === 'otp_expired' || msg.includes('expired')) {
+        setError('Kodi ka skaduar. Kërko një kod të ri më poshtë.')
+      } else if (code === 'over_request_rate_limit' || err.status === 429) {
+        setError('Shumë përpjekje. Prit pak minuta dhe provo përsëri.')
+      } else if (msg.includes('network')) {
+        setError('Nuk ka lidhje me internetin. Kontrollo dhe provo përsëri.')
+      } else {
+        setError('Kodi i gabuar. Kontrollo shifrat dhe provo përsëri.')
+      }
       setLoading(false)
       setCode(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
       return
+    }
+    // Logged in now → make sure the profile row exists (DB trigger also creates it; this is a safety net).
+    const user = data?.user ?? data?.session?.user
+    if (user) {
+      try {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          name: name || (user.user_metadata as any)?.name || '',
+          username: username || (user.user_metadata as any)?.username || '',
+          email: email,
+          is_premium: false,
+        }, { onConflict: 'id' })
+      } catch {}
     }
     setLoading(false)
     // Success — navigate to app
@@ -78,7 +102,11 @@ export default function VerifyOtpScreen() {
     setResending(true); setError(''); setSuccess('')
     const { error: err } = await supabase.auth.resend({ type: 'signup', email })
     setResending(false)
-    if (err) { setError('Nuk u dërgua kodi. Provo përsëri.'); return }
+    if (err) {
+      const rl = (err as any).code === 'over_email_send_rate_limit' || err.status === 429
+      setError(rl ? 'Shumë kërkesa. Prit disa minuta para se ta kërkosh përsëri.' : 'Nuk u dërgua kodi. Provo përsëri.')
+      return
+    }
     setSuccess('Kodi u dërgua përsëri!')
     setCountdown(60)
     setCode(['', '', '', '', '', ''])

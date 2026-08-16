@@ -41,3 +41,4 @@ yarn-error.*
 
 # secrets / service accounts — never commit these
 google-service-account.json
+app-example/

@@ -6,6 +6,44 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
+const MIN_PASSWORD = 8
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+// Map a Supabase auth error (or a thrown fetch error) to a specific Albanian message.
+// Prefer the stable `code` field (newer supabase-js), fall back to message text.
+function mapSignupError(err: any): string {
+  const code: string = err?.code || ''
+  const msg: string = (err?.message || '').toLowerCase()
+  const status: number = err?.status || 0
+
+  // No network / fetch failed (RN reports "Network request failed")
+  if (err?.name === 'AuthRetryableFetchError' || msg.includes('network request failed') || msg.includes('failed to fetch')) {
+    return 'Nuk ka lidhje me internetin. Kontrollo lidhjen dhe provo përsëri.'
+  }
+  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered') || msg.includes('already been registered')) {
+    return 'Ky email është regjistruar tashmë. Provo të hysh ose përdor "Harrove fjalëkalimin".'
+  }
+  if (code === 'weak_password' || (msg.includes('password') && (msg.includes('least') || msg.includes('weak') || msg.includes('short')))) {
+    return `Fjalëkalimi duhet të jetë minimumi ${MIN_PASSWORD} karaktere.`
+  }
+  if (code === 'email_address_invalid' || code === 'validation_failed' || msg.includes('valid email') || msg.includes('invalid email') || msg.includes('is invalid')) {
+    return 'Email-i nuk është i vlefshëm. Kontrollo dhe provo përsëri.'
+  }
+  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || status === 429 || msg.includes('rate limit')) {
+    return 'Shumë përpjekje. Prit disa minuta dhe provo përsëri.'
+  }
+  if (code === 'signup_disabled' || msg.includes('signups not allowed')) {
+    return 'Regjistrimi është i mbyllur përkohësisht. Provo më vonë.'
+  }
+  if (msg.includes('database error') || msg.includes('duplicate key') || msg.includes('profiles_username_key')) {
+    return 'Ky username është zënë. Zgjidh një tjetër.'
+  }
+  if (status === 500 || code === 'unexpected_failure' || msg.includes('smtp') || msg.includes('error sending')) {
+    return 'Problem me dërgimin e email-it. Provo përsëri ose kontakto info@sohealthy.al'
+  }
+  return 'Diçka shkoi keq. Provo përsëri për pak minuta.'
+}
+
 export default function SignupScreen() {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -19,42 +57,50 @@ export default function SignupScreen() {
   const [showTerms, setShowTerms] = useState(false)
   const [legalType, setLegalType] = useState<'terms' | 'privacy'>('terms')
 
+  const cleanName = name.trim()
+  const cleanUsername = username.trim()
+  const cleanEmail = email.trim().toLowerCase()
+  const passTooShort = password.length > 0 && password.length < MIN_PASSWORD
+
   const handleSignup = async () => {
-    if (!name || !username || !email || !password) { setError('Plotëso të gjitha fushat.'); return }
-    if (!accepted) { setError('Duhet të pranoni Kushtet e Shërbimit për të vazhduar.'); return }
-    if (password.length < 8) { setError('Fjalëkalimi duhet të ketë 8+ karaktere.'); return }
+    // ---- Client-side validation: tell the user EXACTLY what is wrong ----
+    if (!cleanName) { setError('Të lutem shkruaj emrin tënd.'); return }
+    if (cleanUsername.length < 3) { setError('Username-i duhet të ketë të paktën 3 karaktere.'); return }
+    if (!EMAIL_RE.test(cleanEmail)) { setError('Email-i nuk është i vlefshëm. Kontrollo dhe provo përsëri.'); return }
+    if (password.length < MIN_PASSWORD) { setError(`Fjalëkalimi duhet të jetë minimumi ${MIN_PASSWORD} karaktere.`); return }
+    if (!accepted) { setError('Duhet të pranosh Kushtet e Shërbimit dhe Politikën e Privatësisë.'); return }
     setLoading(true); setError('')
-    const cleanEmail = email.trim().toLowerCase()
     try {
-      const { data, error: err } = await supabase.auth.signUp({
-        email: cleanEmail, password,
-        options: { data: { name, username } }
-      })
-      if (err) {
-        if (err.message.includes('already registered') || err.message.includes('already been registered')) {
-          setError('Ky email është tashmë i regjistruar. Provo të hysh.')
-        } else if (err.message.includes('invalid') || err.message.includes('valid email')) {
-          setError('Email-i nuk është valid. Kontrollo dhe provo përsëri.')
-        } else if (err.message.includes('password')) {
-          setError('Fjalëkalimi duhet të ketë të paktën 8 karaktere.')
-        } else if (err.message.includes('rate limit') || err.status === 429) {
-          setError('Shumë kërkesa. Prit pak minuta dhe provo përsëri.')
-        } else if (err.status === 500 || err.message.includes('unexpected_failure') || err.message.includes('smtp')) {
-          setError('Problem me dërgimin e email-it. Kontaktoni info@sohealthy.al')
-        } else {
-          setError('Gabim gjatë regjistrimit. Provo përsëri.')
-        }
+      // ---- Username must be unique (profiles.username is UNIQUE) — check before creating the auth user ----
+      const { data: available, error: availErr } = await supabase.rpc('username_available', { p_username: cleanUsername })
+      if (!availErr && available === false) {
+        setError('Ky username është zënë. Zgjidh një tjetër.')
         setLoading(false); return
       }
+
+      const { data, error: err } = await supabase.auth.signUp({
+        email: cleanEmail, password,
+        options: { data: { name: cleanName, username: cleanUsername } }
+      })
+      if (err) { setError(mapSignupError(err)); setLoading(false); return }
+
+      // With email confirmation ON, Supabase hides "already registered" and returns a user with no identities.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setError('Ky email është regjistruar tashmë. Provo të hysh ose përdor "Harrove fjalëkalimin".')
+        setLoading(false); return
+      }
+
       setLoading(false)
       if (data.session && data.user) {
-        await supabase.from('profiles').upsert({ id: data.user.id, name, username, email: cleanEmail, is_premium: false })
+        // Email confirmation OFF → logged in immediately. Profile is also created by the DB trigger; this upsert is a safety net.
+        await supabase.from('profiles').upsert({ id: data.user.id, name: cleanName, username: cleanUsername, email: cleanEmail, is_premium: false })
         router.replace('/(app)/(tabs)/')
       } else {
-        router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail } })
+        // Email confirmation ON → 6-digit code sent; verify-otp finishes signup (and upserts the profile once logged in).
+        router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail, name: cleanName, username: cleanUsername } })
       }
-    } catch {
-      setError('Gabim gjatë regjistrimit. Provo përsëri.')
+    } catch (e: any) {
+      setError(mapSignupError(e))
       setLoading(false)
     }
   }
@@ -76,14 +122,20 @@ export default function SignupScreen() {
           <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
 
           <Text style={s.label}>FJALËKALIMI</Text>
-          <View style={s.passWrap}>
-            <TextInput style={s.passInput} value={password} onChangeText={setPassword}
-              placeholder="Minimum 8 karaktere" placeholderTextColor={Colors.mutedLight}
-              secureTextEntry={!showPass} />
+          <View style={[s.passWrap, passTooShort && s.passWrapError]}>
+            <TextInput style={s.passInput} value={password} onChangeText={t => { setPassword(t); if (error) setError('') }}
+              placeholder="Shkruaj fjalëkalimin" placeholderTextColor={Colors.mutedLight}
+              secureTextEntry={!showPass} autoCapitalize="none" autoCorrect={false} />
             <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
               <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
             </TouchableOpacity>
           </View>
+          {/* Always-visible rule under the field (placeholder disappears when typing) */}
+          <Text style={[s.helper, passTooShort && s.helperError]}>
+            {passTooShort
+              ? `Minimumi ${MIN_PASSWORD} karaktere — edhe ${MIN_PASSWORD - password.length}.`
+              : `Minimumi ${MIN_PASSWORD} karaktere.`}
+          </Text>
 
           <TouchableOpacity style={s.tcRow} onPress={() => setAccepted(!accepted)} activeOpacity={0.7}>
             <View style={[s.checkbox, accepted && s.checkboxChecked]}>
@@ -121,7 +173,10 @@ const s = StyleSheet.create({
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
   label: { fontSize: 10, fontWeight: '600', color: Colors.muted, letterSpacing: 1, marginBottom: 6 },
   input: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine, marginBottom: 16 },
-  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 16, backgroundColor: Colors.white },
+  passWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, marginBottom: 6, backgroundColor: Colors.white },
+  passWrapError: { borderColor: Colors.goji },
+  helper: { fontSize: 12, color: Colors.muted, marginBottom: 16, marginLeft: 2 },
+  helperError: { color: Colors.goji, fontWeight: '600' },
   passInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: Colors.pine },
   eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
   eyeIcon: { fontSize: 18 },

@@ -131,7 +131,7 @@ export default function ProfileScreen() {
       await supabase.from('diet_plans').delete().eq('user_id', uid)
       await supabase.from('purchase_history').delete().eq('user_id', uid)
       await supabase.from('profiles').delete().eq('id', uid)
-      await supabase.rpc('delete_user').then(() => {}).catch(() => {})
+      try { await supabase.rpc('delete_user') } catch {}
       await supabase.auth.signOut()
     } catch {
       await supabase.auth.signOut()
