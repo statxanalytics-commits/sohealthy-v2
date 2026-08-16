@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator, Modal, ScrollView, StyleSheet, Text,
-  TouchableOpacity, View, Image, Alert
+  TouchableOpacity, View, Image, Alert, Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -142,8 +142,12 @@ export default function ScannerScreen() {
         if (status !== 'granted') { Alert.alert('Leje e nevojshme', 'Na duhet leje për kamerën tuaj.'); return }
         picked = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, base64: true })
       } else {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (status !== 'granted') { Alert.alert('Leje e nevojshme', 'Na duhet leje për galerinë tuaj.'); return }
+        // Android uses the system Photo Picker — no storage/media permission needed (Play policy:
+        // READ_MEDIA_IMAGES must not be requested). Only iOS needs the photo library permission.
+        if (Platform.OS === 'ios') {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+          if (status !== 'granted') { Alert.alert('Leje e nevojshme', 'Na duhet leje për galerinë tuaj.'); return }
+        }
         picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: true })
       }
       if (!picked.canceled && picked.assets[0]) {
