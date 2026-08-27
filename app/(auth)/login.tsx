@@ -17,6 +17,9 @@ export default function LoginScreen() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Email-not-confirmed recovery: offer to send a fresh code and finish confirmation.
+  const [needsConfirm, setNeedsConfirm] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   const [showForgot, setShowForgot] = useState(false)
   const [step, setStep] = useState<'email' | 'code' | 'newpass'>('email')
@@ -30,13 +33,45 @@ export default function LoginScreen() {
   const [fError, setFError] = useState('')
 
   const handleLogin = async () => {
+    setNeedsConfirm(false)
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
     setLoading(true); setError('')
     const { error: err } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(), password
     })
-    if (err) setError(err.message)
     setLoading(false)
+    if (err) {
+      const c = (err as any).code || ''
+      const m = (err.message || '').toLowerCase()
+      if (c === 'email_not_confirmed' || m.includes('not confirmed') || m.includes('email not confirmed')) {
+        setError('Ky email s’është konfirmuar ende. Merr një kod dhe konfirmoje.')
+        setNeedsConfirm(true)
+      } else if (c === 'invalid_credentials' || m.includes('invalid login') || m.includes('invalid credentials')) {
+        setError('Email ose fjalëkalim i gabuar.')
+      } else if (c === 'over_request_rate_limit' || err.status === 429 || m.includes('rate limit')) {
+        setError('Shumë përpjekje. Prit pak dhe provo përsëri.')
+      } else if (m.includes('network')) {
+        setError('Nuk ka lidhje me internetin. Provo përsëri.')
+      } else {
+        setError('Nuk u krye hyrja. Provo përsëri.')
+      }
+    }
+  }
+
+  // Resend the signup confirmation code and jump to the verify screen.
+  const goConfirmLogin = async () => {
+    const em = email.trim().toLowerCase()
+    if (!em) { setError('Shkruaj email-in.'); return }
+    setConfirming(true); setError('')
+    const { error: err } = await supabase.auth.resend({ type: 'signup', email: em })
+    setConfirming(false)
+    if (err) {
+      if (err.status === 429 || (err as any).code === 'over_email_send_rate_limit') setError('Shumë kërkesa. Prit disa minuta.')
+      else setError('Nuk u dërgua kodi. Provo përsëri.')
+      return
+    }
+    setNeedsConfirm(false)
+    router.push({ pathname: '/(auth)/verify-otp', params: { email: em } })
   }
 
   const sendCode = async () => {
@@ -108,7 +143,7 @@ export default function LoginScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled">
           <Text style={s.label}>EMAIL</Text>
-          <TextInput style={s.input} value={email} onChangeText={setEmail}
+          <TextInput style={s.input} value={email} onChangeText={t => { setEmail(t); if (needsConfirm) setNeedsConfirm(false); if (error) setError('') }}
             placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight}
             autoCapitalize="none" keyboardType="email-address" />
 
@@ -123,6 +158,16 @@ export default function LoginScreen() {
           </View>
 
           {error ? <Text style={s.error}>{error}</Text> : null}
+
+          {/* Email-not-confirmed recovery path */}
+          {needsConfirm && (
+            <TouchableOpacity style={s.confirmLink} onPress={goConfirmLogin} disabled={confirming}>
+              {confirming
+                ? <ActivityIndicator size="small" color={Colors.pine} />
+                : <Text style={s.confirmLinkText}>Konfirmo email-in me kod →</Text>}
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Hyr →</Text>}
           </TouchableOpacity>
@@ -177,9 +222,9 @@ export default function LoginScreen() {
               <>
                 <Text style={s.mDesc}>Kodi u dërgua te <Text style={{ fontWeight: '700', color: Colors.pine }}>{fEmail}</Text>. Kontrollo email-in tënd (dhe spam).</Text>
                 <Text style={s.mLabel}>KOD 6-SHIFROR</Text>
-                <TextInput style={[s.mInput, s.codeInput]} value={fCode} onChangeText={setFCode}
+                <TextInput style={[s.mInput, s.codeInput]} value={fCode} onChangeText={t => setFCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
                   placeholder="• • • • • •" placeholderTextColor="#ccc"
-                  keyboardType="number-pad" maxLength={6} autoFocus />
+                  keyboardType="number-pad" maxLength={6} textContentType="oneTimeCode" autoComplete="sms-otp" autoFocus />
                 <TouchableOpacity onPress={() => { setStep('email'); setFError('') }} style={s.backLink}>
                   <Text style={s.backLinkTxt}>← Ndrysho email-in</Text>
                 </TouchableOpacity>
@@ -244,6 +289,8 @@ const s = StyleSheet.create({
   eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
   eyeIcon: { fontSize: 18 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12 },
+  confirmLink: { alignItems: 'center', paddingVertical: 10, marginBottom: 8 },
+  confirmLinkText: { fontSize: 14, fontWeight: '700', color: Colors.pine, textDecorationLine: 'underline' },
   btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 4 },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   forgotBtn: { alignItems: 'center', paddingVertical: 14 },
