@@ -19,6 +19,9 @@ export default function VerifyOtpScreen() {
   const [success, setSuccess] = useState('')
   const [countdown, setCountdown] = useState(60)
   const inputRefs = useRef<(TextInput | null)[]>([])
+  // Guards against a double verifyOtp (auto-submit on 6th digit + manual button tap) —
+  // a second call reuses the already-consumed token and looks like a "wrong code".
+  const submittingRef = useRef(false)
 
   // Countdown timer for resend
   useEffect(() => {
@@ -27,23 +30,57 @@ export default function VerifyOtpScreen() {
     return () => clearTimeout(timer)
   }, [countdown])
 
+  // Handles single typed digits AND multi-digit paste / iOS "From Mail" autofill.
+  // Boxes use maxLength={6} + a controlled single-char value, so the field shows one
+  // digit while still letting onChangeText receive the full 6-digit string to distribute.
   function handleChange(val: string, idx: number) {
-    // Only allow digits
-    const digit = val.replace(/[^0-9]/g, '').slice(-1)
+    const digits = val.replace(/[^0-9]/g, '')
+
+    // Deletion (box cleared)
+    if (digits.length === 0) {
+      const newCode = [...code]
+      newCode[idx] = ''
+      setCode(newCode)
+      return
+    }
+
+    // Multi-digit: paste or one-time-code autofill → spread across the boxes.
+    if (digits.length > 1) {
+      const startIdx = digits.length >= 6 ? 0 : idx // a full code lands from the start, wherever it was dropped
+      const newCode = [...code]
+      let writeIdx = startIdx
+      for (const d of digits) {
+        if (writeIdx > 5) break
+        newCode[writeIdx] = d
+        writeIdx++
+      }
+      setCode(newCode)
+      setError('')
+      const nextEmpty = newCode.findIndex(c => !c)
+      const focusIdx = nextEmpty === -1 ? 5 : nextEmpty
+      inputRefs.current[focusIdx]?.focus()
+      if (newCode.every(c => c)) {
+        inputRefs.current[focusIdx]?.blur()
+        verifyCode(newCode.join(''))
+      }
+      return
+    }
+
+    // Single digit
+    const digit = digits
     const newCode = [...code]
     newCode[idx] = digit
     setCode(newCode)
     setError('')
 
-    // Auto-advance to next input
-    if (digit && idx < 5) {
+    if (idx < 5) {
       inputRefs.current[idx + 1]?.focus()
-    }
-
-    // Auto-submit when all 6 digits filled
-    if (digit && idx === 5) {
+    } else {
       const full = newCode.join('')
-      if (full.length === 6) verifyCode(full)
+      if (full.length === 6 && newCode.every(c => c)) {
+        inputRefs.current[idx]?.blur()
+        verifyCode(full)
+      }
     }
   }
 
@@ -56,6 +93,8 @@ export default function VerifyOtpScreen() {
   async function verifyCode(otp?: string) {
     const token = otp || code.join('')
     if (token.length < 6) { setError('Fut të 6 shifrat e kodit.'); return }
+    if (submittingRef.current) return // prevent double submit
+    submittingRef.current = true
     setLoading(true); setError('')
     const { data, error: err } = await supabase.auth.verifyOtp({
       email: email,
@@ -63,11 +102,11 @@ export default function VerifyOtpScreen() {
       type: 'signup'
     })
     if (err) {
-      const code = (err as any).code || ''
+      const errCode = (err as any).code || ''
       const msg = (err.message || '').toLowerCase()
-      if (code === 'otp_expired' || msg.includes('expired')) {
+      if (errCode === 'otp_expired' || msg.includes('expired')) {
         setError('Kodi ka skaduar. Kërko një kod të ri më poshtë.')
-      } else if (code === 'over_request_rate_limit' || err.status === 429) {
+      } else if (errCode === 'over_request_rate_limit' || err.status === 429) {
         setError('Shumë përpjekje. Prit pak minuta dhe provo përsëri.')
       } else if (msg.includes('network')) {
         setError('Nuk ka lidhje me internetin. Kontrollo dhe provo përsëri.')
@@ -75,6 +114,7 @@ export default function VerifyOtpScreen() {
         setError('Kodi i gabuar. Kontrollo shifrat dhe provo përsëri.')
       }
       setLoading(false)
+      submittingRef.current = false
       setCode(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
       return
@@ -93,6 +133,7 @@ export default function VerifyOtpScreen() {
       } catch {}
     }
     setLoading(false)
+    submittingRef.current = false
     // Success — navigate to app
     router.replace('/(app)/(tabs)/')
   }
@@ -142,7 +183,10 @@ export default function VerifyOtpScreen() {
                 onChangeText={val => handleChange(val, idx)}
                 onKeyPress={e => handleKeyPress(e, idx)}
                 keyboardType="number-pad"
-                maxLength={1}
+                maxLength={6}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+                importantForAutofill="yes"
                 selectTextOnFocus
                 textAlign="center"
                 autoFocus={idx === 0}
@@ -179,7 +223,7 @@ export default function VerifyOtpScreen() {
           </View>
 
           <Text style={s.hint}>
-            Kontrollo edhe dosjen Spam nëse nuk e gjen email-in.
+            Kontrollo edhe dosjen Spam nëse nuk e gjen email-in. Përdor kodin më të fundit — kodet e vjetra nuk vlejnë.
           </Text>
         </View>
       </KeyboardAvoidingView>
