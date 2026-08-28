@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
+import HelpButton from '../../src/components/HelpButton'
 
 export default function VerifyOtpScreen() {
   const router = useRouter()
@@ -166,6 +167,7 @@ export default function VerifyOtpScreen() {
         </TouchableOpacity>
         <Text style={s.title}>Konfirmo email-in</Text>
         <Text style={s.subtitle}>Kemi dërguar një kod 6-shifror te{'\n'}{maskedEmail}</Text>
+        <HelpButton style={s.help} />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -235,6 +237,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
   header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 28 },
   back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
+  help: { position: 'absolute', right: 24, top: 12 },
   title: { fontSize: 26, fontWeight: '700', color: '#fff', marginBottom: 8 },
   subtitle: { fontSize: 13, color: Colors.aloe, lineHeight: 20 },
   body: {

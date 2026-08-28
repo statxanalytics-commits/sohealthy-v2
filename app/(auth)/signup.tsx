@@ -5,6 +5,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
+import HelpButton from '../../src/components/HelpButton'
 
 const MIN_PASSWORD = 8
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -141,6 +142,7 @@ export default function SignupScreen() {
         <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
         <Text style={s.title}>Krijo llogarinë</Text>
         <Text style={s.subtitle}>Falas — pa kartë krediti</Text>
+        <HelpButton style={s.help} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled">
@@ -208,6 +210,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
   header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
   back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
+  help: { position: 'absolute', right: 24, top: 12 },
   title: { fontSize: 26, fontWeight: '700', color: Colors.white, marginBottom: 4 },
   subtitle: { fontSize: 13, color: Colors.aloe },
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },

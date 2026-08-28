@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { recoveryState } from '../../src/lib/recoveryState'
 import { supabase } from '../../src/lib/supabase'
+import HelpButton from '../../src/components/HelpButton'
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -138,6 +139,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
         <Text style={s.title}>Hyr në llogari</Text>
         <Text style={s.subtitle}>Mirë se u ktheve</Text>
+        <HelpButton style={s.help} />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -279,6 +281,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
   header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
   back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
+  help: { position: 'absolute', right: 24, top: 12 },
   title: { fontSize: 26, fontWeight: '700', color: Colors.white, marginBottom: 4 },
   subtitle: { fontSize: 13, color: Colors.aloe },
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },

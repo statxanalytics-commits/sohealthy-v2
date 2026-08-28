@@ -109,6 +109,9 @@ export default function ActivateScreen() {
           <Lightbulb size={14} color="#999" strokeWidth={1.75} />
           <Text style={styles.hint}>Kodi gjendet brenda paketës suaj, shkruar në letër.</Text>
         </View>
+        <TouchableOpacity style={styles.helpLink} onPress={() => router.push('/faq')}>
+          <Text style={styles.helpLinkText}>Ke nevojë për ndihmë? Shiko Pyetjet e Shpeshta</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -125,4 +128,6 @@ const styles = StyleSheet.create({
   buttonText: { color: '#ECEFE8', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
   hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   hint: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
+  helpLink: { marginTop: 18, alignItems: 'center' },
+  helpLinkText: { fontSize: 13, color: '#1B3F2F', fontWeight: '600', textDecorationLine: 'underline' },
 });
