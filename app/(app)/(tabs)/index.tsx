@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
-  BookOpen, CalendarCheck, Sparkles, Calculator,
+  BookOpen, CalendarCheck, CalendarDays, Sparkles, Calculator,
   ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
@@ -39,11 +39,19 @@ function daysLabel(n: number) {
   return n === 1 ? '1 ditë e mbetur' : `${n} ditë të mbetura`
 }
 
+// Guida E Javës — weekly guide shown to premium users.
+// Content (title, subtitle, PDF) lives in the `weekly_guides` table + private `guides`
+// storage bucket. RLS returns the single active row only to premium users, so no app
+// update is ever needed to change the weekly guide — only the DB row changes.
+type WeeklyGuide = { title: string; subtitle: string | null; filePath: string }
+
 export default function HomeScreen() {
   const router = useRouter()
   const { isPremium, daysRemaining, loading } = usePremium()
   const [userName, setUserName] = useState('')
   const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
+  const [weeklyGuide, setWeeklyGuide] = useState<WeeklyGuide | null>(null)
+  const [openingGuide, setOpeningGuide] = useState(false)
 
   useFocusEffect(useCallback(() => {
     loadUserData()
@@ -63,7 +71,37 @@ export default function HomeScreen() {
           .eq('is_active', true).order('selected_at', { ascending: true }).limit(1).single()
         if (sel?.product_slug) setActiveProduct({ slug: sel.product_slug, code: profile.order_code })
       }
+
+      // Weekly guide — RLS returns the active row only to premium users.
+      const { data: guide } = await supabase
+        .from('weekly_guides')
+        .select('title, subtitle, file_path')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle()
+      setWeeklyGuide(guide ? { title: guide.title, subtitle: guide.subtitle, filePath: guide.file_path } : null)
     } catch {}
+  }
+
+  // Generate a short-lived signed URL for the private PDF, then open it in the
+  // native in-app browser (same approach as Libri RESET; iOS & Android render PDFs).
+  async function openWeeklyGuide() {
+    if (!weeklyGuide || openingGuide) return
+    try {
+      setOpeningGuide(true)
+      const path = weeklyGuide.filePath.replace(/^guides\//, '') // store just the filename; tolerate a leading "guides/"
+      const { data, error } = await supabase.storage.from('guides').createSignedUrl(path, 3600)
+      if (error || !data?.signedUrl) throw error || new Error('no signed url')
+      await WebBrowser.openBrowserAsync(data.signedUrl, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+        controlsColor: Colors.pine,
+        toolbarColor: Colors.alabaster,
+      })
+    } catch {
+      Alert.alert('Gabim', 'Guida nuk mund të hapet tani. Provo përsëri.')
+    } finally {
+      setOpeningGuide(false)
+    }
   }
 
   function handlePremiumTool(tool: PremiumTool) {
@@ -207,6 +245,30 @@ export default function HomeScreen() {
                 <Text style={s.dietArrowText}>Hap →</Text>
               </View>
             </TouchableOpacity>
+
+            {/* Guida E Javës — weekly guide (content changes weekly from the DB, no app update) */}
+            {weeklyGuide && (
+              <TouchableOpacity style={s.guideCard} onPress={openWeeklyGuide} disabled={openingGuide} activeOpacity={0.85}>
+                <View style={s.guideCardLeft}>
+                  <View style={s.guideBadgeRow}>
+                    <Text style={s.guideLabel}>PREMIUM</Text>
+                    <View style={s.guideNewPill}>
+                      <Text style={s.guideNewText}>E RE</Text>
+                    </View>
+                  </View>
+                  <View style={s.guideTitleRow}>
+                    <CalendarDays size={18} color={Colors.pine} strokeWidth={1.75} />
+                    <Text style={s.guideTitle}>{weeklyGuide.title}</Text>
+                  </View>
+                  {weeklyGuide.subtitle ? <Text style={s.guideSub}>{weeklyGuide.subtitle}</Text> : null}
+                </View>
+                <View style={s.guideArrow}>
+                  {openingGuide
+                    ? <ActivityIndicator size="small" color={Colors.alabaster} />
+                    : <Text style={s.guideArrowText}>Hap →</Text>}
+                </View>
+              </TouchableOpacity>
+            )}
 
             {/* RESET Book — open in in-app browser (react-native-pdf incompatible with New Architecture) */}
             <TouchableOpacity
@@ -422,6 +484,24 @@ const s = StyleSheet.create({
   dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
+
+  // Guida E Javës card (Aloe, with "E RE" badge)
+  guideCard: {
+    backgroundColor: Colors.aloe, marginHorizontal: 16, marginTop: 10,
+    borderRadius: 14, padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  guideCardLeft: { flex: 1 },
+  guideBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  guideLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', opacity: 0.7 },
+  guideNewPill: { backgroundColor: Colors.goji, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  guideNewText: { fontSize: 9, letterSpacing: 1, fontWeight: '800', color: '#fff' },
+  guideTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  guideTitle: { fontSize: 17, color: Colors.pine, fontWeight: '700', marginBottom: 2 },
+  guideSub: { fontSize: 12, color: Colors.pine, opacity: 0.7, marginTop: 2 },
+  guideArrow: { backgroundColor: Colors.pine, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 12, minWidth: 64, alignItems: 'center' },
+  guideArrowText: { fontSize: 13, fontWeight: '600', color: Colors.alabaster },
+
   bookCard: {
     backgroundColor: Colors.aloe, marginHorizontal: 16, marginTop: 10,
     borderRadius: 14, padding: 16,

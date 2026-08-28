@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
+import HelpButton from '../../src/components/HelpButton'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
@@ -40,7 +41,7 @@ export default function WebViewScreen() {
           <Text style={s.back}>← Kthehu</Text>
         </TouchableOpacity>
         <Text style={s.title} numberOfLines={1}>{title}</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.headerRight}><HelpButton /></View>
       </View>
       {loading && (
         <View style={s.loadingOverlay}>
@@ -68,6 +69,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
   header: { backgroundColor: Colors.pine, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 },
   back: { color: Colors.aloe, fontSize: 14 },
+  headerRight: { width: 60, alignItems: 'flex-end' },
   title: { fontSize: 14, fontWeight: '600', color: Colors.white, flex: 1, textAlign: 'center' },
   loadingOverlay: { position: 'absolute', top: 60, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 10, backgroundColor: Colors.alabaster },
 })

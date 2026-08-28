@@ -5,6 +5,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
+import HelpButton from '../../src/components/HelpButton'
 
 const MIN_PASSWORD = 8
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -56,13 +57,41 @@ export default function SignupScreen() {
   const [accepted, setAccepted] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [legalType, setLegalType] = useState<'terms' | 'privacy'>('terms')
+  // When an email is already registered but (maybe) unconfirmed, offer a path to
+  // get a fresh code and finish confirmation instead of dead-ending on the error.
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   const cleanName = name.trim()
   const cleanUsername = username.trim()
   const cleanEmail = email.trim().toLowerCase()
   const passTooShort = password.length > 0 && password.length < MIN_PASSWORD
 
+  // Resend the signup confirmation code and move to the verify screen.
+  // If the account is already confirmed, Supabase errors here → tell them to log in.
+  const goConfirmExisting = async () => {
+    if (!EMAIL_RE.test(cleanEmail)) { setError('Email-i nuk është i vlefshëm.'); return }
+    setConfirming(true); setError('')
+    const { error: err } = await supabase.auth.resend({ type: 'signup', email: cleanEmail })
+    setConfirming(false)
+    if (err) {
+      const c = (err as any).code || ''
+      const m = (err.message || '').toLowerCase()
+      if (m.includes('already') && m.includes('confirm')) {
+        setError('Ky email është konfirmuar tashmë. Hyr me fjalëkalimin ose përdor "Harrove fjalëkalimin".')
+        setShowConfirm(false)
+      } else if (c === 'over_email_send_rate_limit' || err.status === 429) {
+        setError('Shumë kërkesa. Prit disa minuta dhe provo përsëri.')
+      } else {
+        setError('Nuk u dërgua kodi. Provo përsëri.')
+      }
+      return
+    }
+    router.push({ pathname: '/(auth)/verify-otp', params: { email: cleanEmail, name: cleanName, username: cleanUsername } })
+  }
+
   const handleSignup = async () => {
+    setShowConfirm(false)
     // ---- Client-side validation: tell the user EXACTLY what is wrong ----
     if (!cleanName) { setError('Të lutem shkruaj emrin tënd.'); return }
     if (cleanUsername.length < 3) { setError('Username-i duhet të ketë të paktën 3 karaktere.'); return }
@@ -85,8 +114,10 @@ export default function SignupScreen() {
       if (err) { setError(mapSignupError(err)); setLoading(false); return }
 
       // With email confirmation ON, Supabase hides "already registered" and returns a user with no identities.
+      // Offer a recovery path: send a fresh code and let them confirm (or, if already confirmed, log in).
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-        setError('Ky email është regjistruar tashmë. Provo të hysh ose përdor "Harrove fjalëkalimin".')
+        setError('Ky email është regjistruar tashmë. Nëse s’e ke konfirmuar, merr një kod të ri më poshtë.')
+        setShowConfirm(true)
         setLoading(false); return
       }
 
@@ -111,6 +142,7 @@ export default function SignupScreen() {
         <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← Kthehu</Text></TouchableOpacity>
         <Text style={s.title}>Krijo llogarinë</Text>
         <Text style={s.subtitle}>Falas — pa kartë krediti</Text>
+        <HelpButton style={s.help} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled">
@@ -119,7 +151,7 @@ export default function SignupScreen() {
           <Text style={s.label}>USERNAME</Text>
           <TextInput style={s.input} value={username} onChangeText={setUsername} placeholder="username" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" />
           <Text style={s.label}>EMAIL</Text>
-          <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
+          <TextInput style={s.input} value={email} onChangeText={t => { setEmail(t); if (showConfirm) setShowConfirm(false); if (error) setError('') }} placeholder="adresa@email.com" placeholderTextColor={Colors.mutedLight} autoCapitalize="none" keyboardType="email-address" />
 
           <Text style={s.label}>FJALËKALIMI</Text>
           <View style={[s.passWrap, passTooShort && s.passWrapError]}>
@@ -150,6 +182,16 @@ export default function SignupScreen() {
           </TouchableOpacity>
 
           {error ? <Text style={s.error}>{error}</Text> : null}
+
+          {/* Recovery path for an already-registered / unconfirmed email */}
+          {showConfirm && (
+            <TouchableOpacity style={s.confirmLink} onPress={goConfirmExisting} disabled={confirming}>
+              {confirming
+                ? <ActivityIndicator size="small" color={Colors.pine} />
+                : <Text style={s.confirmLinkText}>Ke një kod? Konfirmo email-in →</Text>}
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={[s.btn, (loading || !accepted) && { opacity: 0.6 }]} onPress={handleSignup} disabled={loading || !accepted}>
             {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={s.btnText}>Krijo llogarinë →</Text>}
           </TouchableOpacity>
@@ -168,6 +210,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.pine },
   header: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
   back: { color: Colors.aloe, fontSize: 14, marginBottom: 16 },
+  help: { position: 'absolute', right: 24, top: 12 },
   title: { fontSize: 26, fontWeight: '700', color: Colors.white, marginBottom: 4 },
   subtitle: { fontSize: 13, color: Colors.aloe },
   form: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, flexGrow: 1 },
@@ -181,6 +224,8 @@ const s = StyleSheet.create({
   eyeBtn: { paddingHorizontal: 14, paddingVertical: 10 },
   eyeIcon: { fontSize: 18 },
   error: { color: Colors.goji, fontSize: 13, marginBottom: 12, lineHeight: 18 },
+  confirmLink: { alignItems: 'center', paddingVertical: 10, marginBottom: 8 },
+  confirmLinkText: { fontSize: 14, fontWeight: '700', color: Colors.pine, textDecorationLine: 'underline' },
   btn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
   btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   terms: { fontSize: 11, color: Colors.muted, textAlign: 'center', marginTop: 16, lineHeight: 16 },

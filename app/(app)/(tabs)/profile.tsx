@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'expo-router'
 import { Alert, Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff, User, ChevronRight } from 'lucide-react-native'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff, User, ChevronRight, MessageCircle } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
 const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
 
 export default function ProfileScreen() {
+  const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [authEmail, setAuthEmail] = useState<string>('')
 
@@ -199,6 +201,11 @@ export default function ProfileScreen() {
           <View style={s.actionDivider} />
           <TouchableOpacity style={s.actionRow} onPress={() => openEdit('password')}>
             <View style={s.actionLeft}><Lock size={15} color={Colors.pine} strokeWidth={2} /><Text style={s.actionText}>Ndrysho Fjalëkalimin</Text></View>
+            <ChevronRight size={16} color={Colors.muted} />
+          </TouchableOpacity>
+          <View style={s.actionDivider} />
+          <TouchableOpacity style={s.actionRow} onPress={() => router.push('/faq')}>
+            <View style={s.actionLeft}><MessageCircle size={15} color={Colors.pine} strokeWidth={2} /><Text style={s.actionText}>Ndihmë & Pyetjet e Shpeshta</Text></View>
             <ChevronRight size={16} color={Colors.muted} />
           </TouchableOpacity>
         </View>
