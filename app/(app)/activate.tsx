@@ -8,71 +8,67 @@ import { supabase } from '../../src/lib/supabase';
 import { useRouter } from 'expo-router';
 
 export default function ActivateScreen() {
-  const [code, setCode] = useState('');
+  const [mode, setMode] = useState<'phone' | 'code'>('phone');
+  const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const success = () =>
+    Alert.alert(
+      'Urime!',
+      'Llogaria juaj premium u aktivizua me sukses!',
+      [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/my-packages') }]
+    );
+
+  const handlePhone = async (phone: string) => {
+    // Normalization (069…, +355 69…, 69…) happens on the server.
+    const { data: result, error } = await supabase.rpc('redeem_by_phone', { p_phone: phone });
+    if (error) { Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.'); return; }
+    if (result?.ok) { success(); return; }
+    const messages: Record<string, string> = {
+      invalid_phone: 'Numri nuk duket i saktë. Shkruajeni p.sh. 069 123 4567.',
+      not_found: 'Nuk gjetëm asnjë paketë të dorëzuar me këtë numër. Përdorni numrin që dhatë kur porositët. Nëse paketa ju erdhi sot, provoni sërish pas orës 21:00.',
+      already_active: 'Paketa juaj me këtë numër është tashmë aktive. Kur të bëni porosinë e radhës, aktivizojeni sërish këtu.',
+      already_used: 'Paketa me këtë numër është aktivizuar nga një llogari tjetër. Na kontaktoni nëse mendoni se ka gabim.',
+      rate_limited: 'Shumë tentativa. Provoni sërish pas një ore.',
+      not_authenticated: 'Ju duhet të jeni të kyçur.',
+    };
+    Alert.alert('Nuk u aktivizua', messages[result?.error as string] || 'Provoni përsëri.');
+  };
+
+  const handleCode = async (code: string) => {
+    const { data: result, error } = await supabase.rpc('redeem_order_code', { p_code: code });
+    if (error) { Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.'); return; }
+    if (result?.ok) { success(); return; }
+    const messages: Record<string, string> = {
+      invalid_code: 'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.',
+      already_used: 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.',
+      not_authenticated: 'Ju duhet të jeni të kyçur.',
+      empty_code: 'Ju lutem shkruani kodin tuaj.',
+    };
+    Alert.alert('Kod i Pavlefshëm', messages[result?.error as string] || 'Kodi nuk u pranua. Provoni përsëri.');
+  };
+
   const handleActivate = async () => {
-    const trimmedCode = code.trim().toUpperCase();
-    if (!trimmedCode) {
-      Alert.alert('Gabim', 'Ju lutem shkruani kodin tuaj.');
+    const input = value.trim();
+    if (!input) {
+      Alert.alert('Gabim', mode === 'phone' ? 'Ju lutem shkruani numrin tuaj të telefonit.' : 'Ju lutem shkruani kodin tuaj.');
       return;
     }
     setLoading(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Gabim', 'Ju duhet të jeni të kyçur.');
-        setLoading(false); return;
-      }
-
-      // Same code already active — nothing to do.
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_premium, order_code')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.is_premium && profile?.order_code === trimmedCode) {
-        Alert.alert('Kod i Njëjtë', 'Ky kod është i njëjtë me atë aktual. Futni kodin e paketës suaj të re.');
-        setLoading(false); return;
-      }
-
-      // Activation is validated, claimed and granted atomically on the server
-      // (SECURITY DEFINER RPC). The client can no longer set is_premium directly.
-      const { data: result, error: rpcError } = await supabase.rpc('redeem_order_code', {
-        p_code: trimmedCode,
-      });
-
-      if (rpcError) {
-        Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.');
-        setLoading(false); return;
-      }
-
-      if (!result?.ok) {
-        const messages: Record<string, string> = {
-          invalid_code: 'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.',
-          already_used: 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.',
-          not_authenticated: 'Ju duhet të jeni të kyçur.',
-          empty_code: 'Ju lutem shkruani kodin tuaj.',
-        };
-        Alert.alert('Kod i Pavlefshëm', messages[result?.error as string] || 'Kodi nuk u pranua. Provoni përsëri.');
-        setLoading(false); return;
-      }
-
-      Alert.alert(
-        'Urime!',
-        'Llogaria juaj premium u aktivizua me sukses!',
-        [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/my-packages') }]
-      );
-
+      if (!user) { Alert.alert('Gabim', 'Ju duhet të jeni të kyçur.'); return; }
+      if (mode === 'phone') await handlePhone(input);
+      else await handleCode(input.toUpperCase());
     } catch (err) {
       Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.');
     } finally {
       setLoading(false);
     }
   };
+
+  const switchMode = () => { setValue(''); setMode(mode === 'phone' ? 'code' : 'phone'); };
 
   return (
     <KeyboardAvoidingView
@@ -82,15 +78,20 @@ export default function ActivateScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>Aktivizo Llogarinë</Text>
         <Text style={styles.subtitle}>
-          Shkruani kodin që gjetët në paketën tuaj SoHealthy
+          {mode === 'phone'
+            ? 'Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium'
+            : 'Shkruani kodin që gjetët në paketën tuaj SoHealthy'}
         </Text>
         <TextInput
           style={styles.input}
-          value={code}
-          onChangeText={setCode}
-          placeholder="p.sh. HY8364125"
+          value={value}
+          onChangeText={setValue}
+          placeholder={mode === 'phone' ? 'p.sh. 069 123 4567' : 'p.sh. HY8364125'}
           placeholderTextColor="#aaa"
-          autoCapitalize="characters"
+          keyboardType={mode === 'phone' ? 'phone-pad' : 'default'}
+          textContentType={mode === 'phone' ? 'telephoneNumber' : 'none'}
+          autoComplete={mode === 'phone' ? 'tel' : 'off'}
+          autoCapitalize={mode === 'phone' ? 'none' : 'characters'}
           autoCorrect={false}
           returnKeyType="done"
           onSubmitEditing={handleActivate}
@@ -107,8 +108,17 @@ export default function ActivateScreen() {
         </TouchableOpacity>
         <View style={styles.hintRow}>
           <Lightbulb size={14} color="#999" strokeWidth={1.75} />
-          <Text style={styles.hint}>Kodi gjendet brenda paketës suaj, shkruar në letër.</Text>
+          <Text style={styles.hint}>
+            {mode === 'phone'
+              ? 'Pranohet çdo format: 069…, +355 69… ose 69…'
+              : 'Kodi gjendet brenda paketës suaj, shkruar në letër.'}
+          </Text>
         </View>
+        <TouchableOpacity style={styles.helpLink} onPress={switchMode}>
+          <Text style={styles.switchText}>
+            {mode === 'phone' ? 'Keni një kod porosie? Aktivizo me kod' : 'Aktivizo me numër telefoni'}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.helpLink} onPress={() => router.push('/faq')}>
           <Text style={styles.helpLinkText}>Ke nevojë për ndihmë? Shiko Pyetjet e Shpeshta</Text>
         </TouchableOpacity>
@@ -129,5 +139,6 @@ const styles = StyleSheet.create({
   hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   hint: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
   helpLink: { marginTop: 18, alignItems: 'center' },
+  switchText: { fontSize: 13, color: '#71B5A2', fontWeight: '600' },
   helpLinkText: { fontSize: 13, color: '#1B3F2F', fontWeight: '600', textDecorationLine: 'underline' },
 });

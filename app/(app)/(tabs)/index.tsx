@@ -362,7 +362,7 @@ export default function HomeScreen() {
             {/* Big activate CTA */}
             <TouchableOpacity style={s.bigActivateCard} onPress={() => router.push('/(app)/activate')}>
               <Text style={s.bigActivateTitle}>Aktivizo Paketën Tende</Text>
-              <Text style={s.bigActivateSub}>Fut kodin e porosise per akses te plote ne te gjitha mjetet premium</Text>
+              <Text style={s.bigActivateSub}>Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium</Text>
               <View style={s.bigActivateBtn}>
                 <Text style={s.bigActivateBtnText}>Aktivizo Tani →</Text>
               </View>
