@@ -1,13 +1,61 @@
-export const Colors = {
-  pine: '#1B3F2F',
-  alabaster: '#ECEFE8',
-  aloe: '#71B5A2',
+import { isRozeThemeActive } from '../campaigns/tetoriRoze'
+
+// ─── Theme tokens ────────────────────────────────────────────────────────────
+// Screens read `Colors.*` inside module-level StyleSheets, so the palette is
+// resolved ONCE at app launch. During Tetori Rozë (1–31 Oct, Tirana) every token
+// swaps to the Rozë palette; the first launch after 1 Nov is back to default.
+// Never hardcode pink in components — map it here.
+
+const DEFAULT_COLORS = {
+  pine: '#1B3F2F',      // headings, dark headers/heroes, primary buttons
+  alabaster: '#ECEFE8', // app background; light text on dark blocks
+  aloe: '#71B5A2',      // accent on dark blocks, accent fills (with pine text), borders
+  aloeInk: '#71B5A2',   // accent used as TEXT/ICON on light backgrounds
   goji: '#B74949',
   white: '#FFFFFF',
   border: '#D5DDD0',
   surface: '#F5F7F2',
   muted: '#6B7F72',
   mutedLight: 'rgba(107,127,114,0.5)',
+  tabActive: '#1B3F2F',
+}
+
+// Tetori Rozë palette (WCAG AA checked — don't introduce new values)
+export const ROZE = {
+  bg: '#F8EEF0',
+  card: '#FFFAFB',
+  soft: '#EBC9D1',
+  primary: '#A94A6E',
+  deep: '#6B2340',
+  text: '#4A2A35',
+  muted: '#7E5A66',
+}
+
+// `aloe` maps to roze.soft (not primary) because it's mostly used as a label/text colour
+// on pine blocks and as a fill behind pine text: soft↔deep is 7.1:1, primary↔deep would be ~2:1.
+// Accent text on light backgrounds uses `aloeInk` → roze.primary (4.75:1 on bg).
+const ROZE_COLORS: typeof DEFAULT_COLORS = {
+  pine: ROZE.deep,
+  alabaster: ROZE.bg,
+  aloe: ROZE.soft,
+  aloeInk: ROZE.primary,
+  goji: '#B74949',
+  white: '#FFFFFF',
+  border: ROZE.soft,
+  surface: ROZE.card,
+  muted: ROZE.muted,
+  mutedLight: 'rgba(126,90,102,0.5)',
+  tabActive: ROZE.primary,
+}
+
+export const IS_ROZE_THEME = isRozeThemeActive()
+export const Colors = IS_ROZE_THEME ? ROZE_COLORS : DEFAULT_COLORS
+
+// Transparent variant of a token: tint(Colors.pine, 0.1) → 'rgba(…, 0.1)'
+export function tint(hex: string, alpha: number): string {
+  const h = hex.replace('#', '')
+  const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`
 }
 
 export const LOGO = 'https://sohealthy.al/wp-content/uploads/2026/01/icon-light-scaled.jpeg'

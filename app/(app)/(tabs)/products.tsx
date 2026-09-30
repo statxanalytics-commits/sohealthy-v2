@@ -174,7 +174,7 @@ export default function ProductsScreen() {
                   <View style={s.weightStat}><Text style={s.weightStatLbl}>Fillimi</Text><Text style={s.weightStatVal}>{activePackage.start_weight} kg</Text></View>
                   <ArrowRight size={18} color="#ccc" strokeWidth={2} style={{ marginHorizontal: 4 }} />
                   <View style={s.weightStat}><Text style={s.weightStatLbl}>Tani</Text><Text style={s.weightStatVal}>{activePackage.current_weight} kg</Text></View>
-                  <View style={[s.weightStat, s.weightLossStat]}><Text style={s.weightStatLbl}>Humbur</Text><Text style={[s.weightStatVal, { color: Colors.aloe, fontSize: 22 }]}>-{weightLoss} kg</Text></View>
+                  <View style={[s.weightStat, s.weightLossStat]}><Text style={s.weightStatLbl}>Humbur</Text><Text style={[s.weightStatVal, { color: Colors.aloeInk, fontSize: 22 }]}>-{weightLoss} kg</Text></View>
                 </View>
               ) : (
                 <TouchableOpacity style={s.addWeightBtn} onPress={() => router.push('/(app)/tracker')}>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Alert, Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff, User, ChevronRight, MessageCircle } from 'lucide-react-native'
+import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff, User, ChevronRight, MessageCircle, Heart } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
 
@@ -206,6 +206,12 @@ export default function ProfileScreen() {
           <View style={s.actionDivider} />
           <TouchableOpacity style={s.actionRow} onPress={() => router.push('/faq')}>
             <View style={s.actionLeft}><MessageCircle size={15} color={Colors.pine} strokeWidth={2} /><Text style={s.actionText}>Ndihmë & Pyetjet e Shpeshta</Text></View>
+            <ChevronRight size={16} color={Colors.muted} />
+          </TouchableOpacity>
+          <View style={s.actionDivider} />
+          {/* Tetori Rozë guide — stays reachable here after October leaves Home */}
+          <TouchableOpacity style={s.actionRow} onPress={() => router.push('/tetori-roze?source=direct' as any)}>
+            <View style={s.actionLeft}><Heart size={15} color={Colors.pine} strokeWidth={2} /><Text style={s.actionText}>Tetori Rozë</Text></View>
             <ChevronRight size={16} color={Colors.muted} />
           </TouchableOpacity>
         </View>

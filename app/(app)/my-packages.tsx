@@ -244,7 +244,7 @@ export default function MyPackagesScreen() {
                     <View style={s.weightDivider} />
                     <View style={s.weightStat}>
                       <Text style={s.weightStatLabel}>Humbur</Text>
-                      <Text style={[s.weightStatVal, { color: Colors.aloe }]}>{(activePackage.start_weight - activePackage.current_weight).toFixed(1)} kg</Text>
+                      <Text style={[s.weightStatVal, { color: Colors.aloeInk }]}>{(activePackage.start_weight - activePackage.current_weight).toFixed(1)} kg</Text>
                     </View>
                   </>
                 )}

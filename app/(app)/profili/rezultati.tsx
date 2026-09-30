@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Check, X, ArrowRight } from 'lucide-react-native'
-import { Colors } from '../../../src/constants'
+import { Colors, tint } from '../../../src/constants'
 import { PROFILES, type Profile, type ProductRec } from '../../../constants/quiz-data'
 
 export default function ResultScreen() {
@@ -31,7 +31,7 @@ export default function ResultScreen() {
         <Section title="Ushqime për të prioritizuar">
           {profile.foods.map((item, i) => (
             <View key={i} style={s.iconRow}>
-              <Check size={16} color={Colors.aloe} strokeWidth={2.5} style={s.rowIcon} />
+              <Check size={16} color={Colors.aloeInk} strokeWidth={2.5} style={s.rowIcon} />
               <Text style={s.rowText}>{item}</Text>
             </View>
           ))}
@@ -176,7 +176,7 @@ const s = StyleSheet.create({
   },
   heroTagline: {
     fontSize: 14,
-    color: 'rgba(236,239,232,0.75)',
+    color: tint(Colors.alabaster, 0.75),
     lineHeight: 21,
   },
 

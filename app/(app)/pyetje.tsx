@@ -3,7 +3,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { MessageCircle, Send, Clock, CheckCircle2, Lock } from 'lucide-react-native'
-import { API, Colors } from '../../src/constants'
+import { API, Colors, tint } from '../../src/constants'
 import { usePremium } from '../../src/hooks/usePremium'
 import { supabase } from '../../src/lib/supabase'
 
@@ -193,7 +193,7 @@ const s = StyleSheet.create({
   submitBtn: { backgroundColor: Colors.pine, borderRadius: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  sentText: { fontSize: 12, color: Colors.aloe, marginTop: 10, textAlign: 'center', fontWeight: '600' },
+  sentText: { fontSize: 12, color: Colors.aloeInk, marginTop: 10, textAlign: 'center', fontWeight: '600' },
   errorText: { fontSize: 12, color: Colors.goji, marginTop: 10, textAlign: 'center', fontWeight: '600' },
   sectionLabel: { fontSize: 10, letterSpacing: 2, color: Colors.muted, fontWeight: '600', marginBottom: 10 },
   emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, alignItems: 'center' },
@@ -201,7 +201,7 @@ const s = StyleSheet.create({
   qCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1 },
   badge: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 8 },
   badgePending: { backgroundColor: Colors.surface },
-  badgeDone: { backgroundColor: 'rgba(113,181,162,0.15)' },
+  badgeDone: { backgroundColor: tint(Colors.aloe, 0.15) },
   badgeText: { fontSize: 11, fontWeight: '600', color: Colors.muted },
   badgeTextDone: { color: Colors.pine },
   qText: { fontSize: 14, color: Colors.pine, lineHeight: 20 },

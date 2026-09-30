@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { Colors } from '../../../src/constants'
+import { Colors, tint } from '../../../src/constants'
 import { QUESTIONS, computeAxes, computeProfileKey, type Axis } from '../../../constants/quiz-data'
 
 const TOTAL = QUESTIONS.length
@@ -172,7 +172,7 @@ const s = StyleSheet.create({
   progressBg: {
     flex: 1,
     height: 5,
-    backgroundColor: 'rgba(27,63,47,0.12)',
+    backgroundColor: tint(Colors.pine, 0.12),
     borderRadius: 3,
   },
   progressFill: {
@@ -186,7 +186,7 @@ const s = StyleSheet.create({
   qNum: {
     fontSize: 11,
     letterSpacing: 2,
-    color: Colors.aloe,
+    color: Colors.aloeInk,
     fontWeight: '700',
     marginBottom: 10,
   },
@@ -210,14 +210,14 @@ const s = StyleSheet.create({
   },
   optionSelected: {
     borderColor: Colors.aloe,
-    backgroundColor: 'rgba(113,181,162,0.08)',
+    backgroundColor: tint(Colors.aloe, 0.08),
   },
   optionDot: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: 'rgba(27,63,47,0.25)',
+    borderColor: tint(Colors.pine, 0.25),
   },
   optionDotSelected: {
     borderColor: Colors.aloe,

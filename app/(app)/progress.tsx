@@ -263,7 +263,7 @@ export default function ProgressScreen() {
             <View style={s.ratingCard}>
               <View style={s.chartHeader}><CheckSquare size={16} color={Colors.pine} strokeWidth={1.75} /><Text style={s.chartTitle}>Cilësia e Vakteve</Text></View>
               {[
-                { key: 'E Shëndetshme', Icon: CheckSquare, color: Colors.aloe },
+                { key: 'E Shëndetshme', Icon: CheckSquare, color: Colors.aloeInk },
                 { key: 'Mesatare', Icon: Zap, color: '#D58D3C' },
                 { key: 'Duhet Përmirësuar', Icon: Zap, color: Colors.goji },
               ].map(({ key, Icon, color }) => {

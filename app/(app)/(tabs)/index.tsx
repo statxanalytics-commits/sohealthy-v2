@@ -1,17 +1,20 @@
 import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
-  BookOpen, CalendarCheck, CalendarDays, Sparkles, Calculator,
+  BookOpen, CalendarCheck, Sparkles, Calculator,
   ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
-import { API, Colors, LOGO, PRODUCT_IMAGES } from '../../../src/constants'
+import { API, Colors, IS_ROZE_THEME, LOGO, PRODUCT_IMAGES, ROZE, tint } from '../../../src/constants'
 import { usePremium } from '../../../src/hooks/usePremium'
 import { supabase } from '../../../src/lib/supabase'
 import { useFocusEffect } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
+import { ORDER_URL, isTetoriRozeLive } from '../../../src/campaigns/tetoriRoze'
+import { TR } from '../../../src/content/tetoriRoze'
+import { loadPlan } from '../../../src/lib/tetoriRoze'
 
 // NOTE: the standalone "Gjej Sa Kg Humb" calculator card was merged INTO the quiz —
 // the quiz now ends with the recommended package + expected kg result & benefits.
@@ -39,22 +42,19 @@ function daysLabel(n: number) {
   return n === 1 ? '1 ditë e mbetur' : `${n} ditë të mbetura`
 }
 
-// Guida E Javës — weekly guide shown to premium users.
-// Content (title, subtitle, PDF) lives in the `weekly_guides` table + private `guides`
-// storage bucket. RLS returns the single active row only to premium users, so no app
-// update is ever needed to change the weekly guide — only the DB row changes.
-type WeeklyGuide = { title: string; subtitle: string | null; filePath: string }
-
 export default function HomeScreen() {
   const router = useRouter()
   const { isPremium, daysRemaining, loading } = usePremium()
   const [userName, setUserName] = useState('')
   const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
-  const [weeklyGuide, setWeeklyGuide] = useState<WeeklyGuide | null>(null)
-  const [openingGuide, setOpeningGuide] = useState(false)
+  const [trPlanDone, setTrPlanDone] = useState(0)
+  // Tetori Rozë (1–31 Oct, Tirana): guide card first on Home + offer banner below it.
+  // After 1 Nov both leave Home; the guide stays reachable from Profili.
+  const tetoriLive = isTetoriRozeLive()
 
   useFocusEffect(useCallback(() => {
     loadUserData()
+    loadPlan().then(p => setTrPlanDone(p.length))
   }, []))
 
   async function loadUserData() {
@@ -72,36 +72,7 @@ export default function HomeScreen() {
         if (sel?.product_slug) setActiveProduct({ slug: sel.product_slug, code: profile.order_code })
       }
 
-      // Weekly guide — RLS returns the active row only to premium users.
-      const { data: guide } = await supabase
-        .from('weekly_guides')
-        .select('title, subtitle, file_path')
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle()
-      setWeeklyGuide(guide ? { title: guide.title, subtitle: guide.subtitle, filePath: guide.file_path } : null)
     } catch {}
-  }
-
-  // Generate a short-lived signed URL for the private PDF, then open it in the
-  // native in-app browser (same approach as Libri RESET; iOS & Android render PDFs).
-  async function openWeeklyGuide() {
-    if (!weeklyGuide || openingGuide) return
-    try {
-      setOpeningGuide(true)
-      const path = weeklyGuide.filePath.replace(/^guides\//, '') // store just the filename; tolerate a leading "guides/"
-      const { data, error } = await supabase.storage.from('guides').createSignedUrl(path, 3600)
-      if (error || !data?.signedUrl) throw error || new Error('no signed url')
-      await WebBrowser.openBrowserAsync(data.signedUrl, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-        controlsColor: Colors.pine,
-        toolbarColor: Colors.alabaster,
-      })
-    } catch {
-      Alert.alert('Gabim', 'Guida nuk mund të hapet tani. Provo përsëri.')
-    } finally {
-      setOpeningGuide(false)
-    }
   }
 
   function handlePremiumTool(tool: PremiumTool) {
@@ -167,6 +138,29 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* Tetori Rozë — guide card (first card on Home in October; free for everyone) */}
+        {tetoriLive && (
+          <>
+            <TouchableOpacity style={s.trCard} activeOpacity={0.9} onPress={() => router.push('/tetori-roze?source=home_card' as any)}>
+              <Text style={s.trEyebrow}>{TR.homeCard.eyebrow}</Text>
+              <Text style={s.trTitle}>{TR.homeCard.title}</Text>
+              <Text style={s.trSub}>{TR.homeCard.sub}</Text>
+              <View style={s.trFooter}>
+                <View style={s.trBtn}><Text style={s.trBtnText}>{TR.homeCard.cta}</Text></View>
+                {trPlanDone > 0 && <Text style={s.trProgress}>{TR.plani.progress(trPlanDone)}</Text>}
+              </View>
+            </TouchableOpacity>
+
+            {/* Offer banner — below the guide card, never inside the guide */}
+            <View style={s.offerBanner}>
+              <Text style={s.offerText}>{TR.offer.text}</Text>
+              <TouchableOpacity style={s.offerBtn} onPress={() => Linking.openURL(ORDER_URL)}>
+                <Text style={s.offerBtnText}>{TR.offer.cta}</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
         {/* Quiz Nutricional — featured free card */}
         <TouchableOpacity style={s.quizCard} onPress={() => router.push('/(app)/profili' as any)}>
           <View style={s.quizCardIcon}>
@@ -211,13 +205,13 @@ export default function HomeScreen() {
                 ]}>
                   <Icon
                     size={22}
-                    color={isFeatured ? Colors.alabaster : Colors.pine}
+                    color={isFeatured && !(isDiet && IS_ROZE_THEME) ? Colors.alabaster : Colors.pine}
                     strokeWidth={1.75}
                   />
                 </View>
                 <View style={isRow ? { flex: 1 } : undefined}>
-                  <Text style={[s.freeName, isFeatured && s.freeNameFeatured, isQuiz && s.freeNameQuiz]}>{tool.name}</Text>
-                  <Text style={[s.freeSub, isFeatured && s.freeSubFeatured]}>{tool.sub}</Text>
+                  <Text style={[s.freeName, isFeatured && s.freeNameFeatured, isQuiz && s.freeNameQuiz, isDiet && IS_ROZE_THEME && s.freeNameOnSoft]}>{tool.name}</Text>
+                  <Text style={[s.freeSub, isFeatured && s.freeSubFeatured, isDiet && IS_ROZE_THEME && s.freeSubOnSoft]}>{tool.sub}</Text>
                 </View>
                 {isQuiz && (
                   <View style={s.freeQuizArrow}>
@@ -245,30 +239,6 @@ export default function HomeScreen() {
                 <Text style={s.dietArrowText}>Hap →</Text>
               </View>
             </TouchableOpacity>
-
-            {/* Guida E Javës — weekly guide (content changes weekly from the DB, no app update) */}
-            {weeklyGuide && (
-              <TouchableOpacity style={s.guideCard} onPress={openWeeklyGuide} disabled={openingGuide} activeOpacity={0.85}>
-                <View style={s.guideCardLeft}>
-                  <View style={s.guideBadgeRow}>
-                    <Text style={s.guideLabel}>PREMIUM</Text>
-                    <View style={s.guideNewPill}>
-                      <Text style={s.guideNewText}>E RE</Text>
-                    </View>
-                  </View>
-                  <View style={s.guideTitleRow}>
-                    <CalendarDays size={18} color={Colors.pine} strokeWidth={1.75} />
-                    <Text style={s.guideTitle}>{weeklyGuide.title}</Text>
-                  </View>
-                  {weeklyGuide.subtitle ? <Text style={s.guideSub}>{weeklyGuide.subtitle}</Text> : null}
-                </View>
-                <View style={s.guideArrow}>
-                  {openingGuide
-                    ? <ActivityIndicator size="small" color={Colors.alabaster} />
-                    : <Text style={s.guideArrowText}>Hap →</Text>}
-                </View>
-              </TouchableOpacity>
-            )}
 
             {/* RESET Book — open in in-app browser (react-native-pdf incompatible with New Architecture) */}
             <TouchableOpacity
@@ -354,7 +324,7 @@ export default function HomeScreen() {
                   <TouchableOpacity key={t.name} style={s.lockedSmall} onPress={() => router.push('/(app)/activate')}>
                     <Icon size={22} color={Colors.pine} strokeWidth={1.75} style={s.lockedSmallIcon} />
                     <Text style={s.lockedSmallName}>{t.name}</Text>
-                    <Lock size={10} color="#6B7F72" strokeWidth={2} />
+                    <Lock size={10} color={Colors.muted} strokeWidth={2} />
                   </TouchableOpacity>
                 )
               })}
@@ -377,7 +347,7 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#ECEFE8' },
+  safe: { flex: 1, backgroundColor: Colors.alabaster },
   scroll: { paddingBottom: 20 },
   header: {
     backgroundColor: Colors.pine, paddingHorizontal: 20,
@@ -405,7 +375,7 @@ const s = StyleSheet.create({
   // Countdown pill (inside banner)
   countdownPill: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(113,181,162,0.25)',
+    backgroundColor: tint(Colors.aloe, 0.25),
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -439,7 +409,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(113,181,162,0.15)',
+    backgroundColor: tint(Colors.aloe, 0.15),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -450,7 +420,7 @@ const s = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 2,
     fontWeight: '700',
-    color: Colors.aloe,
+    color: Colors.aloeInk,
     marginBottom: 4,
   },
   quizCardTitle: { fontSize: 15, fontWeight: '700', color: Colors.pine, lineHeight: 20 },
@@ -481,26 +451,27 @@ const s = StyleSheet.create({
   },
   dietLabel: { fontSize: 9, letterSpacing: 2, color: Colors.aloe, fontWeight: '600', marginBottom: 4 },
   dietTitle: { fontSize: 17, color: Colors.alabaster, fontWeight: '600' },
-  dietSub: { fontSize: 12, color: 'rgba(236,239,232,0.6)', marginTop: 2 },
+  dietSub: { fontSize: 12, color: tint(Colors.alabaster, 0.6), marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
 
-  // Guida E Javës card (Aloe, with "E RE" badge)
-  guideCard: {
-    backgroundColor: Colors.aloe, marginHorizontal: 16, marginTop: 10,
-    borderRadius: 14, padding: 16,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  // Tetori Rozë card + offer banner (Rozë palette via tokens in October)
+  trCard: { backgroundColor: ROZE.deep, marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 18 },
+  trEyebrow: { fontSize: 10, letterSpacing: 2.5, color: '#FFFFFF', fontWeight: '700', marginBottom: 6 },
+  trTitle: { fontSize: 20, color: '#FFFFFF', fontWeight: '700', marginBottom: 4 },
+  trSub: { fontSize: 13, color: '#FFFFFF', opacity: 0.9, lineHeight: 19 },
+  trFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 },
+  trBtn: { backgroundColor: '#FFFFFF', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  trBtnText: { fontSize: 13, fontWeight: '700', color: ROZE.deep },
+  trProgress: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  offerBanner: {
+    backgroundColor: ROZE.card, borderWidth: 1, borderColor: ROZE.soft, borderRadius: 14,
+    marginHorizontal: 16, marginTop: 10, padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  guideCardLeft: { flex: 1 },
-  guideBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  guideLabel: { fontSize: 9, letterSpacing: 2, color: Colors.pine, fontWeight: '700', opacity: 0.7 },
-  guideNewPill: { backgroundColor: Colors.goji, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  guideNewText: { fontSize: 9, letterSpacing: 1, fontWeight: '800', color: '#fff' },
-  guideTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  guideTitle: { fontSize: 17, color: Colors.pine, fontWeight: '700', marginBottom: 2 },
-  guideSub: { fontSize: 12, color: Colors.pine, opacity: 0.7, marginTop: 2 },
-  guideArrow: { backgroundColor: Colors.pine, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 12, minWidth: 64, alignItems: 'center' },
-  guideArrowText: { fontSize: 13, fontWeight: '600', color: Colors.alabaster },
+  offerText: { flex: 1, fontSize: 13, lineHeight: 19, color: ROZE.text },
+  offerBtn: { backgroundColor: ROZE.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  offerBtnText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 
   bookCard: {
     backgroundColor: Colors.aloe, marginHorizontal: 16, marginTop: 10,
@@ -516,13 +487,13 @@ const s = StyleSheet.create({
   bookArrow: { backgroundColor: Colors.pine, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginLeft: 12 },
   bookArrowText: { fontSize: 13, fontWeight: '600', color: Colors.alabaster },
   sectionLabel: {
-    fontSize: 10, letterSpacing: 2, color: '#6B7F72', fontWeight: '600',
+    fontSize: 10, letterSpacing: 2, color: Colors.muted, fontWeight: '600',
     marginHorizontal: 16, marginTop: 20, marginBottom: 10,
   },
   freeGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 8 },
   freeCard: {
     width: '47%', backgroundColor: '#fff', borderRadius: 14, padding: 14,
-    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    borderWidth: 0.5, borderColor: tint(Colors.pine, 0.1),
   },
   freeCardFeatured: { width: '100%', backgroundColor: Colors.pine, borderColor: Colors.pine, flexDirection: 'row', alignItems: 'center', gap: 14 },
   freeCardDiet: { backgroundColor: Colors.aloe, borderColor: Colors.aloe },
@@ -532,48 +503,51 @@ const s = StyleSheet.create({
   freeNameQuiz: { fontSize: 15, fontWeight: '700' },
   freeQuizArrow: {
     width: 30, height: 30, borderRadius: 15,
-    backgroundColor: 'rgba(113,181,162,0.2)',
+    backgroundColor: tint(Colors.aloe, 0.2),
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  freeIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(113,181,162,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  freeIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: tint(Colors.aloe, 0.15), alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   freeIconWrapFeatured: { backgroundColor: Colors.goji, marginBottom: 0, flexShrink: 0 },
-  freeIconWrapDiet: { backgroundColor: 'rgba(27,63,47,0.2)', marginBottom: 0, flexShrink: 0 },
+  freeIconWrapDiet: { backgroundColor: tint(Colors.pine, 0.2), marginBottom: 0, flexShrink: 0 },
   freeName: { fontSize: 13, fontWeight: '600', color: Colors.pine, lineHeight: 17, marginBottom: 2 },
   freeNameFeatured: { color: Colors.alabaster, fontSize: 15, fontWeight: '700' },
-  freeSub: { fontSize: 11, color: '#6B7F72' },
-  freeSubFeatured: { color: 'rgba(236,239,232,0.65)', fontSize: 12 },
+  freeSub: { fontSize: 11, color: Colors.muted },
+  // October: the diet card's fill (aloe → roze.soft) is light, so its text switches to deep
+  freeNameOnSoft: { color: Colors.pine },
+  freeSubOnSoft: { color: Colors.pine, opacity: 0.8 },
+  freeSubFeatured: { color: tint(Colors.alabaster, 0.65), fontSize: 12 },
   premiumRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8 },
   premiumSmall: {
     flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
-    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    alignItems: 'center', borderWidth: 0.5, borderColor: tint(Colors.pine, 0.1),
   },
   premiumSmallIcon: { marginBottom: 6 },
   premiumSmallName: { fontSize: 12, fontWeight: '600', color: Colors.pine },
-  premiumSmallSub: { fontSize: 10, color: '#6B7F72', marginTop: 2, textAlign: 'center' },
+  premiumSmallSub: { fontSize: 10, color: Colors.muted, marginTop: 2, textAlign: 'center' },
   activateCard: {
     backgroundColor: Colors.pine, marginHorizontal: 16,
     borderRadius: 14, padding: 16,
   },
   activateTitle: { fontSize: 16, fontWeight: '600', color: Colors.alabaster, marginBottom: 4 },
-  activateSub: { fontSize: 13, color: 'rgba(236,239,232,0.6)' },
+  activateSub: { fontSize: 13, color: tint(Colors.alabaster, 0.6) },
   // Locked premium styles
   lockedDiet: {
     backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 8,
     borderRadius: 14, padding: 16,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    borderWidth: 0.5, borderColor: tint(Colors.pine, 0.1),
     opacity: 0.75,
   },
   lockedDietTitle: { fontSize: 15, fontWeight: '600', color: Colors.pine, marginBottom: 2 },
-  lockedDietSub: { fontSize: 11, color: '#6B7F72' },
+  lockedDietSub: { fontSize: 11, color: Colors.muted },
   lockIcon: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#ECEFE8', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.alabaster, alignItems: 'center', justifyContent: 'center',
   },
   lockedRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8, marginBottom: 12 },
   lockedSmall: {
     flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12,
-    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    alignItems: 'center', borderWidth: 0.5, borderColor: tint(Colors.pine, 0.1),
     opacity: 0.75,
   },
   lockedSmallIcon: { marginBottom: 4 },
@@ -584,7 +558,7 @@ const s = StyleSheet.create({
     borderRadius: 16, padding: 20,
   },
   bigActivateTitle: { fontSize: 17, fontWeight: '700', color: Colors.alabaster, marginBottom: 6 },
-  bigActivateSub: { fontSize: 12, color: 'rgba(236,239,232,0.65)', lineHeight: 17, marginBottom: 16 },
+  bigActivateSub: { fontSize: 12, color: tint(Colors.alabaster, 0.65), lineHeight: 17, marginBottom: 16 },
   bigActivateBtn: {
     backgroundColor: Colors.aloe, borderRadius: 10,
     paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'flex-start',

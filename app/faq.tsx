@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ChevronRight } from 'lucide-react-native'
-import { Colors } from '../src/constants'
+import { Colors, tint } from '../src/constants'
 import { supabase } from '../src/lib/supabase'
 
 // FAQ content lives in the Supabase `faq` table and is editable there without
@@ -195,7 +195,7 @@ const s = StyleSheet.create({
   card: {
     backgroundColor: Colors.white, borderRadius: 12, marginBottom: 8,
     paddingHorizontal: 14, paddingVertical: 4,
-    borderWidth: 0.5, borderColor: 'rgba(27,63,47,0.1)',
+    borderWidth: 0.5, borderColor: tint(Colors.pine, 0.1),
   },
   qRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, gap: 12 },
   qText: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.pine, lineHeight: 20 },

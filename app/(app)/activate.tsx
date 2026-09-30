@@ -6,6 +6,7 @@ import {
 import { Lightbulb } from 'lucide-react-native';
 import { supabase } from '../../src/lib/supabase';
 import { useRouter } from 'expo-router';
+import { Colors } from '../../src/constants'
 
 export default function ActivateScreen() {
   const [mode, setMode] = useState<'phone' | 'code'>('phone');
@@ -102,7 +103,7 @@ export default function ActivateScreen() {
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#ECEFE8" />
+            ? <ActivityIndicator color={Colors.alabaster} />
             : <Text style={styles.buttonText}>Aktivizo</Text>
           }
         </TouchableOpacity>
@@ -128,17 +129,17 @@ export default function ActivateScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#ECEFE8', justifyContent: 'center', paddingHorizontal: 24 },
+  container: { flex: 1, backgroundColor: Colors.alabaster, justifyContent: 'center', paddingHorizontal: 24 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 28, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
-  title: { fontSize: 24, fontWeight: '700', color: '#1B3F2F', marginBottom: 8, textAlign: 'center' },
+  title: { fontSize: 24, fontWeight: '700', color: Colors.pine, marginBottom: 8, textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 28, lineHeight: 20 },
-  input: { borderWidth: 1.5, borderColor: '#71B5A2', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: '600', color: '#1B3F2F', letterSpacing: 1.5, textAlign: 'center', marginBottom: 20, backgroundColor: '#ECEFE8' },
-  button: { backgroundColor: '#1B3F2F', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
-  buttonDisabled: { backgroundColor: '#71B5A2' },
-  buttonText: { color: '#ECEFE8', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
+  input: { borderWidth: 1.5, borderColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: '600', color: Colors.pine, letterSpacing: 1.5, textAlign: 'center', marginBottom: 20, backgroundColor: Colors.alabaster },
+  button: { backgroundColor: Colors.pine, borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
+  buttonDisabled: { backgroundColor: Colors.aloe },
+  buttonText: { color: Colors.alabaster, fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
   hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   hint: { fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 18 },
   helpLink: { marginTop: 18, alignItems: 'center' },
-  switchText: { fontSize: 13, color: '#71B5A2', fontWeight: '600' },
-  helpLinkText: { fontSize: 13, color: '#1B3F2F', fontWeight: '600', textDecorationLine: 'underline' },
+  switchText: { fontSize: 13, color: Colors.aloeInk, fontWeight: '600' },
+  helpLinkText: { fontSize: 13, color: Colors.pine, fontWeight: '600', textDecorationLine: 'underline' },
 });

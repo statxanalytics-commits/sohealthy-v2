@@ -48,9 +48,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading) return
     const inAuth = segments[0] === '(auth)'
-    // The FAQ (Pyetjet e Shpeshta) is a public screen — reachable whether the
-    // user is logged in or not — so it must be exempt from the auth redirects.
-    const isPublic = segments[0] === 'faq'
+    // Public screens — reachable whether the user is logged in or not — so they must be
+    // exempt from the auth redirects: FAQ (Pyetjet e Shpeshta) and the Tetori Rozë guide.
+    const isPublic = segments[0] === 'faq' || segments[0] === 'tetori-roze'
     if (isPublic) return
     if (!session && !inAuth) router.replace('/(auth)/splash')
     // Gjatë recovery mos ridrejto: përdoruesi duhet të caktojë fjalëkalimin e ri në login.tsx

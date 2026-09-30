@@ -7,7 +7,7 @@ import { Colors } from '../../../src/constants'
 function TabIcon({ Icon, label, focused }: { Icon: LucideIcon; label: string; focused: boolean }) {
   return (
     <View style={s.tabItem}>
-      <Icon size={22} color={focused ? Colors.pine : Colors.muted} strokeWidth={focused ? 2.25 : 1.75} />
+      <Icon size={22} color={focused ? Colors.tabActive : Colors.muted} strokeWidth={focused ? 2.25 : 1.75} />
       <Text style={[s.tabLabel, focused && s.tabLabelFocused]}>{label}</Text>
     </View>
   )
@@ -27,5 +27,5 @@ const s = StyleSheet.create({
   tabBar: { backgroundColor: Colors.white, borderTopWidth: 0.5, borderTopColor: Colors.border, height: 72, paddingBottom: 8, paddingTop: 6 },
   tabItem: { alignItems: 'center', justifyContent: 'center', gap: 3, width: 70 },
   tabLabel: { fontSize: 10, color: Colors.muted, opacity: 0.7 },
-  tabLabelFocused: { fontWeight: '700', color: Colors.pine, opacity: 1 },
+  tabLabelFocused: { fontWeight: '700', color: Colors.tabActive, opacity: 1 },
 })

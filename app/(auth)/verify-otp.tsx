@@ -246,7 +246,7 @@ const s = StyleSheet.create({
     padding: 28,
   },
   codeLabel: {
-    fontSize: 10, fontWeight: '600', color: '#6B7F72',
+    fontSize: 10, fontWeight: '600', color: Colors.muted,
     letterSpacing: 1.5, marginBottom: 16,
   },
   otpRow: {
@@ -274,8 +274,8 @@ const s = StyleSheet.create({
   },
   btnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
   resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  resendText: { fontSize: 13, color: '#6B7F72' },
+  resendText: { fontSize: 13, color: Colors.muted },
   resendLink: { fontSize: 13, fontWeight: '600', color: Colors.pine },
-  resendDisabled: { color: '#9EB5A5' },
-  hint: { fontSize: 11, color: '#9EB5A5', textAlign: 'center', lineHeight: 16 },
+  resendDisabled: { color: Colors.mutedLight },
+  hint: { fontSize: 11, color: Colors.mutedLight, textAlign: 'center', lineHeight: 16 },
 })

@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { Camera, ImageIcon, Utensils, AlertTriangle, CheckCircle, Zap, Sparkles, Footprints, Clock } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
-import { API, Colors } from '../../src/constants'
+import { API, Colors, tint } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
 
 type FoodItem = {
@@ -75,7 +75,7 @@ function ratePlate(t: ScanResult['total']): PlateRating {
   if (t.fiber >= 6) { score += 5; positives.push(`fibra e mirë (${t.fiber}g)`) }
   if (t.calories >= 300 && t.calories <= 550) { score += 5 }
   score = Math.max(0, Math.min(100, score))
-  if (score >= 75) return { score, label: 'E Shëndetshme', Icon: CheckCircle, color: Colors.aloe, description: positives.length > 0 ? `Vakt i ekuilibruar. ${positives.join(', ')}.` : 'Vakt me makro të mira.' }
+  if (score >= 75) return { score, label: 'E Shëndetshme', Icon: CheckCircle, color: Colors.aloeInk, description: positives.length > 0 ? `Vakt i ekuilibruar. ${positives.join(', ')}.` : 'Vakt me makro të mira.' }
   if (score >= 45) return { score, label: 'Mesatare', Icon: Zap, color: '#D58D3C', description: issues.length > 0 ? `Ka hapësirë: ${issues.slice(0, 2).join(', ')}.` : 'Vakt me disa çekuilibra.' }
   return { score, label: 'Duhet Përmirësuar', Icon: AlertTriangle, color: Colors.goji, description: issues.length > 0 ? `Probleme: ${issues.slice(0, 3).join(', ')}.` : 'Ky vakt ka çekuilibra.' }
 }
@@ -302,7 +302,7 @@ export default function ScannerScreen() {
               </View>
             ))}
             <View style={s.savedBadge}>
-              <CheckCircle size={15} color={Colors.aloe} strokeWidth={2} />
+              <CheckCircle size={15} color={Colors.aloeInk} strokeWidth={2} />
               <Text style={s.savedText}>U ruajt në historikun tuaj</Text>
             </View>
             <Text style={s.disclaimer}>Vlerësimet janë të përafërta dhe shërbejnë vetëm për orientim. Nuk zëvendësojnë këshillën e një mjeku ose nutricionisti.</Text>
@@ -374,7 +374,7 @@ const s = StyleSheet.create({
   },
   walkIconWrap: {
     width: 52, height: 52, borderRadius: 14,
-    backgroundColor: 'rgba(27,63,47,0.25)',
+    backgroundColor: tint(Colors.pine, 0.25),
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   walkBody: { flex: 1 },
@@ -412,5 +412,5 @@ const s = StyleSheet.create({
   disclosureBtn: { backgroundColor: Colors.pine, borderRadius: 12, padding: 14, alignItems: 'center' },
   disclosureBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   savedBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.aloe + '20', borderRadius: 10, padding: 12, marginBottom: 12 },
-  savedText: { color: Colors.aloe, fontWeight: '700', fontSize: 13 },
+  savedText: { color: Colors.aloeInk, fontWeight: '700', fontSize: 13 },
 })
