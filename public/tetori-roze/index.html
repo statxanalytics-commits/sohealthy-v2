@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tetori Rozë — Udhëzuesi SoHealthy</title>
+<meta name="description" content="Si ta njohësh trupin tënd, cilat kontrolle të bësh sipas moshës dhe zakonet që kanë rëndësi.">
+<link rel="canonical" href="https://app.sohealthy.al/tetori-roze">
+<meta name="theme-color" content="#6B2340">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SoHealthy">
+<meta property="og:locale" content="sq_AL">
+<meta property="og:title" content="Tetori Rozë — Udhëzuesi SoHealthy">
+<meta property="og:description" content="Si ta njohësh trupin tënd, cilat kontrolle të bësh sipas moshës dhe zakonet që kanë rëndësi.">
+<meta property="og:url" content="https://app.sohealthy.al/tetori-roze">
+<meta property="og:image" content="https://app.sohealthy.al/tetori-roze/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tetori Rozë — Udhëzuesi SoHealthy">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tetori Rozë — Udhëzuesi SoHealthy">
+<meta name="twitter:description" content="Si ta njohësh trupin tënd, cilat kontrolle të bësh sipas moshës dhe zakonet që kanë rëndësi.">
+<meta name="twitter:image" content="https://app.sohealthy.al/tetori-roze/og.png">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8EEF0;--card:#FFFAFB;--soft:#EBC9D1;--primary:#A94A6E;--deep:#6B2340;--text:#4A2A35;--muted:#7E5A66}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.55 'Open Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
+h1,h2,.eyebrow,.chip,.btn,.week,.age-chip,.brand{font-family:'Montserrat',system-ui,sans-serif}
+.wrap{max-width:640px;margin:0 auto}
+.top{background:var(--deep);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:700;letter-spacing:.18em;font-size:12px}
+.hero{background:var(--deep);color:#fff;padding:14px 20px 30px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.2em;font-weight:700;margin:0 0 12px}
+.hero h1{font-size:27px;line-height:1.25;margin:0;font-weight:700}
+.meta{margin:10px 0 0;font-size:14px;opacity:.88}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:18px 20px 0}
+.chip{background:var(--card);border:1px solid var(--soft);border-radius:20px;padding:7px 13px;color:var(--deep);font-size:13px;font-weight:600;text-decoration:none}
+section{padding:24px 20px 0;scroll-margin-top:12px}
+h2{color:var(--deep);font-size:20px;line-height:1.3;margin:0 0 12px;font-weight:700}
+p{margin:0 0 12px}
+strong{font-weight:700}
+.muted-i{font-style:italic;color:var(--muted)}
+.step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--soft);border-radius:14px;padding:14px;margin:0 0 8px}
+.num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.step p{margin:0}
+blockquote{margin:8px 0 0;border-left:3px solid var(--primary);padding:4px 0 4px 12px;color:var(--deep);font-weight:600}
+ul.dots{list-style:none;padding:0;margin:0 0 6px}
+ul.dots li{position:relative;padding-left:18px;margin:0 0 6px}
+ul.dots li:before{content:"";position:absolute;left:2px;top:.65em;width:6px;height:6px;border-radius:50%;background:var(--primary)}
+.note{background:var(--soft);color:var(--deep);border-radius:12px;padding:14px;margin-top:10px}
+.note p{margin:0}
+.age-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.age-chip{border:1.5px solid var(--primary);background:var(--card);color:var(--primary);border-radius:20px;padding:7px 15px;font-weight:700;font-size:14px;cursor:pointer}
+.age-chip[aria-pressed="true"]{background:var(--primary);color:#fff}
+.table{background:var(--card);border:1px solid var(--soft);border-radius:14px;overflow:hidden}
+.tr{display:flex;gap:10px;padding:12px;border-left:4px solid transparent}
+.tr+.tr{border-top:1px solid var(--soft)}
+.tr.th{background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.03em}
+.tr.on{background:var(--soft);border-left-color:var(--deep)}
+.td-age{flex:0 0 58px;color:var(--deep);font-weight:700}
+.callout{background:var(--card);border:1.5px solid var(--primary);border-radius:14px;padding:14px;margin-top:12px}
+.callout p{margin:0}.callout strong{color:var(--deep)}
+.habit{background:var(--card);border:1px solid var(--soft);border-radius:12px;padding:12px;margin:0 0 8px}
+.habit p{margin:0}.habit strong{color:var(--deep)}
+.progress{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+.track{flex:1;height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.fill{height:100%;width:0;background:var(--primary);border-radius:4px;transition:width .25s}
+.plabel{color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap}
+label.plan{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--soft);border-radius:14px;padding:14px;margin:0 0 8px;cursor:pointer}
+label.plan input{appearance:none;-webkit-appearance:none;flex:0 0 24px;height:24px;margin:2px 0 0;border:2px solid var(--primary);border-radius:6px;display:grid;place-content:center;cursor:pointer}
+label.plan input:checked{background:var(--primary)}
+label.plan input:checked:after{content:"";width:10px;height:6px;border:3px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+label.plan input:focus-visible{outline:2px solid var(--deep);outline-offset:2px}
+.week{display:block;color:var(--deep);font-size:12px;font-weight:700;letter-spacing:.03em}
+.bravo{background:var(--deep);color:#fff;border-radius:14px;padding:16px;margin-top:8px;text-align:center;font-weight:700;display:none}
+.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:15px 16px;background:var(--primary);color:#fff;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;margin-top:12px}
+.btn.done{background:var(--soft);color:var(--deep);cursor:default}
+.btn.outline{background:transparent;border:1.5px solid var(--deep);color:var(--deep)}
+.rem-set{display:none;text-align:center}
+.link{background:none;border:0;color:var(--primary);font:600 14px 'Open Sans',sans-serif;text-decoration:underline;margin-top:10px;cursor:pointer}
+.shenim{margin:28px 20px 0;padding:16px 0 40px;border-top:1px solid var(--soft);color:var(--muted);font-size:13px;line-height:1.5}
+.shenim b{display:block;margin-bottom:4px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--deep);color:#fff;border-radius:20px;padding:10px 16px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+svg{flex:0 0 auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="brand">SOHEALTHY</span></div>
+
+  <header class="hero">
+    <p class="eyebrow">
+      <svg width="18" height="26" viewBox="0 0 22 30" fill="none" aria-hidden="true"><path d="M11 3C7.2 3 6.4 7 8 10.2L16.5 27M11 3c3.8 0 4.6 4 3 7.2L5.5 27" stroke="#EBC9D1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      TETORI ROZË
+    </p>
+    <h1>Ky udhëzues nuk flet për produkte. Flet për ty.</h1>
+    <p class="meta">5 minuta lexim</p>
+  </header>
+
+  <nav class="chips" aria-label="Seksionet">
+    <a class="chip" href="#njihe">1. Njihe trupin</a>
+    <a class="chip" href="#shenjat">2. Shenjat</a>
+    <a class="chip" href="#kontrollet">3. Kontrollet</a>
+    <a class="chip" href="#zakonet">4. Zakonet</a>
+    <a class="chip" href="#plani">5. Plani</a>
+  </nav>
+
+  <section id="hyrje">
+    <p>Kanceri i gjirit është kanceri më i shpeshtë te gratë, dhe kur zbulohet herët, ka shumë më tepër mundësi trajtimi. Tre gjëra janë në duart e tua: ta njohësh trupin tënd, të bësh kontrollet në kohë dhe të ndërtosh zakone që të mbështesin për vite.</p>
+  </section>
+
+  <section id="njihe">
+    <h2>1. Njihe trupin tënd</h2>
+    <p>Qëllimi nuk është të bëhesh mjeke. Qëllimi është të dish si është gjoksi yt normalisht, që ta vëresh menjëherë kur diçka ndryshon.</p>
+    <p><strong>Kur:</strong> një herë në muaj, 3–5 ditë pas përfundimit të ciklit (kur gjoksi është më pak i ndjeshëm). Nëse nuk ke më cikël, zgjidh një datë fikse çdo muaj.</p>
+    <p><strong>Si — 4 hapa:</strong></p>
+    <div class="step"><span class="num">1</span><p><strong>Para pasqyrës, krahët poshtë.</strong> Vëri re formën, madhësinë, lëkurën dhe thithat.</p></div>
+    <div class="step"><span class="num">2</span><p><strong>Krahët lart.</strong> Shiko sërish, a ka ndryshim në formë, rrudhje apo tërheqje të lëkurës.</p></div>
+    <div class="step"><span class="num">3</span><p><strong>Shtrirë.</strong> Me tre gishtat e mesit, me lëvizje të vogla rrethore, prek gjithë gjoksin, nga klavikula deri poshtë brinjëve, nga sqetulla deri në mes.</p></div>
+    <div class="step"><span class="num">4</span><p><strong>Sqetulla.</strong> Mos e harro. Edhe aty ka inde gjiri dhe gjëndra limfatike.</p></div>
+    <p style="margin-top:6px">Mund ta bësh edhe në dush, kur lëkura është e lagur dhe dora rrëshqet më lehtë.</p>
+    <blockquote>Vetëkontrolli nuk e zëvendëson mamografinë. Janë dy gjëra që plotësojnë njëra-tjetrën.</blockquote>
+    <button class="btn" id="remind" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Shto në kalendar
+    </button>
+    <div class="rem-set" id="remSet">
+      <div class="btn done">Kujtesa u vendos ✓</div>
+      <button class="link" id="remRemove" type="button">Hiq kujtesën</button>
+    </div>
+  </section>
+
+  <section id="shenjat">
+    <h2>2. Shenjat që nuk i shtyn për më vonë</h2>
+    <p>Shko te mjeku nëse vëren:</p>
+    <ul class="dots">
+      <li>një gungë të re në gjoks ose në sqetull</li>
+      <li>ënjtje të një pjese të gjoksit, edhe pa gungë</li>
+      <li>lëkurë të rrudhosur, si lëvozhgë portokalli</li>
+      <li>skuqje, zhvoshkje ose trashje të lëkurës apo të thithit</li>
+      <li>thith që tërhiqet nga brenda</li>
+      <li>rrjedhje nga thithi (që nuk është qumësht)</li>
+      <li>dhimbje në një pikë që nuk largohet</li>
+    </ul>
+    <div class="note"><p><strong>E rëndësishme:</strong> shumica e gungave nuk janë kancer. Por vetëm mjeku mund ta thotë këtë. Mos prit që të kalojë vetë.</p></div>
+  </section>
+
+  <section id="kontrollet">
+    <h2>3. Kontrollet sipas moshës</h2>
+    <p class="muted-i">Për gra me rrezik mesatar. Intervalin e saktë e cakton mjeku yt.</p>
+    <div class="age-chips" role="group" aria-label="Mosha">
+      <button type="button" class="age-chip" aria-pressed="false" data-age="20–39">20–39</button>
+      <button type="button" class="age-chip" aria-pressed="false" data-age="40–49">40–49</button>
+      <button type="button" class="age-chip" aria-pressed="false" data-age="50–74">50–74</button>
+      <button type="button" class="age-chip" aria-pressed="false" data-age="75+">75+</button>
+    </div>
+    <div class="table">
+      <div class="tr th"><span class="td-age" style="color:inherit">Mosha</span><span>Çfarë bën</span></div>
+      <div class="tr" data-row="20–39"><span class="td-age">20–39</span><span>Vetëkontroll mujor. Pyet gjinekologun për gjoksin në vizitat e rregullta.</span></div>
+      <div class="tr" data-row="40–49"><span class="td-age">40–49</span><span>Fillo mamografinë. Zakonisht çdo 1–2 vjet, sipas mjekut.</span></div>
+      <div class="tr" data-row="50–74"><span class="td-age">50–74</span><span>Mamografi çdo 1–2 vjet. Kjo është mosha kur kontrolli ka ndikimin më të madh.</span></div>
+      <div class="tr" data-row="75+"><span class="td-age">75+</span><span>Vendos me mjekun nëse vazhdon, sipas gjendjes tënde shëndetësore.</span></div>
+    </div>
+    <p style="margin-top:16px"><strong>Nëse ke rrezik më të lartë</strong>, flit me mjekun për të filluar më herët:</p>
+    <ul class="dots">
+      <li>nëna, motra ose vajza ka pasur kancer gjiri ose vezoresh</li>
+      <li>ke gjoks me ind të dendur (ta thotë radiologu)</li>
+      <li>ke pasur rrezatim në gjoks para moshës 30 vjeç</li>
+    </ul>
+    <div class="callout"><p><strong>Hapi i këtij muaji:</strong> nëse je 40+ dhe nuk ke bërë mamografi këtë vit ose vitin e kaluar, telefono sot mjekun e familjes ose qendrën shëndetësore dhe pyet ku mund ta bësh.</p></div>
+  </section>
+
+  <section id="zakonet">
+    <h2>4. Zakonet që kanë rëndësi</h2>
+    <p>Nuk ka asnjë ushqim, çaj apo suplement që e parandalon kancerin e gjirit. Por disa zakone e ulin rrezikun, dhe të gjitha të bëjnë të ndihesh më mirë çdo ditë.</p>
+    <div class="habit"><p><strong>Lëviz.</strong> 150–300 minuta aktivitet të moderuar në javë. Kjo do të thotë 30 minuta ecje të shpejtë, 5 ditë në javë. Nuk ka nevojë për palestër.</p></div>
+    <div class="habit"><p><strong>Alkooli: sa më pak, aq më mirë.</strong> Rreziku rritet me sasinë, dhe asnjë sasi nuk është plotësisht e sigurt. Nëse pi, jo më shumë se 1 gotë në ditë, dhe jo çdo ditë.</p></div>
+    <div class="habit"><p><strong>Një peshë e qëndrueshme me kalimin e viteve.</strong> Sidomos pas menopauzës. Nuk bëhet fjalë për dieta, por për një ritëm që mund ta mbash.</p></div>
+    <div class="habit"><p><strong>Pa duhan.</strong> Për gjoksin, për zemrën, për gjithçka.</p></div>
+    <div class="habit"><p><strong>Shto në pjatë, mos hiq.</strong> Perime në çdo vakt, fibra, fruta, drithëra të plota. Nuk janë mjekim, janë baza e një trupi që ndihet mirë.</p></div>
+    <div class="habit"><p><strong>Gjidhënia</strong>, për ato që e zgjedhin dhe munden, lidhet me një rrezik pak më të ulët.</p></div>
+    <div class="habit"><p><strong>Terapitë hormonale</strong> (kontraceptivët, terapia e menopauzës): nuk janë të ndaluara, por fol me mjekun për kohëzgjatjen dhe rrezikun personal.</p></div>
+  </section>
+
+  <section id="plani">
+    <h2>5. Plani i tetorit — 4 javë, 4 hapa</h2>
+    <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><span class="plabel" id="plabel">0 nga 4 hapa</span></div>
+    <label class="plan"><input type="checkbox" data-week="1"><span><span class="week">Java 1</span>Bëj vetëkontrollin e parë me 4 hapat. Vendos një kujtesë në telefon për çdo muaj.</span></label>
+    <label class="plan"><input type="checkbox" data-week="2"><span><span class="week">Java 2</span>Cakto kontrollin tënd (mamografi nëse je 40+, vizitë te gjinekologu nëse je më e re).</span></label>
+    <label class="plan"><input type="checkbox" data-week="3"><span><span class="week">Java 3</span>30 minuta ecje, 5 ditë. Shëno ditët këtu.</span></label>
+    <label class="plan"><input type="checkbox" data-week="4"><span><span class="week">Java 4</span>Dërgoja këtë udhëzues një gruaje që do: mamasë, motrës, shoqes.</span></label>
+    <div class="bravo" id="bravo">Bravo. Tani dërgoja një gruaje që do.</div>
+  </section>
+
+  <section>
+    <button class="btn" id="share" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+      Dërgoja një gruaje që do
+    </button>
+    <a class="btn outline" id="appCta" href="https://apps.apple.com/app/id6784248522">Hap aplikacionin SoHealthy</a>
+  </section>
+
+  <footer class="shenim" id="shenim">
+    <b>Shënim</b>
+    Ky udhëzues është informues dhe nuk zëvendëson këshillën e mjekut. Produktet SoHealthy nuk parandalojnë, nuk diagnostikojnë dhe nuk trajtojnë kancerin. Për çdo ndryshim në gjoks, drejtohu te mjeku.
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var SHARE_TEXT = "Më duket i rëndësishëm. 5 minuta lexim, për ty. 🎀 https://app.sohealthy.al/tetori-roze";
+  var COPIED = "Linku u kopjua";
+  var NOTIF_TITLE = "5 minuta për veten";
+  var NOTIF_BODY = "Koha për vetëkontrollin mujor. Hap udhëzuesin.";
+  var URL_ = "https://app.sohealthy.al/tetori-roze";
+  var PROGRESS_SUFFIX = " nga 4 hapa";
+
+  function get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }
+  function set(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} }
+
+  var toastEl = document.getElementById('toast'), toastT;
+  function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove('show') }, 2000) }
+
+  // "Hap aplikacionin" → the right store for the device
+  var ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) document.getElementById('appCta').href = 'https://play.google.com/store/apps/details?id=al.sohealthy.app';
+
+  // Age chips (UI state only — nothing stored)
+  var chips = document.querySelectorAll('.age-chip'), rows = document.querySelectorAll('[data-row]');
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () {
+      var on = c.getAttribute('aria-pressed') !== 'true', age = c.getAttribute('data-age');
+      chips.forEach(function (x) { x.setAttribute('aria-pressed', x === c && on ? 'true' : 'false') });
+      rows.forEach(function (r) { r.classList.toggle('on', on && r.getAttribute('data-row') === age) });
+    });
+  });
+
+  // Plan (saved in this browser)
+  var PK = 'tr_plan_web_v1', boxes = document.querySelectorAll('input[data-week]');
+  var saved = []; try { saved = JSON.parse(get(PK) || '[]') } catch (e) {}
+  function render() {
+    var n = 0; boxes.forEach(function (b) { if (b.checked) n++ });
+    document.getElementById('fill').style.width = (n / 4 * 100) + '%';
+    document.getElementById('plabel').textContent = n + PROGRESS_SUFFIX;
+    document.getElementById('bravo').style.display = n === 4 ? 'block' : 'none';
+    return n;
+  }
+  boxes.forEach(function (b) {
+    b.checked = saved.indexOf(+b.getAttribute('data-week')) > -1;
+    b.addEventListener('change', function () {
+      var w = []; boxes.forEach(function (x) { if (x.checked) w.push(+x.getAttribute('data-week')) });
+      set(PK, JSON.stringify(w)); render();
+    });
+  });
+  render();
+
+  // Monthly reminder → .ics calendar event
+  var RK = 'tr_reminder_web_v1', remBtn = document.getElementById('remind'), remSet = document.getElementById('remSet');
+  function remUI() { var on = !!get(RK); remBtn.style.display = on ? 'none' : 'flex'; remSet.style.display = on ? 'block' : 'none' }
+  function ics() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n };
+    var date = '' + d.getFullYear() + p(d.getMonth() + 1) + p(Math.min(d.getDate(), 28));
+    var stamp = d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    var e = function (s) { return s.replace(/[\\,;]/g, function (m) { return '\\' + m }) };
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SoHealthy//Tetori Roze//SQ', 'BEGIN:VEVENT',
+      'UID:tetori-roze-' + stamp + '@sohealthy.al', 'DTSTAMP:' + stamp, 'DTSTART:' + date + 'T100000', 'DURATION:PT15M',
+      'RRULE:FREQ=MONTHLY', 'SUMMARY:' + e(NOTIF_TITLE), 'DESCRIPTION:' + e(NOTIF_BODY) + ' ' + URL_, 'URL:' + URL_,
+      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(NOTIF_TITLE), 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
+  remBtn.addEventListener('click', function () {
+    var a = document.createElement('a');
+    a.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics());
+    a.download = 'tetori-roze-kujtesa.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    set(RK, '1'); remUI();
+  });
+  document.getElementById('remRemove').addEventListener('click', function () { set(RK, null); remUI() });
+  remUI();
+
+  // Share → native sheet, else copy the link
+  function copy() {
+    function done() { toast(COPIED) }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(SHARE_TEXT).then(done, legacy);
+    } else legacy();
+    function legacy() {
+      var t = document.createElement('textarea'); t.value = SHARE_TEXT; t.setAttribute('readonly', '');
+      t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); done() } catch (e) { window.prompt('', SHARE_TEXT) } t.remove();
+    }
+  }
+  document.getElementById('share').addEventListener('click', function () {
+    if (navigator.share) navigator.share({ text: SHARE_TEXT }).catch(function (e) { if (e && e.name !== 'AbortError') copy() });
+    else copy();
+  });
+})();
+</script>
+</body>
+</html>

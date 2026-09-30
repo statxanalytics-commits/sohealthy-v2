@@ -3,6 +3,8 @@
   "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
+    { "source": "/tetori-roze", "destination": "/tetori-roze/index.html" },
+    { "source": "/tetori-roze/", "destination": "/tetori-roze/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
