@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { supabase } from '../lib/supabase'
+import { fetchMyPackage } from '../lib/package'
 
-// Premium access lasts this many days from the activation date (plan_start).
-// A new code activation overwrites plan_start, which resets the window.
+// Premium access lasts this many days from the activation date (plan_start) unless the package says otherwise
+// (28-day packages get 28 days; see my_package().premium_days). A new activation overwrites plan_start.
 export const PREMIUM_WINDOW_DAYS = 14
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -54,10 +55,13 @@ export function usePremium() {
         return
       }
 
-      // Expire PREMIUM_WINDOW_DAYS full days after activation.
+      const pkg = await fetchMyPackage()
+      const windowDays = Math.max(PREMIUM_WINDOW_DAYS, Number(pkg.premium_days) || PREMIUM_WINDOW_DAYS)
+
+      // Expire windowDays full days after activation.
       const start = new Date(data.plan_start).getTime()
       const elapsedDays = Math.floor((Date.now() - start) / MS_PER_DAY)
-      const remaining = Math.max(0, PREMIUM_WINDOW_DAYS - elapsedDays)
+      const remaining = Math.max(0, windowDays - elapsedDays)
 
       setDaysRemaining(remaining)
       setIsPremium(remaining > 0)

@@ -14,18 +14,28 @@ export default function ActivateScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const success = () =>
+  const success = (seat?: number) =>
     Alert.alert(
       'Urime!',
-      'Llogaria juaj premium u aktivizua me sukses!',
-      [{ text: 'Vazhdo', onPress: () => router.replace('/(app)/my-packages') }]
+      seat === 2
+        ? 'U aktivizove si personi i dytë i kësaj pakete. Hap "Plani i Dietës" dhe plotëso pyetësorin tënd për planin tënd 14-ditor.'
+        : 'Llogaria juaj premium u aktivizua me sukses!',
+      [{ text: 'Vazhdo', onPress: () => router.replace(seat === 2 ? '/(app)/diet' : '/(app)/my-packages') }]
     );
+
+  // v2 activation also lets the second person of a shared 28-day package activate with the buyer's phone/code.
+  // Falls back to the original functions if the v2 ones are not available.
+  const redeem = async (fn: 'redeem_by_phone' | 'redeem_order_code', args: Record<string, string>) => {
+    const v2 = await supabase.rpc(`${fn}_v2`, { ...args, p_seat2: true });
+    if (!v2.error) return v2;
+    return supabase.rpc(fn, args);
+  };
 
   const handlePhone = async (phone: string) => {
     // Normalization (069…, +355 69…, 69…) happens on the server.
-    const { data: result, error } = await supabase.rpc('redeem_by_phone', { p_phone: phone });
+    const { data: result, error } = await redeem('redeem_by_phone', { p_phone: phone });
     if (error) { Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.'); return; }
-    if (result?.ok) { success(); return; }
+    if (result?.ok) { success(result?.seat); return; }
     const messages: Record<string, string> = {
       invalid_phone: 'Numri nuk duket i saktë. Shkruajeni p.sh. 069 123 4567.',
       not_found: 'Nuk gjetëm asnjë paketë të dorëzuar me këtë numër. Përdorni numrin që dhatë kur porositët. Nëse paketa ju erdhi sot, provoni sërish pas orës 21:00.',
@@ -38,9 +48,9 @@ export default function ActivateScreen() {
   };
 
   const handleCode = async (code: string) => {
-    const { data: result, error } = await supabase.rpc('redeem_order_code', { p_code: code });
+    const { data: result, error } = await redeem('redeem_order_code', { p_code: code });
     if (error) { Alert.alert('Gabim', 'Diçka shkoi keq. Provoni përsëri.'); return; }
-    if (result?.ok) { success(); return; }
+    if (result?.ok) { success(result?.seat); return; }
     const messages: Record<string, string> = {
       invalid_code: 'Kodi që shkruat nuk u gjet. Kontrolloni kodin dhe provoni përsëri.',
       already_used: 'Ky kod është përdorur tashmë. Kontaktoni SoHealthy nëse mendoni ka gabim.',
