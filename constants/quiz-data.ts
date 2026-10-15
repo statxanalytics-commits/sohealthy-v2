@@ -36,7 +36,7 @@ export interface ProductRec {
   url: string
 }
 
-// ─── QUESTIONS ────────────────────────────────────────────────────────────────
+// ─── QUESTIONS ────────────────────────────────────────────────────────────────────────────
 
 export const QUESTIONS: Question[] = [
   {
@@ -149,7 +149,7 @@ export const QUESTIONS: Question[] = [
   },
 ]
 
-// ─── SCORING ──────────────────────────────────────────────────────────────────
+// ─── SCORING ────────────────────────────────────────────────────────────────────────────
 
 export function computeAxes(answers: Partial<Record<Axis, number>>[]): Record<Axis, number> {
   const totals: Record<Axis, number> = { INS: 0, HUN: 0, GUT: 0, CIR: 0, STR: 0 }
@@ -176,7 +176,7 @@ export function computeProfileKey(axes: Record<Axis, number>): string {
   return 'ekuilibruar'
 }
 
-// ─── PROFILES ─────────────────────────────────────────────────────────────────
+// ─── PROFILES ───────────────────────────────────────────────────────────────────────────
 
 export const PROFILES: Record<string, Profile> = {
   'stresuar': {
@@ -282,7 +282,7 @@ export const PROFILES: Record<string, Profile> = {
       {
         slug: 'g1',
         name: 'G1',
-        reason: 'Rrit GLP-1 në mënyrë natyrale — stabilizon sheqerin në gjak dhe vepron si Ozempik natyral',
+        reason: 'Rrit GLP-1 në mënyrë natyrale — stabilizon sheqerin në gjak dhe mban ngopjen më gjatë',
         price: '3500 L / 14 ditë',
         url: 'https://app.sohealthy.al/products/g1',
       },
