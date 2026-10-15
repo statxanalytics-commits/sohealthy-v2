@@ -6,8 +6,9 @@ import { supabase } from './supabase'
 //   Orders from before the new packages keep the 14-day diet.
 export type Deliverable = 'diet' | 'tips' | 'none' | null
 
-//   Premium = package days + 2 in calendar days (Tirana), activation day = day 1:
-//   7-day → through day 9 · 14-day → day 16 · 28-day → day 30 (shared by 2 → 16 each) · older orders → 16.
+//   Premium (orders from 20 Oct 2026) = package days + 2 in calendar days (Tirana), activation day = day 1:
+//   7-day → through day 9 · 14-day → day 16 · 28-day → day 30 (shared by 2 → 16 each).
+//   Older orders: as before, 14 × 24 h from the activation time.
 //   The plan / tips of the current order stay readable after premium ends (has_plan); a new activation
 //   switches the account to the new order, so the old plan is no longer shown.
 export type MyPackage = {
@@ -27,7 +28,7 @@ export type MyPackage = {
 
 export const DEFAULT_PACKAGE: MyPackage = {
   order_code: null, model: null, deliverable: null, diet_days: null,
-  supply_days: 14, premium_days: 16, persons: 1, seat: null,
+  supply_days: 14, premium_days: 14, persons: 1, seat: null,
   premium_active: null, premium_until: null, days_left: null, has_plan: false,
 }
 
