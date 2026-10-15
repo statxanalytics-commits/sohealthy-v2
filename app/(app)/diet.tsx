@@ -1,16 +1,19 @@
 import { useCallback, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
-  ActivityIndicator, ScrollView, Share, StyleSheet,
+  ActivityIndicator, Linking, ScrollView, Share, StyleSheet,
   Text, TouchableOpacity, View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { WebView } from 'react-native-webview'
-import { Target, Droplets, CheckSquare, Utensils, Upload, Sparkles } from 'lucide-react-native'
+import { Target, Droplets, CheckSquare, Utensils, Upload, Sparkles, Lightbulb, Lock } from 'lucide-react-native'
 import { Colors } from '../../src/constants'
 import { supabase } from '../../src/lib/supabase'
+import { DEFAULT_PACKAGE, DailyTip, MyPackage, fetchMyPackage, fetchTips, localDate, markTipSeen, weekdayOf } from '../../src/lib/package'
 
 const DIET_APP_URL = 'https://sohealthy-diet.vercel.app'
+const SHOP_URL = 'https://sohealthy.al'
 
 // Strip ALL emoji / pictographic / symbol characters from a line.
 // The diet API sometimes emits emojis that don't render on-device (show as ◇/boxes),
@@ -26,17 +29,25 @@ type DietPlan = {
   id: string
   order_code: string | null
   plan_content: {
-    target_calories: number
+    kind?: 'diet' | 'tips'
+    target_calories: number | null
     plan_text: string
+    diet_days?: number
   }
   generated_at: string
   is_active: boolean
 }
 
+type ScreenState = 'loading' | 'saved' | 'tips' | 'locked7' | 'webview' | 'empty'
+
+const SLOT_LABEL: Record<string, string> = { morning: 'Mëngjes', midday: 'Mesditë', evening: 'Mbrëmje' }
+
 export default function DietScreen() {
   const router = useRouter()
-  const [state, setState] = useState<'loading' | 'saved' | 'webview' | 'empty'>('loading')
+  const [state, setState] = useState<ScreenState>('loading')
   const [plan, setPlan] = useState<DietPlan | null>(null)
+  const [tips, setTips] = useState<DailyTip[]>([])
+  const [pkg, setPkg] = useState<MyPackage>(DEFAULT_PACKAGE)
   const [orderCode, setOrderCode] = useState('')
   const [webUrl, setWebUrl] = useState('')
   const [activeTab, setActiveTab] = useState(0)
@@ -48,17 +59,52 @@ export default function DietScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setState('empty'); return }
-      const { data: prof } = await supabase.from('profiles').select('order_code').eq('id', user.id).single()
+      const [{ data: prof }, p] = await Promise.all([
+        supabase.from('profiles').select('order_code').eq('id', user.id).single(),
+        fetchMyPackage(),
+      ])
+      setPkg(p)
       const code = prof?.order_code || ''
       setOrderCode(code)
       if (!code) { setState('empty'); return }
+
+      // 7-day packages: no diet and no tips
+      if (p.deliverable === 'none') { setState('locked7'); return }
+
+      // 14-day packages: daily tips
+      if (p.deliverable === 'tips') {
+        const t = await fetchTips(code)
+        if (t.length) { showTips(t); return }
+        setState('empty'); return
+      }
+
       const { data: plansByCode } = await supabase.from('diet_plans').select('*').eq('order_code', code).order('generated_at', { ascending: false }).limit(1)
       // Fallback only considers plans from BEFORE order codes existed (order_code IS NULL) —
       // prevents a stale plan from a previous activation leaking into a newly re-activated account.
       const { data: plansByUser } = plansByCode?.length ? { data: null } : await supabase.from('diet_plans').select('*').eq('user_id', user.id).is('order_code', null).order('generated_at', { ascending: false }).limit(1)
       const found = plansByCode?.[0] || plansByUser?.[0]
-      if (found?.plan_content?.plan_text) { setPlan(found); setState('saved') } else { setState('empty') }
+      if (found?.plan_content?.kind === 'tips') {
+        const t = await fetchTips(code)
+        if (t.length) { showTips(t); return }
+      }
+      if (found?.plan_content?.plan_text) { setPlan(found); setActiveTab(0); setState('saved') } else { setState('empty') }
     } catch (e) { setState('empty') }
+  }
+
+  function showTips(t: DailyTip[]) {
+    setTips(t)
+    setState('tips')
+    const today = t.find(x => x.scheduled_date === localDate())
+    if (today && !today.seen_at) markTipSeen(today.id)
+  }
+
+  async function openGenerator() {
+    // The access token goes in the URL fragment (never sent to a server) so the generator knows who you are —
+    // needed for the second person of a shared package.
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token ? `#t=${encodeURIComponent(session.access_token)}` : ''
+    setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(orderCode)}${token}`)
+    setState('webview')
   }
 
   async function handleShare() {
@@ -68,6 +114,14 @@ export default function DietScreen() {
 
   function handleWebViewNavChange(navState: any) {
     if (navState.url === DIET_APP_URL + '/' || navState.url === DIET_APP_URL) loadPlan()
+  }
+
+  // The generator posts { type: 'sohealthy:plan_ready' } once the plan or tips are saved
+  function handleWebViewMessage(e: any) {
+    try {
+      const msg = JSON.parse(e?.nativeEvent?.data || '{}')
+      if (msg?.type === 'sohealthy:plan_ready') setTimeout(loadPlan, 1500)
+    } catch {}
   }
 
   function parsePlan(text: string) {
@@ -85,30 +139,59 @@ export default function DietScreen() {
     return { header, days }
   }
 
+  const isTipsPackage = pkg.deliverable === 'tips'
+  const screenTitle = isTipsPackage ? 'Këshillat e Tua' : 'Plani i Dietës'
+  const TitleIcon = isTipsPackage ? Lightbulb : Utensils
+
+  const headerBar = (right?: ReactNode) => (
+    <View style={s.header}>
+      <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
+      <View style={s.titleRow}><TitleIcon size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>{screenTitle}</Text></View>
+      {right}
+    </View>
+  )
+
   if (state === 'loading') return (
     <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
-        <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
-      </View>
-      <View style={s.center}><ActivityIndicator size="large" color={Colors.pine} /><Text style={s.loadingText}>Duke ngarkuar planin tuaj...</Text></View>
+      {headerBar()}
+      <View style={s.center}><ActivityIndicator size="large" color={Colors.pine} /><Text style={s.loadingText}>Duke ngarkuar...</Text></View>
+    </SafeAreaView>
+  )
+
+  // ── 7-day package: what's included + the packages that include a plan ──
+  if (state === 'locked7') return (
+    <SafeAreaView style={s.safe}>
+      {headerBar()}
+      <ScrollView contentContainerStyle={s.lockedWrap}>
+        <View style={s.emptyIconWrap}><Lock size={36} color={Colors.pine} strokeWidth={1.5} /></View>
+        <Text style={s.emptyTitle}>Paketa jote 7-ditore</Text>
+        <Text style={s.emptyText}>Paketa 7-ditore përfshin produktet SoHealthy dhe udhëzimet e përdorimit, por jo plan diete ose këshilla personale.</Text>
+        <View style={s.upsellBox}>
+          <Text style={s.upsellLine}><Text style={s.upsellStrong}>Paketa 14-ditore: </Text>14 këshilla personale, një çdo ditë në aplikacion.</Text>
+          <Text style={s.upsellLine}><Text style={s.upsellStrong}>Paketa 28-ditore: </Text>plani yt personal i dietës për 28 ditë.</Text>
+        </View>
+        <TouchableOpacity style={s.generateBtn} onPress={() => Linking.openURL(SHOP_URL)}>
+          <Text style={s.generateBtnText}>Shiko paketat 14 dhe 28-ditore</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   )
 
   if (state === 'empty') return (
     <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
-        <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
-      </View>
+      {headerBar()}
       <View style={s.center}>
-        <View style={s.emptyIconWrap}><Utensils size={40} color={Colors.pine} strokeWidth={1.5} /></View>
-        <Text style={s.emptyTitle}>{orderCode ? 'Gjenero Planin Tënd' : 'Plan nuk u gjet'}</Text>
-        <Text style={s.emptyText}>{orderCode ? 'Plani i dietës personalizohet bazuar në informacionin tuaj — moshën, peshën, aktivitetin dhe produktet SoHealthy.' : 'Aktivizoni llogarinë tuaj premium për të gjeneruar planin personal të dietës.'}</Text>
+        <View style={s.emptyIconWrap}><TitleIcon size={40} color={Colors.pine} strokeWidth={1.5} /></View>
+        <Text style={s.emptyTitle}>{!orderCode ? 'Plan nuk u gjet' : isTipsPackage ? 'Këshillat e tua personale' : 'Gjenero Planin Tënd'}</Text>
+        <Text style={s.emptyText}>{!orderCode
+          ? 'Aktivizoni llogarinë tuaj premium për të gjeneruar planin personal të dietës.'
+          : isTipsPackage
+            ? 'Plotëso pyetësorin e shkurtër dhe merr 14 këshilla, një për çdo ditë, të përshtatura për ty dhe produktet e tua.'
+            : `Plani i dietës${pkg.diet_days ? ` (${pkg.diet_days} ditë)` : ''} personalizohet bazuar në informacionin tuaj — moshën, peshën, aktivitetin dhe produktet SoHealthy.`}</Text>
         {orderCode ? (
-          <TouchableOpacity style={s.generateBtn} onPress={() => { setWebUrl(`${DIET_APP_URL}?code=${encodeURIComponent(orderCode)}`); setState('webview') }}>
+          <TouchableOpacity style={s.generateBtn} onPress={openGenerator}>
             <Sparkles size={16} color={Colors.alabaster} strokeWidth={1.75} />
-            <Text style={s.generateBtnText}>Gjenero Planin Tim →</Text>
+            <Text style={s.generateBtnText}>{isTipsPackage ? 'Plotëso pyetësorin →' : 'Gjenero Planin Tim →'}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -118,22 +201,56 @@ export default function DietScreen() {
   if (state === 'webview') return (
     <SafeAreaView style={[s.safe, { flex: 1 }]} edges={['top']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
-        <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Gjenero Planin</Text></View>
+        <TouchableOpacity onPress={() => loadPlan()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
+        <View style={s.titleRow}><TitleIcon size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>{isTipsPackage ? 'Pyetësori' : 'Gjenero Planin'}</Text></View>
       </View>
-      <WebView source={{ uri: webUrl }} style={{ flex: 1 }} javaScriptEnabled domStorageEnabled onNavigationStateChange={handleWebViewNavChange} />
+      <WebView source={{ uri: webUrl }} style={{ flex: 1 }} javaScriptEnabled domStorageEnabled onNavigationStateChange={handleWebViewNavChange} onMessage={handleWebViewMessage} />
     </SafeAreaView>
   )
+
+  // ── 14-day package: one tip per day; future days unlock on their date ──
+  if (state === 'tips') {
+    const today = localDate()
+    const dayNow = tips.filter(t => t.scheduled_date <= today).length
+    return (
+      <SafeAreaView style={s.safe} edges={['top']}>
+        {headerBar()}
+        <View style={s.targetBar}>
+          <Lightbulb size={14} color={Colors.pine} strokeWidth={2} />
+          <Text style={s.targetText}>{dayNow > 0 ? <>Dita <Text style={s.targetNum}>{Math.min(dayNow, 14)}</Text> nga 14 · një këshillë e re çdo ditë</> : 'Këshilla e parë hapet nesër'}</Text>
+        </View>
+        <ScrollView contentContainerStyle={s.scroll}>
+          {tips.map(t => {
+            const open = t.scheduled_date <= today
+            const isToday = t.scheduled_date === today
+            return open ? (
+              <View key={t.id} style={[s.tipCard, isToday && s.tipCardToday]}>
+                <Text style={[s.tipMeta, isToday && s.tipMetaToday]}>{isToday ? 'SOT' : `DITA ${t.day}`} · {weekdayOf(t.scheduled_date)} · {SLOT_LABEL[t.slot] || ''}</Text>
+                <Text style={s.tipTitle}>{t.title}</Text>
+                <Text style={s.tipBody}>{t.body}</Text>
+                <Text style={s.tipDetail}>{t.detail}</Text>
+              </View>
+            ) : (
+              <View key={t.id} style={s.tipLocked}>
+                <Lock size={14} color={Colors.muted} strokeWidth={2} />
+                <Text style={s.tipLockedText}>Dita {t.day} · hapet {weekdayOf(t.scheduled_date)}</Text>
+              </View>
+            )
+          })}
+          <Text style={s.disclaimer}>Këshillat janë të përgjithshme dhe shërbejnë vetëm për orientim. Nëse keni probleme shëndetësore, konsultohuni me mjekun tuaj.</Text>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </SafeAreaView>
+    )
+  }
 
   const { header, days } = parsePlan(plan!.plan_content.plan_text)
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Text style={s.backText}>‹ Kthehu</Text></TouchableOpacity>
-        <View style={s.titleRow}><Utensils size={18} color={Colors.alabaster} strokeWidth={1.75} /><Text style={s.title}>Plani i Dietës</Text></View>
+      {headerBar(
         <TouchableOpacity onPress={handleShare} style={s.shareBtn}><Upload size={16} color={Colors.aloe} strokeWidth={1.75} /><Text style={s.shareText}>Nda</Text></TouchableOpacity>
-      </View>
+      )}
 
       {plan!.plan_content.target_calories ? (
         <View style={s.targetBar}>
@@ -170,7 +287,7 @@ export default function DietScreen() {
                 </View>
               )
             })}
-            {days[activeTab].lines.map((line, i) => {
+            {(days[activeTab] || days[0]).lines.map((line, i) => {
               const isMealHeader = /^[\u{1F305}\u{2600}\u{1F319}\u{1F34E}\u{1F37D}]/u.test(line)
               const isDayTotal = /^[\u{1F4CA}]/u.test(line) || line.toLowerCase().startsWith('total')
               const clean = stripEmoji(line)
@@ -204,10 +321,14 @@ const s = StyleSheet.create({
   shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 },
   shareText: { color: Colors.aloe, fontSize: 14, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  lockedWrap: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   loadingText: { marginTop: 16, color: Colors.pine, fontSize: 15 },
   emptyIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.pine + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.pine, marginBottom: 8, textAlign: 'center' },
   emptyText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22 },
+  upsellBox: { backgroundColor: Colors.aloe + '22', borderRadius: 12, padding: 14, marginTop: 20, alignSelf: 'stretch', gap: 6 },
+  upsellLine: { fontSize: 13, color: Colors.pine, lineHeight: 20 },
+  upsellStrong: { fontWeight: '700' },
   targetBar: { backgroundColor: Colors.pine + '12', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: Colors.pine + '20' },
   targetText: { fontSize: 13, color: Colors.pine },
   targetNum: { fontWeight: '700' },
@@ -230,4 +351,13 @@ const s = StyleSheet.create({
   disclaimer: { fontSize: 11, color: '#999', textAlign: 'center', lineHeight: 16, marginTop: 20, paddingHorizontal: 8 },
   generateBtn: { marginTop: 24, backgroundColor: Colors.pine, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 8 },
   generateBtnText: { color: Colors.alabaster, fontWeight: '700', fontSize: 16 },
+  tipCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#eee' },
+  tipCardToday: { borderColor: Colors.pine, borderWidth: 1.5 },
+  tipMeta: { fontSize: 11, fontWeight: '700', color: Colors.muted, letterSpacing: 0.6, marginBottom: 6 },
+  tipMetaToday: { color: Colors.pine },
+  tipTitle: { fontSize: 16, fontWeight: '700', color: Colors.pine, marginBottom: 4 },
+  tipBody: { fontSize: 14, color: '#333', lineHeight: 21, marginBottom: 8 },
+  tipDetail: { fontSize: 14, color: '#555', lineHeight: 22 },
+  tipLocked: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, backgroundColor: '#f3f4f1', marginBottom: 8 },
+  tipLockedText: { fontSize: 13, color: Colors.muted },
 })
