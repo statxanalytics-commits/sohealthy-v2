@@ -1,16 +1,23 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { supabase } from '../lib/supabase'
-import { fetchMyPackage } from '../lib/package'
+import { DEFAULT_PACKAGE, MyPackage, fetchMyPackage } from '../lib/package'
 
-// Premium access lasts this many days from the activation date (plan_start) unless the package says otherwise
-// (28-day packages get 28 days; see my_package().premium_days). A new activation overwrites plan_start.
-export const PREMIUM_WINDOW_DAYS = 14
+// Premium lasts the package days + 2, counted in calendar days from the activation day (day 1):
+//   7-day → through day 9 · 14-day → day 16 · 28-day → day 30 (28 shared by 2 people → day 16 each) · older orders → day 16.
+// The server works this out (my_package). The local count below is only a fallback if that call fails.
+// A new activation resets plan_start and switches the account to the new order.
+export const PREMIUM_WINDOW_DAYS = 16
 const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+function dayStart(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
 
 export function usePremium() {
   const [isPremium, setIsPremium] = useState(false)
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null)
+  const [pkg, setPkg] = useState<MyPackage>(DEFAULT_PACKAGE)
   const [loading, setLoading] = useState(true)
 
   useFocusEffect(
@@ -26,44 +33,44 @@ export function usePremium() {
       if (!user) {
         setIsPremium(false)
         setDaysRemaining(null)
-        setLoading(false)
+        setPkg(DEFAULT_PACKAGE)
         return
       }
 
+      const p = await fetchMyPackage()
+      setPkg(p)
+
+      if (typeof p.premium_active === 'boolean') {
+        setIsPremium(p.premium_active)
+        setDaysRemaining(p.premium_active ? p.days_left : null)
+        return
+      }
+
+      // Fallback: count locally from the profile
       const { data } = await supabase
         .from('profiles')
         .select('is_premium, plan_start')
         .eq('id', user.id)
         .single()
 
-      const flagged = data?.is_premium === true
-
-      // Not flagged premium at all → locked.
-      if (!flagged) {
+      if (data?.is_premium !== true) {
         setIsPremium(false)
         setDaysRemaining(null)
-        setLoading(false)
         return
       }
 
-      // Flagged premium but no activation date on record → legacy account,
-      // keep access (no expiry) so existing customers are never locked out by missing data.
-      if (!data?.plan_start) {
+      // Premium without an activation date (very old accounts) keeps access
+      if (!data.plan_start) {
         setIsPremium(true)
         setDaysRemaining(null)
-        setLoading(false)
         return
       }
 
-      const pkg = await fetchMyPackage()
-      const windowDays = Math.max(PREMIUM_WINDOW_DAYS, Number(pkg.premium_days) || PREMIUM_WINDOW_DAYS)
+      const windowDays = Number(p.premium_days) || PREMIUM_WINDOW_DAYS
+      const dayIndex = Math.round((dayStart(new Date()) - dayStart(new Date(data.plan_start))) / MS_PER_DAY) // 0 on the activation day
+      const remaining = Math.max(0, windowDays - dayIndex)
 
-      // Expire windowDays full days after activation.
-      const start = new Date(data.plan_start).getTime()
-      const elapsedDays = Math.floor((Date.now() - start) / MS_PER_DAY)
-      const remaining = Math.max(0, windowDays - elapsedDays)
-
-      setDaysRemaining(remaining)
+      setDaysRemaining(remaining > 0 ? remaining : null)
       setIsPremium(remaining > 0)
     } catch {
       setIsPremium(false)
@@ -73,5 +80,5 @@ export function usePremium() {
     }
   }
 
-  return { isPremium, daysRemaining, loading, refresh: checkPremium }
+  return { isPremium, daysRemaining, pkg, loading, refresh: checkPremium }
 }
