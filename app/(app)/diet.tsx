@@ -38,7 +38,7 @@ type DietPlan = {
   is_active: boolean
 }
 
-type ScreenState = 'loading' | 'saved' | 'tips' | 'locked7' | 'webview' | 'empty'
+type ScreenState = 'loading' | 'saved' | 'tips' | 'locked7' | 'expired' | 'webview' | 'empty'
 
 const SLOT_LABEL: Record<string, string> = { morning: 'Mëngjes', midday: 'Mesditë', evening: 'Mbrëmje' }
 
@@ -71,23 +71,28 @@ export default function DietScreen() {
       // 7-day packages: no diet and no tips
       if (p.deliverable === 'none') { setState('locked7'); return }
 
+      // Nothing saved for this order: generate while premium is on; after it ends, a new package is needed.
+      // (A plan or tips already saved stay readable after premium ends.)
+      const nothingSaved = () => setState(p.premium_active === false ? 'expired' : 'empty')
+
       // 14-day packages: daily tips
       if (p.deliverable === 'tips') {
         const t = await fetchTips(code)
         if (t.length) { showTips(t); return }
-        setState('empty'); return
+        nothingSaved(); return
       }
 
+      // Plans belong to the current order code: activating a new code switches the code, so the old plan is no longer shown
       const { data: plansByCode } = await supabase.from('diet_plans').select('*').eq('order_code', code).order('generated_at', { ascending: false }).limit(1)
-      // Fallback only considers plans from BEFORE order codes existed (order_code IS NULL) —
-      // prevents a stale plan from a previous activation leaking into a newly re-activated account.
-      const { data: plansByUser } = plansByCode?.length ? { data: null } : await supabase.from('diet_plans').select('*').eq('user_id', user.id).is('order_code', null).order('generated_at', { ascending: false }).limit(1)
+      // Fallback only considers plans from BEFORE order codes existed (order_code IS NULL) that are still active —
+      // every activation turns them off, so a stale plan never leaks into a newly activated package.
+      const { data: plansByUser } = plansByCode?.length ? { data: null } : await supabase.from('diet_plans').select('*').eq('user_id', user.id).is('order_code', null).eq('is_active', true).order('generated_at', { ascending: false }).limit(1)
       const found = plansByCode?.[0] || plansByUser?.[0]
       if (found?.plan_content?.kind === 'tips') {
         const t = await fetchTips(code)
         if (t.length) { showTips(t); return }
       }
-      if (found?.plan_content?.plan_text) { setPlan(found); setActiveTab(0); setState('saved') } else { setState('empty') }
+      if (found?.plan_content?.plan_text) { setPlan(found); setActiveTab(0); setState('saved') } else { nothingSaved() }
     } catch (e) { setState('empty') }
   }
 
@@ -174,6 +179,23 @@ export default function DietScreen() {
           <Text style={s.generateBtnText}>Shiko paketat 14 dhe 28-ditore</Text>
         </TouchableOpacity>
       </ScrollView>
+    </SafeAreaView>
+  )
+
+  // ── Premium ended before a plan was made ──
+  if (state === 'expired') return (
+    <SafeAreaView style={s.safe}>
+      {headerBar()}
+      <View style={s.center}>
+        <View style={s.emptyIconWrap}><Lock size={36} color={Colors.pine} strokeWidth={1.5} /></View>
+        <Text style={s.emptyTitle}>Paketa jote përfundoi</Text>
+        <Text style={s.emptyText}>{isTipsPackage
+          ? 'Këshillat personale krijohen gjatë kohës që paketa është aktive. Kur të porosisësh sërish, aktivizo paketën e re dhe plotëso pyetësorin.'
+          : 'Plani personal krijohet gjatë kohës që paketa është aktive. Kur të porosisësh sërish, aktivizo paketën e re dhe plotëso pyetësorin.'}</Text>
+        <TouchableOpacity style={s.generateBtn} onPress={() => router.push('/(app)/activate')}>
+          <Text style={s.generateBtnText}>Aktivizo paketën e re →</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   )
 
