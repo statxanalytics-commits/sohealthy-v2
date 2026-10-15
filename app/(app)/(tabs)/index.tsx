@@ -104,6 +104,21 @@ export default function HomeScreen() {
 
   const showCountdown = isPremium && daysRemaining !== null
   const countdownUrgent = showCountdown && (daysRemaining as number) <= 5
+  // Premium over: the plan / tips of the last package stay open; everything else locks until a new activation
+  const packageEnded = !isPremium && !!pkg.order_code
+  const planStaysOpen = packageEnded && pkg.has_plan && pkg.deliverable !== 'none'
+
+  const tipCard = tipToday ? (
+    <TouchableOpacity style={s.tipCard} onPress={() => router.push('/(app)/diet')}>
+      <View style={s.tipCardHead}>
+        <Lightbulb size={16} color={Colors.pine} strokeWidth={2} />
+        <Text style={s.tipCardLabel}>KËSHILLA E DITËS · DITA {tipToday.day}</Text>
+      </View>
+      <Text style={s.tipCardTitle}>{tipToday.title}</Text>
+      <Text style={s.tipCardBody} numberOfLines={3}>{tipToday.body}</Text>
+      <Text style={s.tipCardMore}>Lexo më shumë →</Text>
+    </TouchableOpacity>
+  ) : null
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -244,17 +259,7 @@ export default function HomeScreen() {
             <Text style={s.sectionLabel}>PREMIUM</Text>
 
             {/* Today's tip (14-day packages) */}
-            {tipToday && (
-              <TouchableOpacity style={s.tipCard} onPress={() => router.push('/(app)/diet')}>
-                <View style={s.tipCardHead}>
-                  <Lightbulb size={16} color={Colors.pine} strokeWidth={2} />
-                  <Text style={s.tipCardLabel}>KËSHILLA E DITËS · DITA {tipToday.day}</Text>
-                </View>
-                <Text style={s.tipCardTitle}>{tipToday.title}</Text>
-                <Text style={s.tipCardBody} numberOfLines={3}>{tipToday.body}</Text>
-                <Text style={s.tipCardMore}>Lexo më shumë →</Text>
-              </TouchableOpacity>
-            )}
+            {tipCard}
 
             {/* Diet Plan / Tips */}
             <TouchableOpacity style={s.dietCard} onPress={() => router.push('/(app)/diet')}>
@@ -322,16 +327,34 @@ export default function HomeScreen() {
         ) : !loading ? (
           <>
             <Text style={s.sectionLabel}>PREMIUM</Text>
-            {/* Locked premium tools */}
-            <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
-              <View>
-                <Text style={s.lockedDietTitle}>Plani i Dietës</Text>
-                <Text style={s.lockedDietSub}>Këshilla ose plan diete personal, sipas paketës</Text>
-              </View>
-              <View style={s.lockIcon}>
-                <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
-              </View>
-            </TouchableOpacity>
+            {planStaysOpen ? (
+              <>
+                {/* Tips that started late keep coming after premium ends */}
+                {tipCard}
+                {/* Plan / tips of the last package stay open */}
+                <TouchableOpacity style={[s.dietCard, { marginTop: tipCard ? 10 : 0, marginBottom: 8 }]} onPress={() => router.push('/(app)/diet')}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.dietLabel}>{pkg.deliverable === 'tips' ? 'MBETEN TË HAPURA' : 'MBETET I HAPUR'}</Text>
+                    <Text style={s.dietTitle}>{planCardText(pkg).title}</Text>
+                    <Text style={s.dietSub}>Nga paketa jote e fundit</Text>
+                  </View>
+                  <View style={s.dietArrow}>
+                    <Text style={s.dietArrowText}>Hap →</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            ) : (
+              /* Locked premium tools */
+              <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
+                <View>
+                  <Text style={s.lockedDietTitle}>Plani i Dietës</Text>
+                  <Text style={s.lockedDietSub}>Këshilla ose plan diete personal, sipas paketës</Text>
+                </View>
+                <View style={s.lockIcon}>
+                  <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
+                </View>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
               <View>
                 <Text style={s.lockedDietTitle}>Pyet Nutricionistin</Text>
@@ -359,10 +382,12 @@ export default function HomeScreen() {
             </View>
             {/* Big activate CTA */}
             <TouchableOpacity style={s.bigActivateCard} onPress={() => router.push('/(app)/activate')}>
-              <Text style={s.bigActivateTitle}>Aktivizo Paketën Tende</Text>
-              <Text style={s.bigActivateSub}>Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium</Text>
+              <Text style={s.bigActivateTitle}>{packageEnded ? 'Paketa jote përfundoi' : 'Aktivizo Paketën Tende'}</Text>
+              <Text style={s.bigActivateSub}>{packageEnded
+                ? 'Kur të porosisësh sërish, aktivizo paketën e re me numrin e telefonit dhe Premium hapet përsëri.'
+                : 'Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium'}</Text>
               <View style={s.bigActivateBtn}>
-                <Text style={s.bigActivateBtnText}>Aktivizo Tani →</Text>
+                <Text style={s.bigActivateBtnText}>{packageEnded ? 'Aktivizo paketën e re →' : 'Aktivizo Tani →'}</Text>
               </View>
             </TouchableOpacity>
           </>
