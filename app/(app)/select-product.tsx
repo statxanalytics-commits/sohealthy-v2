@@ -13,7 +13,7 @@ const PRODUCT_LIST = [
   { slug: 'berry-bliss', name: 'Berry Bliss', desc: 'Stabilizon sheqerin & pastron mëlçinë' },
   { slug: 'aloe-shot', name: 'Aloe Shot', desc: 'Qetëson zorrët & pastron lëkurën' },
   { slug: 'metabolic-shot', name: 'Metabolic Shot', desc: 'Nxit metabolizmin & rrit energjinë' },
-  { slug: 'g1', name: 'G1 Sachet', desc: 'Efekt Ozempik natyral & ngopje' },
+  { slug: 'g1', name: 'G1 Sachet', desc: 'GLP-1 natyral & ngopje' },
   { slug: 'nf01', name: 'NF-01', desc: 'Zëvendëso darkën & përmirëso gjumin' },
   { slug: 'fiber-plus', name: 'Fiber+', desc: 'Rregullon tretjen & ngop' },
   { slug: 'green-organics', name: 'Green Organics', desc: 'Zëvendëso 2 vakte & humb deri 4kg/10 ditë' },

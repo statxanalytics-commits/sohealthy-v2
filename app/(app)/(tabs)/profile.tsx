@@ -5,12 +5,21 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Crown, Mail, BadgeCheck, CalendarDays, LogOut, Trash2, FileText, Lock, Eye, EyeOff, User, ChevronRight, MessageCircle, Heart } from 'lucide-react-native'
 import { Colors } from '../../../src/constants'
 import { supabase } from '../../../src/lib/supabase'
+import { usePremium } from '../../../src/hooks/usePremium'
 
 const PRIVACY_URL = 'https://sohealthy.al/privacy-policy-3/'
+
+// YYYY-MM-DD → DD.MM.YYYY
+function formatDay(iso: string) {
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
+}
 
 export default function ProfileScreen() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
+  // Premium ends with the package (9 / 16 / 30 days); is_premium alone stays true after that
+  const { isPremium, pkg } = usePremium()
   const [authEmail, setAuthEmail] = useState<string>('')
 
   // Edit profile modal
@@ -160,7 +169,7 @@ export default function ProfileScreen() {
           <View style={{ flex: 1 }}>
             <Text style={s.name}>{displayName}</Text>
             <Text style={s.username}>@{displayUsername}</Text>
-            {profile?.is_premium && (
+            {isPremium && (
               <View style={s.premiumBadge}>
                 <Crown size={11} color={Colors.white} strokeWidth={2} />
                 <Text style={s.premiumText}>Premium</Text>
@@ -176,13 +185,13 @@ export default function ProfileScreen() {
           </View>
           <View style={s.infoRow}>
             <View style={s.infoLabelRow}><BadgeCheck size={15} color={Colors.muted} strokeWidth={1.75} /><Text style={s.infoLabel}>Statusi</Text></View>
-            {profile?.is_premium ? (
+            {isPremium ? (
               <View style={s.statusVal}>
                 <Crown size={13} color={Colors.pine} strokeWidth={2} />
-                <Text style={[s.infoValue, { color: Colors.pine }]}>Premium</Text>
+                <Text style={[s.infoValue, { color: Colors.pine }]}>Premium{pkg.premium_until ? ` deri më ${formatDay(pkg.premium_until)}` : ''}</Text>
               </View>
             ) : (
-              <Text style={[s.infoValue, { color: Colors.muted }]}>Falas</Text>
+              <Text style={[s.infoValue, { color: Colors.muted }]}>{profile?.order_code ? 'Paketa përfundoi' : 'Falas'}</Text>
             )}
           </View>
           {profile?.plan_start && (

@@ -1,6 +1,6 @@
 import { isRozeThemeActive } from '../campaigns/tetoriRoze'
 
-// ─── Theme tokens ────────────────────────────────────────────────────────────
+// ─── Theme tokens ─────────────────────────────────────────────────────────────────────────
 // Screens read `Colors.*` inside module-level StyleSheets, so the palette is
 // resolved ONCE at app launch. During Tetori Rozë (1–31 Oct, Tirana) every token
 // swaps to the Rozë palette; the first launch after 1 Nov is back to default.
@@ -71,7 +71,7 @@ export const PRODUCT_COMBOS: Record<string, { slug: string; time: string; instru
   // Detox Shot + G1
   'detox-shot+g1': [
     { slug: 'detox-shot', time: '07:00', instruction: 'Detox Shot — stomak bosh, 15-20 min para mëngjesit' },
-    { slug: 'g1', time: '07:30', instruction: 'G1 — menjëherë pas Detox Shot, si zëvendësim mëngjesi' },
+    { slug: 'g1', time: '07:30', instruction: 'G1 — menjëherë pas Detox Shot, 15-20 min para mëngjesit (nuk e zëvendëson mëngjesin)' },
   ],
   // Detox Shot + Berry Bliss
   'berry-bliss+detox-shot': [
@@ -86,11 +86,11 @@ export const PRODUCT_COMBOS: Record<string, { slug: string; time: string; instru
   // Detox 2.0 + G1
   'detox-2+g1': [
     { slug: 'detox-2', time: '07:00', instruction: 'Detox 2.0 — stomak bosh, 15-20 min para mëngjesit' },
-    { slug: 'g1', time: '07:30', instruction: 'G1 — menjëherë pas Detox 2.0, si zëvendësim mëngjesi' },
+    { slug: 'g1', time: '07:30', instruction: 'G1 — menjëherë pas Detox 2.0, 15-20 min para mëngjesit (nuk e zëvendëson mëngjesin)' },
   ],
   // Green Shot + G1
   'g1+green-shot': [
-    { slug: 'g1', time: '07:30', instruction: 'G1 — mëngjes si zëvendësim' },
+    { slug: 'g1', time: '07:30', instruction: 'G1 — 15-20 min para mëngjesit (nuk e zëvendëson mëngjesin)' },
     { slug: 'green-shot', time: '12:10', instruction: 'Green Shot — 20 min para drekës' },
   ],
   // Green Organics (replaces breakfast + dinner, no other shots needed at same time)
@@ -198,7 +198,7 @@ export const PRODUCTS: Record<string, any> = {
     notif_msg: 'G1 — 1 qeskë në 250ml ujë',
     storage: 'Vend i thatë dhe i freskët — JO frigorifer',
     how: '1 qeskë në 250ml ujë — tunde mirë në shaker',
-    when: 'Çdo mëngjes si zëvendësim i mëngjesit',
+    when: 'Çdo mëngjes, 15-20 min para mëngjesit — nuk e zëvendëson mëngjesin',
     has_plan: true,
   },
   'nf01': {

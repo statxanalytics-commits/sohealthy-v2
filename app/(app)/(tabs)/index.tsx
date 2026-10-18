@@ -4,7 +4,7 @@ import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   BookOpen, CalendarCheck, Sparkles, Calculator,
-  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle,
+  ScanLine, TrendingUp, Trophy, Package, Lock, ClipboardList, ArrowRight, Flame, UtensilsCrossed, MessageCircle, Lightbulb,
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { API, Colors, IS_ROZE_THEME, LOGO, PRODUCT_IMAGES, ROZE, tint } from '../../../src/constants'
@@ -15,6 +15,7 @@ import * as WebBrowser from 'expo-web-browser'
 import { ORDER_URL, isTetoriRozeLive } from '../../../src/campaigns/tetoriRoze'
 import { TR } from '../../../src/content/tetoriRoze'
 import { loadPlan } from '../../../src/lib/tetoriRoze'
+import { DEFAULT_PACKAGE, DailyTip, MyPackage, fetchMyPackage, fetchTips, todaysTip } from '../../../src/lib/package'
 
 // NOTE: the standalone "Gjej Sa Kg Humb" calculator card was merged INTO the quiz —
 // the quiz now ends with the recommended package + expected kg result & benefits.
@@ -42,12 +43,23 @@ function daysLabel(n: number) {
   return n === 1 ? '1 ditë e mbetur' : `${n} ditë të mbetura`
 }
 
+// Title + subtitle of the Premium plan card for each package (7 → none, 14 → tips, 28 → diet; older orders → 14-day diet)
+function planCardText(pkg: MyPackage): { title: string; sub: string } {
+  if (pkg.deliverable === 'tips') return { title: 'Këshillat e Tua', sub: '14 këshilla personale · një çdo ditë' }
+  if (pkg.deliverable === 'none') return { title: 'Plani i Dietës', sub: 'Shiko çfarë përfshin paketa 7-ditore' }
+  if (pkg.deliverable === 'diet') return { title: 'Plani i Dietës', sub: `Plan ${pkg.diet_days || 14}-ditor personal` }
+  if (pkg.model === 'new') return { title: 'Plani Yt Personal', sub: 'Plotëso pyetësorin e shkurtër' }
+  return { title: 'Plani i Dietës', sub: 'Plan 14-ditor personal' }
+}
+
 export default function HomeScreen() {
   const router = useRouter()
   const { isPremium, daysRemaining, loading } = usePremium()
   const [userName, setUserName] = useState('')
   const [activeProduct, setActiveProduct] = useState<{ slug: string; code: string } | null>(null)
   const [trPlanDone, setTrPlanDone] = useState(0)
+  const [pkg, setPkg] = useState<MyPackage>(DEFAULT_PACKAGE)
+  const [tipToday, setTipToday] = useState<DailyTip | null>(null)
   // Tetori Rozë (1–31 Oct, Tirana): guide card first on Home + offer banner below it.
   // After 1 Nov both leave Home; the guide stays reachable from Profili.
   const tetoriLive = isTetoriRozeLive()
@@ -70,6 +82,9 @@ export default function HomeScreen() {
           .eq('user_id', user.id).eq('order_code', profile.order_code)
           .eq('is_active', true).order('selected_at', { ascending: true }).limit(1).single()
         if (sel?.product_slug) setActiveProduct({ slug: sel.product_slug, code: profile.order_code })
+        const p = await fetchMyPackage()
+        setPkg(p)
+        setTipToday(p.deliverable === 'tips' ? todaysTip(await fetchTips(profile.order_code)) : null)
       }
 
     } catch {}
@@ -89,6 +104,21 @@ export default function HomeScreen() {
 
   const showCountdown = isPremium && daysRemaining !== null
   const countdownUrgent = showCountdown && (daysRemaining as number) <= 5
+  // Premium over: the plan / tips of the last package stay open; everything else locks until a new activation
+  const packageEnded = !isPremium && !!pkg.order_code
+  const planStaysOpen = packageEnded && pkg.has_plan && pkg.deliverable !== 'none'
+
+  const tipCard = tipToday ? (
+    <TouchableOpacity style={s.tipCard} onPress={() => router.push('/(app)/diet')}>
+      <View style={s.tipCardHead}>
+        <Lightbulb size={16} color={Colors.pine} strokeWidth={2} />
+        <Text style={s.tipCardLabel}>KËSHILLA E DITËS · DITA {tipToday.day}</Text>
+      </View>
+      <Text style={s.tipCardTitle}>{tipToday.title}</Text>
+      <Text style={s.tipCardBody} numberOfLines={3}>{tipToday.body}</Text>
+      <Text style={s.tipCardMore}>Lexo më shumë →</Text>
+    </TouchableOpacity>
+  ) : null
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -228,12 +258,15 @@ export default function HomeScreen() {
           <>
             <Text style={s.sectionLabel}>PREMIUM</Text>
 
-            {/* Diet Plan */}
+            {/* Today's tip (14-day packages) */}
+            {tipCard}
+
+            {/* Diet Plan / Tips */}
             <TouchableOpacity style={s.dietCard} onPress={() => router.push('/(app)/diet')}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={s.dietLabel}>PREMIUM</Text>
-                <Text style={s.dietTitle}>Plani i Dietes</Text>
-                <Text style={s.dietSub}>Plan 14-ditor personal</Text>
+                <Text style={s.dietTitle}>{planCardText(pkg).title}</Text>
+                <Text style={s.dietSub}>{planCardText(pkg).sub}</Text>
               </View>
               <View style={s.dietArrow}>
                 <Text style={s.dietArrowText}>Hap →</Text>
@@ -294,16 +327,34 @@ export default function HomeScreen() {
         ) : !loading ? (
           <>
             <Text style={s.sectionLabel}>PREMIUM</Text>
-            {/* Locked premium tools */}
-            <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
-              <View>
-                <Text style={s.lockedDietTitle}>Plani i Dietes</Text>
-                <Text style={s.lockedDietSub}>Plan 14-ditor personal</Text>
-              </View>
-              <View style={s.lockIcon}>
-                <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
-              </View>
-            </TouchableOpacity>
+            {planStaysOpen ? (
+              <>
+                {/* Tips that started late keep coming after premium ends */}
+                {tipCard}
+                {/* Plan / tips of the last package stay open */}
+                <TouchableOpacity style={[s.dietCard, { marginTop: tipCard ? 10 : 0, marginBottom: 8 }]} onPress={() => router.push('/(app)/diet')}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.dietLabel}>{pkg.deliverable === 'tips' ? 'MBETEN TË HAPURA' : 'MBETET I HAPUR'}</Text>
+                    <Text style={s.dietTitle}>{planCardText(pkg).title}</Text>
+                    <Text style={s.dietSub}>Nga paketa jote e fundit</Text>
+                  </View>
+                  <View style={s.dietArrow}>
+                    <Text style={s.dietArrowText}>Hap →</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            ) : (
+              /* Locked premium tools */
+              <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
+                <View>
+                  <Text style={s.lockedDietTitle}>Plani i Dietës</Text>
+                  <Text style={s.lockedDietSub}>Këshilla ose plan diete personal, sipas paketës</Text>
+                </View>
+                <View style={s.lockIcon}>
+                  <Lock size={18} color={Colors.pine} strokeWidth={1.75} />
+                </View>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={s.lockedDiet} onPress={() => router.push('/(app)/activate')}>
               <View>
                 <Text style={s.lockedDietTitle}>Pyet Nutricionistin</Text>
@@ -331,10 +382,12 @@ export default function HomeScreen() {
             </View>
             {/* Big activate CTA */}
             <TouchableOpacity style={s.bigActivateCard} onPress={() => router.push('/(app)/activate')}>
-              <Text style={s.bigActivateTitle}>Aktivizo Paketën Tende</Text>
-              <Text style={s.bigActivateSub}>Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium</Text>
+              <Text style={s.bigActivateTitle}>{packageEnded ? 'Paketa jote përfundoi' : 'Aktivizo Paketën Tende'}</Text>
+              <Text style={s.bigActivateSub}>{packageEnded
+                ? 'Kur të porosisësh sërish, aktivizo paketën e re me numrin e telefonit dhe Premium hapet përsëri.'
+                : 'Vendos numrin e telefonit që përdore për porosinë për të aktivizuar Premium'}</Text>
               <View style={s.bigActivateBtn}>
-                <Text style={s.bigActivateBtnText}>Aktivizo Tani →</Text>
+                <Text style={s.bigActivateBtnText}>{packageEnded ? 'Aktivizo paketën e re →' : 'Aktivizo Tani →'}</Text>
               </View>
             </TouchableOpacity>
           </>
@@ -454,6 +507,16 @@ const s = StyleSheet.create({
   dietSub: { fontSize: 12, color: tint(Colors.alabaster, 0.6), marginTop: 2 },
   dietArrow: { backgroundColor: Colors.aloe, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   dietArrowText: { fontSize: 13, fontWeight: '600', color: Colors.pine },
+
+  tipCard: {
+    backgroundColor: Colors.white, marginHorizontal: 16, marginTop: 10, borderRadius: 16, padding: 16,
+    borderWidth: 1.5, borderColor: Colors.aloe,
+  },
+  tipCardHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  tipCardLabel: { fontSize: 10, letterSpacing: 1.5, color: Colors.pine, fontWeight: '700' },
+  tipCardTitle: { fontSize: 16, color: Colors.pine, fontWeight: '700', marginBottom: 4 },
+  tipCardBody: { fontSize: 13, color: '#444', lineHeight: 19 },
+  tipCardMore: { fontSize: 12, color: Colors.aloeInk, fontWeight: '700', marginTop: 8 },
 
   // Tetori Rozë card + offer banner (Rozë palette via tokens in October)
   trCard: { backgroundColor: ROZE.deep, marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 18 },
